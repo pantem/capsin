@@ -1,0 +1,14 @@
+node_modules/
+.env
+flutter/
+.pub-cache/
+build/
+.android/
+.ios/
+.macos/
+.linux/
+.web/
+*.iml
+*.lock
+.packages
+.dart_tool/

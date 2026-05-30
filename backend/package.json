@@ -1,0 +1,20 @@
+{
+  "name": "siniestros-sismo-api",
+  "version": "1.0.0",
+  "description": "API para registro de siniestros por sismo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "morgan": "^1.10.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

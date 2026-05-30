@@ -1,0 +1,317 @@
+PLAN DE TRABAJO
+================
+Desarrollador: 1
+Horario: 9:00 - 17:00 (lunes a viernes)
+Estimación: ~7 hrs efectivas/día
+
+Módulo 1: Administrador de Tipos de Inmueble
+Módulo 2: Administrador de Catálogo de Direcciones (SEPOMEX)
+
+---------------------------------------------------------------
+MÓDULO 1: ADMINISTRADOR DE TIPOS DE INMUEBLE
+---------------------------------------------------------------
+
+Objetivo:
+  Permitir crear, editar y eliminar tipos de inmueble (ej: Casa, Edificio,
+  Local, Bodega, etc.) y asignarles características (atributos) dinámicas
+  que luego se usen al registrar inmuebles en un siniestro.
+
+--- Día 1 (modelos + backend) ---
+
+  1.1 Modelo de datos (MongoDB / SQLite)
+      - Nueva colección/tabla: "tipos_inmueble"
+        - id (UUID / ObjectId)
+        - nombre (string, único, ej: "Casa", "Edificio", "Local Comercial")
+        - descripcion (string, opcional)
+        - activo (bool, para desactivar sin eliminar)
+        - creado_en, actualizado_en (timestamps)
+
+      - Nueva colección/tabla: "caracteristicas_tipo_inmueble"
+        - id (UUID / ObjectId)
+        - tipo_inmueble_id (FK -> tipos_inmueble)
+        - nombre_caracteristica (string, ej: "Número de niveles",
+          "Área construida", "Tiene sótano", "Material predominante")
+        - tipo_dato (string enum: texto, numero, booleano, seleccion)
+        - opciones (json array, solo para tipo_dato = seleccion,
+          ej: ["Concreto", "Ladrillo", "Madera"])
+        - requerido (bool)
+        - orden (int, para ordenar en el formulario)
+        - creado_en, actualizado_en (timestamps)
+
+      - Nueva columna en "inmuebles": tipo_inmueble_id (FK opcional)
+      - Nueva tabla "valores_caracteristicas_inmueble":
+        - id (UUID)
+        - inmueble_id (FK -> inmuebles)
+        - caracteristica_id (FK -> caracteristicas_tipo_inmueble)
+        - valor_texto (string, nullable)
+        - valor_numero (real, nullable)
+        - valor_booleano (int 0/1, nullable)
+        - valor_seleccion (string, nullable)
+
+  Duración: 0.5 días
+
+  1.2 Backend - Modelos Mongoose
+      - models/TipoInmueble.js
+      - models/CaracteristicaTipo.js
+      - models/ValorCaracteristica.js
+      - Actualizar models/Inmueble.js: agregar campo tipoInmueble (ref)
+
+  Duración: 0.5 días
+
+--- Día 2 (backend APIs) ---
+
+  1.3 Backend - API REST
+      - GET    /api/tipos-inmueble          -> listar tipos (activos)
+      - POST   /api/tipos-inmueble          -> crear tipo
+      - PUT    /api/tipos-inmueble/:id      -> editar tipo
+      - DELETE /api/tipos-inmueble/:id      -> desactivar/eliminar tipo
+
+      - GET    /api/tipos-inmueble/:id/caracteristicas
+                                               -> listar características de un tipo
+      - POST   /api/tipos-inmueble/:id/caracteristicas
+                                               -> agregar característica
+      - PUT    /api/caracteristicas/:id      -> editar característica
+      - DELETE /api/caracteristicas/:id      -> eliminar característica
+
+  Duración: 1 día
+
+--- Día 3 (backend sync + modelos Dart) ---
+
+  1.4 Backend - Actualizar ruta sync
+      - Al sincronizar inmueble, incluir tipo_inmueble_id y
+        valores_caracteristicas en el payload JSON
+      - POST /api/siniestros/sync procesar también estos nuevos campos
+      - Sincronizar tipos de inmueble primero (evitar errores de FK)
+
+  Duración: 0.5 días
+
+  1.5 Mobile - Modelos Dart
+      - models/tipo_inmueble.dart
+      - models/caracteristica_tipo.dart
+      - models/valor_caracteristica.dart
+      - Actualizar models/inmueble.dart: agregar campo tipoInmuebleId
+
+  Duración: 0.5 días
+
+--- Día 4 (servicios mobile) ---
+
+  1.6 Mobile - Servicios
+      - services/tipo_inmueble_service.dart (CRUD local + remoto)
+      - Actualizar database_service.dart:
+        - Migración de BD (nuevas tablas + columna en inmuebles)
+        - CRUD de tipos de inmueble y características
+        - CRUD de valores de características
+      - Actualizar sync_service.dart:
+        - Sincronizar tipos de inmueble primero
+        - Incluir valores_caracteristicas en payload
+
+  Duración: 1 día
+
+--- Días 5-6 (pantallas mobile) ---
+
+  1.7 Mobile - Pantallas
+      - AdminTiposInmuebleScreen:
+        - Lista de tipos con toggle activo/inactivo
+        - Botón flotante para nuevo tipo
+        - Swipe o icono para editar/eliminar
+      - FormTipoInmuebleScreen:
+        - Crear/editar tipo (nombre, descripción)
+        - Lista de características del tipo
+        - Agregar/editar característica (nombre, tipo_dato, opciones,
+          requerido, orden)
+
+  Duración: 1 día
+
+  1.8 Mobile - Modificar formulario de inmueble
+      - Modificar NuevoInmuebleScreen:
+        - Agregar selector de tipo de inmueble al inicio
+        - Al seleccionar un tipo, cargar dinámicamente los campos
+          de características definidos para ese tipo
+        - Renderizar cada campo según tipo_dato:
+          - texto -> TextFormField
+          - numero -> TextFormField con teclado numérico
+          - booleano -> Switch/Checkbox
+          - seleccion -> DropdownButton
+        - Validar campos requeridos
+        - Guardar valores de características junto con el inmueble
+      - Modificar DetalleSiniestroScreen:
+        - Mostrar características y sus valores en cada inmueble
+
+  Duración: 1 día
+
+Total Módulo 1: 6 días hábiles
+
+---------------------------------------------------------------
+MÓDULO 2: ADMINISTRADOR DE CATÁLOGO DE DIRECCIONES (SEPOMEX)
+---------------------------------------------------------------
+
+Objetivo:
+  Cargar el catálogo oficial de SEPOMEX (códigos postales, colonias,
+  municipios, estados) y usarlo para autocompletar direcciones al
+  registrar un siniestro.
+
+--- Día 7 (fuente de datos + script de carga) ---
+
+  2.1 Fuente de datos
+      - Descargar catálogo SEPOMEX:
+        https://www.correosdemexico.gob.mx/SSLServicios/ConsultaCP/Descarga.aspx
+      - Analizar formato del CSV (columnas, encoding, delimitador)
+      - Alternativa: API pública de sepomex.gob.mx
+
+  Duración: 0.5 días
+
+  2.2 Modelo de datos
+      - Colección/tabla "codigos_postales":
+        - codigo (string, 5 dígitos, indexado)
+        - colonia (string)
+        - tipo_asentamiento (string, ej: Colonia, Fraccionamiento, Barrio)
+        - municipio (string)
+        - estado (string)
+        - ciudad (string, opcional)
+        - latitud (real, opcional)
+        - longitud (real, opcional)
+      - Alternativa normalizada en MongoDB:
+        - Tabla "estados": id, nombre
+        - Tabla "municipios": id, nombre, estado_id
+        - Tabla "colonias": id, nombre, tipo_asentamiento, municipio_id,
+          codigo_postal (indexado)
+
+  Duración: 0.5 días
+
+  2.3 Script de carga
+      - script/cargar_sepomex.js
+      - Leer CSV de SEPOMEX (usar csv-parse o similar)
+      - Parsear y normalizar (estados, municipios, colonias)
+      - Insertar en MongoDB con bulk insert
+      - Validar duplicados y datos inconsistentes
+      - Ejecutable como: node script/cargar_sepomex.js --archivo=ruta.csv
+      - Agregar csv-parse a package.json
+
+  Duración: 1 día
+
+--- Día 8 (backend APIs de catálogo) ---
+
+  2.4 Backend - API de catálogo
+      - routes/catalogos.js:
+        - POST /api/catalogos/cargar-sepomex
+          -> Recibe archivo CSV, procesa e inserta en BD
+          -> Solo para administración inicial
+        - GET /api/catalogos/estados -> lista de estados
+        - GET /api/catalogos/municipios?estado_id=X -> municipios por estado
+        - GET /api/catalogos/colonias?municipio_id=X -> colonias por municipio
+        - GET /api/catalogos/colonias?codigo_postal=XXXXX -> colonias por CP
+        - GET /api/catalogos/buscar?q=texto -> búsqueda de dirección
+      - Registrar ruta en server.js
+
+  Duración: 1 día
+
+--- Día 9 (servicio mobile + cache SQLite) ---
+
+  2.5 Mobile - Servicio de catálogo
+      - services/catalogo_direcciones_service.dart
+      - buscarPorCP(cp) -> consulta API y cachea en SQLite
+      - buscarPorTexto(query) -> búsqueda de dirección
+      - descargarCatalogo() -> descarga masiva de todo el catálogo
+      - sincronizarCatalogo() -> descarga incremental
+      - Cache en SQLite:
+        - Tabla "direcciones_cache": cp, colonia, municipio, estado
+        - Indices por cp y por texto
+
+  Duración: 1 día
+
+--- Día 10 (autocompletado en formulario) ---
+
+  2.6 Mobile - Autocompletado en formulario
+      - Modificar NuevoSiniestroScreen:
+        - Campo "Código Postal" (input de 5 dígitos con máscara)
+        - Al escribir 5 dígitos, buscar en cache local
+          (o API si no hay cache)
+        - Autocompletar estado y municipio automáticamente
+        - Mostrar selector de colonias filtrado por CP
+        - Ordenar colonias alfabéticamente
+        - Si el CP no está en el catálogo, permitir escritura manual
+          de estado, municipio, colonia
+        - Selectores en cascada: estado -> municipio -> colonia
+          (como alternativa a buscar por CP)
+      - Manejo offline:
+        - Si no hay cache y no hay internet, mostrar campos manuales
+        - Indicar al usuario que no hay conexión
+
+  Duración: 1 día
+
+Total Módulo 2: 4 días hábiles
+
+---------------------------------------------------------------
+FASE DE CIERRE
+---------------------------------------------------------------
+
+--- Día 11 (sincronización y pruebas) ---
+
+  3.1 Sincronización bidireccional
+      - Probar sync de tipos de inmueble (mobile -> backend)
+      - Probar sync de inmuebles con características
+      - Manejar conflictos (edición simultánea)
+      - Mostrar estado de sincronización en UI
+
+  Duración: 0.5 días
+
+  3.2 Pruebas integrales
+      - Prueba offline: crear reporte sin conexión, sync después
+      - Prueba online: crear reporte con conexión directa
+      - Prueba de catálogo: autocompletado con y sin cache
+      - Prueba de migración: BD existente sin perder datos
+      - Prueba de rendimiento: catálogo completo en SQLite
+      - Corrección de bugs encontrados
+
+  Duración: 0.5 días
+
+--- Días 12-13 (buffer / imprevistos) ---
+
+  3.3 Buffer de contingencia
+      - Ajustes por cambios en requisitos
+      - Problemas con formato SEPOMEX real
+      - Issues de compatibilidad SQLite/MongoDB
+      - UI/UX refinamiento
+
+  Duración: 2 días (holgura)
+
+Total Fase de Cierre: 3 días hábiles
+
+---------------------------------------------------------------
+RESUMEN DE CRONOGRAMA
+---------------------------------------------------------------
+
+Semana 1 (lun-vie):
+  Lun - Día 1:  Modelos + Mongoose
+  Mar - Día 2:  Backend APIs tipos de inmueble
+  Mié - Día 3:  Ruta sync + modelos Dart
+  Jue - Día 4:  Servicios mobile
+  Vie - Día 5:  Pantallas admin tipos
+
+Semana 2 (lun-vie):
+  Lun - Día 6:  Formulario dinámico de inmueble
+  Mar - Día 7:  Fuente SEPOMEX + script de carga
+  Mié - Día 8:  Backend APIs de catálogo
+  Jue - Día 9:  Servicio mobile de catálogo
+  Vie - Día 10: Autocompletado en formulario
+
+Semana 3 (lun-vie):
+  Lun - Día 11: Sync + pruebas
+  Mar - Día 12: Buffer imprevistos
+  Mié - Día 13: Buffer / margen de entrega
+
+---------------------------------------------------------------
+NOTAS TÉCNICAS
+---------------------------------------------------------------
+
+- Compatibilidad: La app actual usa sqflite + http + uuid. Mantener
+  mismo stack.
+- Migración SQLite: Usar onUpgrade con incremento de versión de DB
+  para crear nuevas tablas sin perder datos existentes.
+- El SEPOMEX CSV tiene ~155k filas (por cada colonia-CP). Al insertar
+  en MongoDB normalizado se reduce a ~32 estados + ~2500 municipios +
+  ~45k CP-colonias. En SQLite mobile se puede guardar desnormalizado
+  (~45k filas) con índices.
+- Los tipos de inmueble deben sincronizarse antes que los inmuebles
+  para evitar errores de FK. Primero sync tipos, luego sync inmuebles.
+- Tiempo total estimado: 13 días hábiles (con 2 de buffer = 3 semanas).

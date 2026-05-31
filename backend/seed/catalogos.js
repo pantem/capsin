@@ -1,24 +1,14 @@
-const XLSX = require('xlsx');
+const fs = require('fs');
 const path = require('path');
 const CodigoPostal = require('../models/CodigoPostal');
 
+const JSON_PATH = path.join(__dirname, 'codigos_cdmx.json');
 const EXCEL_PATH = 'C:\\sepomex\\codigos.xls';
-const SHEET_NAME = 'Distrito_Federal';
 
-async function cargarCatalogos() {
-  const count = await CodigoPostal.countDocuments();
-  if (count > 0) {
-    console.log(`Limpiando catálogo existente (${count} registros)...`);
-    await CodigoPostal.deleteMany({});
-  }
-
+function leerDesdeExcel() {
+  const XLSX = require('xlsx');
   const wb = XLSX.readFile(EXCEL_PATH);
-  const ws = wb.Sheets[SHEET_NAME];
-  if (!ws) {
-    console.error(`Hoja "${SHEET_NAME}" no encontrada en ${EXCEL_PATH}`);
-    return;
-  }
-
+  const ws = wb.Sheets['Distrito_Federal'];
   const raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
   const docs = [];
   for (let i = 1; i < raw.length; i++) {
@@ -32,9 +22,31 @@ async function cargarCatalogos() {
       estado: 'CDMX',
     });
   }
+  return docs;
+}
+
+function leerDesdeJSON() {
+  return JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
+}
+
+async function cargarCatalogos() {
+  const count = await CodigoPostal.countDocuments();
+  if (count > 0) {
+    console.log(`Limpiando catálogo existente (${count} registros)...`);
+    await CodigoPostal.deleteMany({});
+  }
+
+  let docs;
+  if (fs.existsSync(EXCEL_PATH)) {
+    console.log('Leyendo datos desde Excel SEPOMEX...');
+    docs = leerDesdeExcel();
+  } else {
+    console.log('Leyendo datos desde JSON local...');
+    docs = leerDesdeJSON();
+  }
 
   await CodigoPostal.insertMany(docs);
-  console.log(`Catálogo CDMX cargado desde SEPOMEX: ${docs.length} registros`);
+  console.log(`Catálogo CDMX cargado: ${docs.length} registros`);
 }
 
 module.exports = { cargarCatalogos };

@@ -19,7 +19,7 @@ class _NuevoSiniestroScreenState extends State<NuevoSiniestroScreen> {
   final _db = DatabaseService();
   final _uuid = const Uuid();
 
-  static const String _apiBase = 'http://192.168.1.80:4000/api';
+  static const String _apiBase = 'https://capsin.onrender.com/api';
 
   final _direccionCtrl = TextEditingController();
   final _municipioCtrl = TextEditingController();

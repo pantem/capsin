@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'database_service.dart';
 
 class SyncService {
-  static const String _baseUrl = 'http://192.168.1.80:4000/api';
+  static const String _baseUrl = 'https://capsin.onrender.com/api';
 
   final DatabaseService _db = DatabaseService();
 

@@ -376,12 +376,12 @@ function renderCaractsLista() {
     return;
   }
   container.innerHTML = _caractsTemp.map((c, i) => {
-    const tipoLabel = { texto: 'Texto', numero: 'Número', booleano: 'Sí/No', seleccion: 'Selección' };
+    const tipoLabel = { texto: 'Texto', numero: 'Número', booleano: 'Sí/No', seleccion: 'Selección', multiseleccion: 'Multiselección' };
     return `
       <div class="caract-item">
         <div class="caract-info">
           <div class="caract-nombre">${c.nombre}</div>
-          <div class="caract-detalle">${tipoLabel[c.tipoDato] || c.tipoDato} ${c.requerido ? '· Requerido' : ''}${c.tipoDato === 'seleccion' && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}</div>
+          <div class="caract-detalle">${tipoLabel[c.tipoDato] || c.tipoDato} ${c.requerido ? '· Requerido' : ''}              ${(c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}</div>
         </div>
         <div class="caract-acciones">
           <button class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
@@ -416,7 +416,8 @@ function abrirFormCaract(idx) {
           <option value="texto" ${c.tipoDato === 'texto' ? 'selected' : ''}>Texto</option>
           <option value="numero" ${c.tipoDato === 'numero' ? 'selected' : ''}>Número</option>
           <option value="booleano" ${c.tipoDato === 'booleano' ? 'selected' : ''}>Sí/No</option>
-          <option value="seleccion" ${c.tipoDato === 'seleccion' ? 'selected' : ''}>Selección</option>
+            <option value="seleccion" ${c.tipoDato === 'seleccion' ? 'selected' : ''}>Selección</option>
+            <option value="multiseleccion" ${c.tipoDato === 'multiseleccion' ? 'selected' : ''}>Multiselección</option>
         </select>
       </div>
       <div class="form-group checkbox" style="align-self:flex-end;">
@@ -443,7 +444,7 @@ function abrirFormCaract(idx) {
 function onCaractTipoChange() {
   const tipo = document.getElementById('caract-tipo').value;
   const group = document.getElementById('caract-opciones-group');
-  group.style.display = tipo === 'seleccion' ? '' : 'none';
+      group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
 }
 
 function cancelarCaractForm() {
@@ -456,7 +457,7 @@ function guardarCaract(idx) {
   if (!nombre) { alert('El nombre es requerido'); return; }
   const tipoDato = document.getElementById('caract-tipo').value;
   const requerido = document.getElementById('caract-req').checked;
-  const opciones = tipoDato === 'seleccion'
+  const opciones = tipoDato === 'seleccion' || tipoDato === 'multiseleccion'
     ? document.getElementById('caract-opciones').value.split('\n').map(s => s.trim()).filter(s => s)
     : [];
 

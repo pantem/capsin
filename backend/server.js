@@ -11,6 +11,7 @@ const tiposInmuebleRouter = require('./routes/tipos_inmueble');
 const caracteristicasRouter = require('./routes/caracteristicas');
 const catalogosRouter = require('./routes/catalogos');
 const { cargarCatalogos } = require('./seed/catalogos');
+const { seedTiposInmueble } = require('./seed/tipos');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -25,6 +26,7 @@ app.use('/api/damnificados', damnificadosRouter);
 app.use('/api/tipos-inmueble', tiposInmuebleRouter);
 app.use('/api/caracteristicas', caracteristicasRouter);
 app.use('/api', catalogosRouter);
+app.use('/api/reportes', require('./routes/reportes'));
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
@@ -124,6 +126,7 @@ app.get('*', (req, res) => {
 
 connectDB().then(async () => {
   await cargarCatalogos();
+  await seedTiposInmueble();
   app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
   });

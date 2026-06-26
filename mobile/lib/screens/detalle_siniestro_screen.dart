@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../models/reporte.dart';
 import '../models/damnificado.dart';
+import '../models/caracteristica_tipo.dart';
+import '../models/valor_caracteristica.dart';
 import 'nuevo_damnificado_screen.dart';
 
 class DetalleSiniestroScreen extends StatefulWidget {
@@ -18,42 +20,10 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
   final DatabaseService _db = DatabaseService();
   Reporte? _reporte;
   List<Damnificado> _damnificados = [];
+  List<ValorCaracteristica> _valores = [];
+  List<CaracteristicaTipo> _caracteristicas = [];
+  Map<String, CaracteristicaTipo> _caractsIndex = {};
   bool _loading = true;
-
-  static const Map<String, String> _usosLabel = {
-    'vivienda_unifamiliar': 'Vivienda Unifamiliar',
-    'vivienda_multifamiliar': 'Vivienda Multifamiliar',
-    'escuela': 'Escuela',
-    'hospital': 'Hospital',
-    'oficina': 'Oficina',
-    'comercio': 'Comercio',
-    'otro': 'Otro',
-  };
-
-  static const Map<String, String> _danosLabel = {
-    'grietas_leves': 'Grietas leves',
-    'grietas_estructurales': 'Grietas estructurales',
-    'desprendimiento_acabados': 'Desprendimiento de acabados',
-    'dano_columnas': 'Daño en columnas',
-    'dano_trabes': 'Daño en trabes',
-    'inclinacion': 'Inclinación',
-    'colapso_parcial': 'Colapso parcial',
-    'colapso_total': 'Colapso total',
-  };
-
-  static const Map<String, String> _condLabel = {
-    'segura': 'Edificación segura',
-    'riesgo_alto': 'Riesgo alto',
-    'riesgo_medio': 'Riesgo medio',
-    'riesgo_bajo': 'Riesgo bajo',
-  };
-
-  static const Map<String, Color> _condColor = {
-    'segura': Colors.green,
-    'riesgo_alto': Colors.red,
-    'riesgo_medio': Colors.orange,
-    'riesgo_bajo': Colors.yellow,
-  };
 
   @override
   void initState() {
@@ -65,9 +35,14 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     setState(() => _loading = true);
     final r = await _db.getReporte(widget.reporteId);
     final damns = await _db.getDamnificados(widget.reporteId);
+    final valores = await _db.getValoresCaracteristica(widget.reporteId);
+    final caracts = await _db.getTodasCaracteristicas();
     setState(() {
       _reporte = r;
       _damnificados = damns;
+      _valores = valores;
+      _caracteristicas = caracts;
+      _caractsIndex = {for (final c in caracts) c.id: c};
       _loading = false;
     });
   }
@@ -88,6 +63,14 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
         body: const Center(child: Text('Reporte no encontrado')),
       );
     }
+
+    final caractsTab2 = _caracteristicas.where((c) => c.orden <= 2).toList();
+    final caractsTab3 = _caracteristicas.where((c) => c.orden == 3).toList();
+    final caractsTab4 = _caracteristicas.where((c) => c.orden == 4).toList();
+
+    final valorIndex = <String, ValorCaracteristica>{
+      for (final v in _valores) v.caracteristicaId: v
+    };
 
     return Scaffold(
       appBar: AppBar(title: Text(r.folio)),
@@ -134,79 +117,51 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   if (r.lat != null && r.lng != null)
                     _infoRow(Icons.gps_fixed,
                         '${r.lat!.toStringAsFixed(5)}, ${r.lng!.toStringAsFixed(5)}'),
+                  if (caractsTab2.isNotEmpty) ...[
+                    const Divider(height: 24),
+                    const Text('Características',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    ...caractsTab2.map((c) => _buildValorRow(c, valorIndex[c.id])),
+                  ],
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Uso del Inmueble',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  _infoRow(Icons.home,
-                      _usosLabel[r.usoInmueble] ?? r.usoInmueble),
-                  if (r.usoInmueble == 'otro' && r.otroUso != null && r.otroUso!.isNotEmpty)
-                    _infoRow(Icons.edit, r.otroUso!),
-                  _infoRow(Icons.stairs, '${r.numeroNiveles} nivel(es)'),
-                  if (r.fechaConstruccion.isNotEmpty)
-                    _infoRow(Icons.calendar_view_month, 'Construcción: ${r.fechaConstruccion}'),
-                ],
+          if (caractsTab3.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(caractsTab3.first.nombre,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    ...caractsTab3.map((c) => _buildValorRow(c, valorIndex[c.id])),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Daños observados',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  if (r.danosObservados.isEmpty)
-                    const Text('Ninguno', style: TextStyle(color: Colors.grey))
-                  else
-                    ...r.danosObservados.split(',').map(
-                          (d) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 1),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.warning_amber, size: 16, color: Colors.red),
-                                const SizedBox(width: 6),
-                                Text(_danosLabel[d.trim()] ?? d.trim()),
-                              ],
-                            ),
-                          ),
-                        ),
-                ],
+          ],
+          if (caractsTab4.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(caractsTab4.first.nombre,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    ...caractsTab4.map((c) => _buildValorRow(c, valorIndex[c.id])),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Condición de seguridad',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Chip(
-                    label: Text(_condLabel[r.condicionSeguridad] ?? r.condicionSeguridad),
-                    backgroundColor:
-                        (_condColor[r.condicionSeguridad] ?? Colors.grey).withOpacity(0.2),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          ],
           if (r.observaciones.isNotEmpty) ...[
             const SizedBox(height: 8),
             Card(
@@ -286,6 +241,90 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildValorRow(CaracteristicaTipo c, ValorCaracteristica? v) {
+    if (v == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Icon(_iconForTipo(c.tipoDato), size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Text('${c.nombre}: ', style: const TextStyle(color: Colors.grey)),
+            const Text('No especificado', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    String displayValue;
+    switch (c.tipoDato) {
+      case 'texto':
+        displayValue = v.valorTexto ?? '';
+        break;
+      case 'numero':
+        displayValue = v.valorNumero?.toString() ?? '';
+        break;
+      case 'booleano':
+        displayValue = v.valorBooleano == true ? 'Sí' : 'No';
+        break;
+      case 'seleccion':
+        displayValue = v.valorSeleccion ?? '';
+        if (displayValue == 'Otro' && v.valorTexto != null) {
+          displayValue = 'Otro: ${v.valorTexto}';
+        }
+        break;
+      case 'multiseleccion':
+        displayValue = v.valorSeleccion ?? '';
+        break;
+      default:
+        displayValue = '';
+    }
+
+    if (displayValue.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(_iconForTipo(c.tipoDato), size: 16, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: DefaultTextStyle.of(context).style,
+                children: [
+                  TextSpan(
+                    text: '${c.nombre}: ',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  TextSpan(text: displayValue),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _iconForTipo(String tipoDato) {
+    switch (tipoDato) {
+      case 'texto':
+        return Icons.text_fields;
+      case 'numero':
+        return Icons.numbers;
+      case 'booleano':
+        return Icons.toggle_on;
+      case 'seleccion':
+        return Icons.radio_button_checked;
+      case 'multiseleccion':
+        return Icons.check_box;
+      default:
+        return Icons.circle;
+    }
   }
 
   Widget _infoRow(IconData icon, String text) {

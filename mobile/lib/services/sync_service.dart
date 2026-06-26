@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
 import '../models/reporte.dart';
 import '../models/damnificado.dart';
+import '../models/tipo_inmueble.dart';
+import '../models/caracteristica_tipo.dart';
+import '../models/valor_caracteristica.dart';
 
 class SyncService {
   static const String _baseUrl = 'https://capsin.onrender.com/api';
@@ -33,6 +36,8 @@ class SyncService {
     try {
       final did = await dispositivoId;
 
+      await _sincronizarTipos();
+
       final descargadosCount = await _descargar(did);
       descargados = descargadosCount;
 
@@ -48,12 +53,15 @@ class SyncService {
       for (final reporte in pendientes) {
         try {
           final damnificados = await _db.getDamnificados(reporte.id);
+          final valores = await _db.getValoresCaracteristica(reporte.id);
 
           final body = {
             'dispositivo_id': did,
             'reportes': [
               {
                 ...reporte.toJson(),
+                'valores_caracteristica':
+                    valores.map((v) => v.toJson()).toList(),
                 'damnificados': damnificados.map((d) => d.toJson()).toList(),
               }
             ],
@@ -79,7 +87,8 @@ class SyncService {
         }
       }
     } catch (e) {
-      return SyncResult(subidos: 0, errores: 1, mensaje: 'Error de conexión: $e');
+      return SyncResult(
+          subidos: 0, errores: 1, mensaje: 'Error de conexión: $e');
     }
 
     final partes = <String>[];
@@ -90,6 +99,41 @@ class SyncService {
         partes.isNotEmpty ? partes.join(', ') : 'Sincronizado correctamente';
 
     return SyncResult(subidos: subidos, errores: errores, mensaje: msg);
+  }
+
+  Future<void> _sincronizarTipos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/tipos-inmueble?activos=true'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode != 200) return;
+
+      final tiposJson = jsonDecode(response.body) as List;
+      final tipos = tiposJson
+          .map((j) => TipoInmueble.fromJson(j as Map<String, dynamic>))
+          .toList();
+
+      if (tipos.isEmpty) return;
+      await _db.insertTiposInmueble(tipos);
+
+      for (final tipo in tipos) {
+        final caractsResponse = await http.get(
+          Uri.parse('$_baseUrl/tipos-inmueble/${tipo.id}/caracteristicas'),
+          headers: {'Content-Type': 'application/json'},
+        );
+        if (caractsResponse.statusCode != 200) continue;
+
+        final caractsJson = jsonDecode(caractsResponse.body) as List;
+        final caracts = caractsJson
+            .map((j) => CaracteristicaTipo.fromJson(j as Map<String, dynamic>))
+            .toList();
+
+        await _db.insertCaracteristicas(tipo.id, caracts);
+      }
+    } catch (e) {
+      // Silently fail - tipos will be used from cache if available
+    }
   }
 
   Future<int> _descargar(String did) async {
@@ -137,6 +181,22 @@ class SyncService {
           sincronizado: true,
         );
         await _db.insertReporte(reporte);
+
+        final valoresData = item['valores_caracteristica'] as List? ?? [];
+        if (valoresData.isNotEmpty) {
+          final valores = valoresData.map((v) => ValorCaracteristica(
+                id: _uuid.v4(),
+                reporteId: reporteId,
+                caracteristicaId: v['caracteristica_id'] as String? ?? '',
+                valorTexto: v['valor_texto'] as String?,
+                valorNumero: (v['valor_numero'] as num?)?.toDouble(),
+                valorBooleano: v['valor_booleano'] == null
+                    ? null
+                    : (v['valor_booleano'] as int) == 1,
+                valorSeleccion: v['valor_seleccion'] as String?,
+              )).toList();
+          await _db.insertValoresCaracteristica(valores);
+        }
 
         final damnificadosData = item['damnificados'] as List? ?? [];
         for (final d in damnificadosData) {

@@ -4,6 +4,9 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../models/reporte.dart';
+import '../models/caracteristica_tipo.dart';
+import '../models/tipo_inmueble.dart';
+import '../models/valor_caracteristica.dart';
 
 class NuevoReporteScreen extends StatefulWidget {
   const NuevoReporteScreen({super.key});
@@ -20,98 +23,54 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   late TabController _tabController;
 
-  // 1. Datos Generales
   final _nombreCapturistaCtrl = TextEditingController();
   final _areaCtrl = TextEditingController();
-
-  // 2. Información del inmueble
   final _calleNumeroCtrl = TextEditingController();
   final _coloniaCtrl = TextEditingController();
   final _alcaldiaCtrl = TextEditingController();
   final _codigoPostalCtrl = TextEditingController();
-
-  // 2.1 Uso del Inmueble
-  String _usoInmueble = '';
-  final _otroUsoCtrl = TextEditingController();
-  final _fechaConstruccionCtrl = TextEditingController();
-  int _numeroNiveles = 1;
-
-  // 3. Daños
-  final Set<String> _danosSeleccionados = {};
-
-  // 4. Condición de seguridad
-  String _condicionSeguridad = '';
-
-  // 5. Observaciones
   final _observacionesCtrl = TextEditingController();
 
-  // 6. Fotografías
-  final List<String> _fotos = [];
+  final Map<String, dynamic> _valoresCaracteristica = {};
+  final Map<String, TextEditingController> _textControllers = {};
 
   double? _lat;
   double? _lng;
   bool _obteniendoUbicacion = false;
+  bool _cargandoCaracts = true;
 
-  static const List<String> _usos = [
-    'vivienda_unifamiliar',
-    'vivienda_multifamiliar',
-    'escuela',
-    'hospital',
-    'oficina',
-    'comercio',
-    'otro',
-  ];
-
-  static const Map<String, String> _usosLabel = {
-    'vivienda_unifamiliar': 'Vivienda Unifamiliar',
-    'vivienda_multifamiliar': 'Vivienda Multifamiliar',
-    'escuela': 'Escuela',
-    'hospital': 'Hospital',
-    'oficina': 'Oficina',
-    'comercio': 'Comercio',
-    'otro': 'Otro',
-  };
-
-  static const List<String> _danos = [
-    'grietas_leves',
-    'grietas_estructurales',
-    'desprendimiento_acabados',
-    'dano_columnas',
-    'dano_trabes',
-    'inclinacion',
-    'colapso_parcial',
-    'colapso_total',
-  ];
-
-  static const Map<String, String> _danosLabel = {
-    'grietas_leves': 'Grietas leves',
-    'grietas_estructurales': 'Grietas estructurales',
-    'desprendimiento_acabados': 'Desprendimiento de acabados',
-    'dano_columnas': 'Daño en columnas',
-    'dano_trabes': 'Daño en trabes',
-    'inclinacion': 'Inclinación',
-    'colapso_parcial': 'Colapso parcial',
-    'colapso_total': 'Colapso total',
-  };
-
-  static const List<String> _condiciones = [
-    'segura',
-    'riesgo_alto',
-    'riesgo_medio',
-    'riesgo_bajo',
-  ];
-
-  static const Map<String, String> _condLabel = {
-    'segura': 'Edificación segura',
-    'riesgo_alto': 'Riesgo alto',
-    'riesgo_medio': 'Riesgo medio',
-    'riesgo_bajo': 'Riesgo bajo',
-  };
+  TipoInmueble? _tipoGenerico;
+  List<CaracteristicaTipo> _caracteristicas = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
+    _cargarCaracteristicas();
+  }
+
+  Future<void> _cargarCaracteristicas() async {
+    final tipos = await _db.getTiposInmueble(soloActivos: true);
+    if (!mounted) return;
+    if (tipos.isNotEmpty) {
+      _tipoGenerico = tipos.first;
+      final caracts = await _db.getCaracteristicas(_tipoGenerico!.id);
+      setState(() {
+        _caracteristicas = caracts;
+        _cargandoCaracts = false;
+        for (final c in caracts) {
+          if (c.tipoDato == 'multiseleccion') {
+            _valoresCaracteristica[c.id] = <String>{};
+          } else if (c.tipoDato == 'booleano') {
+            _valoresCaracteristica[c.id] = false;
+          } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
+            _textControllers[c.id] = TextEditingController();
+          }
+        }
+      });
+    } else {
+      setState(() => _cargandoCaracts = false);
+    }
   }
 
   @override
@@ -123,9 +82,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     _coloniaCtrl.dispose();
     _alcaldiaCtrl.dispose();
     _codigoPostalCtrl.dispose();
-    _otroUsoCtrl.dispose();
-    _fechaConstruccionCtrl.dispose();
     _observacionesCtrl.dispose();
+    for (final ctrl in _textControllers.values) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
@@ -165,27 +125,44 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_usoInmueble.isEmpty) {
-      _tabController.animateTo(1);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona el uso del inmueble')),
-      );
-      return;
-    }
-
-    if (_condicionSeguridad.isEmpty) {
-      _tabController.animateTo(3);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona la condición de seguridad')),
-      );
-      return;
+    final caractsRequeridas = _caracteristicas.where((c) => c.requerido);
+    for (final c in caractsRequeridas) {
+      if (c.tipoDato == 'seleccion') {
+        final val = _valoresCaracteristica[c.id] as String?;
+        if (val == null || val.isEmpty) {
+          _tabController.animateTo(c.orden <= 2 ? 1 : c.orden == 3 ? 2 : 3);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Selecciona: ${c.nombre}')),
+          );
+          return;
+        }
+      } else if (c.tipoDato == 'multiseleccion') {
+        final val = _valoresCaracteristica[c.id] as Set<String>?;
+        if (val == null || val.isEmpty) {
+          _tabController.animateTo(c.orden <= 2 ? 1 : c.orden == 3 ? 2 : 3);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Selecciona: ${c.nombre}')),
+          );
+          return;
+        }
+      } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
+        final ctrl = _textControllers[c.id];
+        if (ctrl == null || ctrl.text.trim().isEmpty) {
+          _tabController.animateTo(c.orden <= 2 ? 1 : c.orden == 3 ? 2 : 3);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Completa: ${c.nombre}')),
+          );
+          return;
+        }
+      }
     }
 
     final folio =
         'SIS-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}-${_uuid.v4().substring(0, 4).toUpperCase()}';
+    final reporteId = _uuid.v4();
 
     final reporte = Reporte(
-      id: _uuid.v4(),
+      id: reporteId,
       folio: folio,
       fecha: DateTime.now(),
       nombreCapturista: _nombreCapturistaCtrl.text,
@@ -196,23 +173,68 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       codigoPostal: _codigoPostalCtrl.text,
       lat: _lat,
       lng: _lng,
-      usoInmueble: _usoInmueble,
-      otroUso: _usoInmueble == 'otro' ? _otroUsoCtrl.text : null,
-      fechaConstruccion: _fechaConstruccionCtrl.text,
-      numeroNiveles: _numeroNiveles,
-      danosObservados: _danosSeleccionados.join(','),
-      condicionSeguridad: _condicionSeguridad,
+      usoInmueble: '',
+      otroUso: null,
+      fechaConstruccion: '',
+      numeroNiveles: 1,
+      danosObservados: '',
+      condicionSeguridad: '',
       observaciones: _observacionesCtrl.text,
-      fotos: _fotos.join(','),
+      fotos: '',
     );
 
     await _db.insertReporte(reporte);
+    await _db.insertValoresCaracteristica(
+        _buildValores(reporteId));
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Reporte $folio creado')),
     );
     Navigator.pop(context);
+  }
+
+  List<ValorCaracteristica> _buildValores(String reporteId) {
+    return _caracteristicas.map((c) {
+      final raw = _valoresCaracteristica[c.id];
+      String? valorTexto;
+      double? valorNumero;
+      bool? valorBooleano;
+      String? valorSeleccion;
+
+      switch (c.tipoDato) {
+        case 'texto':
+          valorTexto = _textControllers[c.id]?.text;
+          break;
+        case 'numero':
+          valorNumero =
+              double.tryParse(_textControllers[c.id]?.text ?? '');
+          break;
+        case 'booleano':
+          valorBooleano = raw as bool?;
+          break;
+        case 'seleccion':
+          valorSeleccion = raw as String?;
+          if (valorSeleccion == 'Otro') {
+            valorTexto = _textControllers['${c.id}_otro']?.text;
+          }
+          break;
+        case 'multiseleccion':
+          final set = raw as Set<String>?;
+          valorSeleccion = set?.join(', ') ?? '';
+          break;
+      }
+
+      return ValorCaracteristica(
+        id: _uuid.v4(),
+        reporteId: reporteId,
+        caracteristicaId: c.id,
+        valorTexto: valorTexto,
+        valorNumero: valorNumero,
+        valorBooleano: valorBooleano,
+        valorSeleccion: valorSeleccion,
+      );
+    }).toList();
   }
 
   @override
@@ -257,13 +279,15 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   children: [
                     if (_tabController.index > 0)
                       OutlinedButton(
-                        onPressed: () => _tabController.animateTo(_tabController.index - 1),
+                        onPressed: () =>
+                            _tabController.animateTo(_tabController.index - 1),
                         child: const Text('Anterior'),
                       ),
                     const Spacer(),
                     if (_tabController.index < 5)
                       FilledButton(
-                        onPressed: () => _tabController.animateTo(_tabController.index + 1),
+                        onPressed: () =>
+                            _tabController.animateTo(_tabController.index + 1),
                         child: const Text('Siguiente'),
                       )
                     else
@@ -328,6 +352,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab2() {
+    final caractsTab2 =
+        _caracteristicas.where((c) => c.orden <= 2).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -396,63 +423,37 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('2.1 Uso del Inmueble',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                const SizedBox(height: 12),
-                ..._usos.map((u) => RadioListTile<String>(
-                      title: Text(_usosLabel[u]!),
-                      value: u,
-                      groupValue: _usoInmueble,
-                      onChanged: (v) => setState(() => _usoInmueble = v!),
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                    )),
-                if (_usoInmueble == 'otro') ...[
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _otroUsoCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Especifique otro uso',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+        if (caractsTab2.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('2.1 Características del Inmueble',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 12),
+                  ...caractsTab2.map((c) => _buildCampoDinamico(c)),
                 ],
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _fechaConstruccionCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha aproximada de construcción',
-                    hintText: 'Ej: 1995',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: _numeroNiveles.toString(),
-                  decoration: const InputDecoration(
-                    labelText: 'Número de niveles',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) =>
-                      _numeroNiveles = int.tryParse(v) ?? 1,
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
+        if (_cargandoCaracts)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }
 
   Widget _buildTab3() {
+    final caractsTab3 =
+        _caracteristicas.where((c) => c.orden == 3).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -465,25 +466,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 const Text('3. Evaluación preliminar de daños',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 8),
-                const Text('Selecciona el tipo de daño observado:'),
+                if (caractsTab3.isEmpty)
+                  const Text('Selecciona el tipo de daño observado:'),
                 const SizedBox(height: 12),
-                ..._danos.map(
-                  (d) => CheckboxListTile(
-                    title: Text(_danosLabel[d]!),
-                    value: _danosSeleccionados.contains(d),
-                    onChanged: (v) {
-                      setState(() {
-                        if (v == true) {
-                          _danosSeleccionados.add(d);
-                        } else {
-                          _danosSeleccionados.remove(d);
-                        }
-                      });
-                    },
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                  ),
-                ),
+                ...caractsTab3.map((c) => _buildCampoDinamico(c)),
+                if (caractsTab3.isEmpty) ...[
+                  const Text('Sin características configuradas',
+                      style: TextStyle(color: Colors.grey)),
+                ],
               ],
             ),
           ),
@@ -493,6 +483,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab4() {
+    final caractsTab4 =
+        _caracteristicas.where((c) => c.orden == 4).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -505,17 +498,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 const Text('4. Condición de seguridad',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
-                ..._condiciones.map(
-                  (c) => RadioListTile<String>(
-                    title: Text(_condLabel[c]!),
-                    value: c,
-                    groupValue: _condicionSeguridad,
-                    onChanged: (v) =>
-                        setState(() => _condicionSeguridad = v!),
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                  ),
-                ),
+                ...caractsTab4.map((c) => _buildCampoDinamico(c)),
+                if (caractsTab4.isEmpty)
+                  const Text('Sin características configuradas',
+                      style: TextStyle(color: Colors.grey)),
               ],
             ),
           ),
@@ -570,25 +556,131 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   'Función de captura próximamente disponible',
                   style: TextStyle(color: Colors.grey),
                 ),
-                if (_fotos.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _fotos
-                        .map((f) => Chip(
-                              label: Text(f),
-                              onDeleted: () =>
-                                  setState(() => _fotos.remove(f)),
-                            ))
-                        .toList(),
-                  ),
-                ],
               ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  Widget _buildCampoDinamico(CaracteristicaTipo c) {
+    switch (c.tipoDato) {
+      case 'texto':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextFormField(
+            controller: _textControllers[c.id],
+            decoration: InputDecoration(
+              labelText: c.nombre,
+              border: const OutlineInputBorder(),
+            ),
+            validator: c.requerido
+                ? (v) => v == null || v.isEmpty ? 'Requerido' : null
+                : null,
+          ),
+        );
+      case 'numero':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextFormField(
+            controller: _textControllers[c.id],
+            decoration: InputDecoration(
+              labelText: c.nombre,
+              border: const OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.number,
+            validator: c.requerido
+                ? (v) => v == null || v.isEmpty ? 'Requerido' : null
+                : null,
+          ),
+        );
+      case 'booleano':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: SwitchListTile(
+            title: Text(c.nombre),
+            value: _valoresCaracteristica[c.id] as bool? ?? false,
+            onChanged: (v) =>
+                setState(() => _valoresCaracteristica[c.id] = v),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+          ),
+        );
+      case 'seleccion':
+        final seleccion = _valoresCaracteristica[c.id] as String?;
+        final tieneOtro = c.opciones.contains('Otro');
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(c.nombre,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 14)),
+              const SizedBox(height: 4),
+              ...c.opciones.map((o) => RadioListTile<String>(
+                    title: Text(o, style: const TextStyle(fontSize: 14)),
+                    value: o,
+                    groupValue: seleccion,
+                    onChanged: (v) {
+                      setState(() => _valoresCaracteristica[c.id] = v);
+                      if (v == 'Otro' &&
+                          !_textControllers.containsKey('${c.id}_otro')) {
+                        _textControllers['${c.id}_otro'] =
+                            TextEditingController();
+                      }
+                    },
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  )),
+              if (seleccion == 'Otro' && tieneOtro) ...[
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: _textControllers['${c.id}_otro'],
+                  decoration: const InputDecoration(
+                    hintText: 'Especifique',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      case 'multiseleccion':
+        final seleccionados = _valoresCaracteristica[c.id] as Set<String>? ??
+            <String>{};
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(c.nombre,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w500, fontSize: 14)),
+              const SizedBox(height: 4),
+              ...c.opciones.map((o) => CheckboxListTile(
+                    title: Text(o, style: const TextStyle(fontSize: 14)),
+                    value: seleccionados.contains(o),
+                    onChanged: (v) {
+                      setState(() {
+                        if (v == true) {
+                          seleccionados.add(o);
+                        } else {
+                          seleccionados.remove(o);
+                        }
+                        _valoresCaracteristica[c.id] = seleccionados;
+                      });
+                    },
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    controlAffinity: ListTileControlAffinity.leading,
+                  )),
+            ],
+          ),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 }

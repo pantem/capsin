@@ -1,0 +1,50 @@
+SISTEMA DE REGISTRO DE AFECTACIONES DE SISMOS
+==============================================
+
+Plataforma para el registro y monitoreo de afectaciones por sismos,
+compuesta por una aplicacion movil y un dashboard web.
+
+----------------------------------------------------------------------
+APLICACION MOVIL (Flutter)
+----------------------------------------------------------------------
+Disenada para inspector de campo con operacion offline-first.
+
+- Registro de siniestros con captura de ubicacion GPS, folio automatico
+  y busqueda de codigo postal (catalogo SEPOMEX).
+- Registro de inmuebles con formulario dinamico: segun el tipo de
+  propiedad (Casa, Edificio, Local Comercial, etc.) se renderizan
+  caracteristicas configurables (texto, numero, booleano, seleccion).
+  Evaluacion de danos: Sin danos / Moderado / Critico.
+- Registro de damnificados con clasificacion: Ileso / Lesion leve /
+  Lesion grave / Fallecido.
+- Sincronizacion bidireccional con el servidor (sube datos nuevos,
+  descarga datos de otros dispositivos), identificando cada dispositivo
+  por UUID.
+- Administracion de tipos de inmueble: crear/editar tipos con
+  caracteristicas dinamicas.
+
+----------------------------------------------------------------------
+DASHBOARD WEB (Vanilla JavaScript + Leaflet)
+----------------------------------------------------------------------
+Disenado para centro de monitoreo/gestion (solo lectura).
+
+- Resumen con estadisticas agregadas (fallecidos, lesionados, inmuebles
+  por nivel de dano).
+- Mapa interactivo (Leaflet) con marcadores codificados por color
+  segun severidad.
+- Lista de siniestros con busqueda y modal de detalle que muestra
+  inmuebles y damnificados asociados.
+- Administracion de tipos de inmueble (CRUD completo).
+- Catalogo de codigos postales (busqueda por CP o colonia).
+
+----------------------------------------------------------------------
+BACKEND (Node.js + Express + MongoDB Atlas)
+----------------------------------------------------------------------
+API REST que conecta ambos frontales.
+
+- La app movil sincroniza via POST /api/siniestros/sync y
+  GET /api/siniestros/pull?dispositivo=ID.
+- El dashboard consulta datos mediante endpoints de resumen, mapa
+  y detalle.
+- Almacenamiento en MongoDB Atlas.
+- Catalogo SEPOMEX de codigos postales de CDMX precargado.

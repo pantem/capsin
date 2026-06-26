@@ -3,10 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_service.dart';
-import '../models/siniestro.dart';
-import '../models/inmueble.dart';
+import '../models/reporte.dart';
 import '../models/damnificado.dart';
-import '../models/valor_caracteristica.dart';
 
 class SyncService {
   static const String _baseUrl = 'https://capsin.onrender.com/api';
@@ -38,82 +36,41 @@ class SyncService {
       final descargadosCount = await _descargar(did);
       descargados = descargadosCount;
 
-      final tiposPendientes = await _db.getTiposInmueble();
-      final siniestrosPendientes = await _db.getSiniestrosNoSincronizados();
+      final pendientes = await _db.getReportesNoSincronizados();
 
-      if (tiposPendientes.isEmpty && siniestrosPendientes.isEmpty) {
+      if (pendientes.isEmpty) {
         final msg = descargados > 0
             ? '$descargados reporte(s) descargado(s)'
             : 'Sin datos pendientes';
         return SyncResult(subidos: 0, errores: 0, mensaje: msg);
       }
 
-      bool tiposSynced = false;
-
-      for (final siniestro in siniestrosPendientes) {
+      for (final reporte in pendientes) {
         try {
-          final inmuebles = await _db.getInmuebles(siniestro.id);
-          final inmueblesJson = <Map<String, dynamic>>[];
-
-          for (final inm in inmuebles) {
-            final valores = await _db.getValoresCaracteristica(inm.id);
-            final damnificados = await _db.getDamnificados(inm.id);
-            final inmJson = inm.toJson();
-            inmJson['valores_caracteristica'] = valores.map((v) => v.toJson()).toList();
-            inmJson['damnificados'] = damnificados.map((d) => d.toJson()).toList();
-            inmueblesJson.add(inmJson);
-          }
+          final damnificados = await _db.getDamnificados(reporte.id);
 
           final body = {
             'dispositivo_id': did,
-            'siniestros': [
+            'reportes': [
               {
-                ...siniestro.toJson(),
-                'inmuebles': inmueblesJson,
+                ...reporte.toJson(),
+                'damnificados': damnificados.map((d) => d.toJson()).toList(),
               }
             ],
-            if (tiposPendientes.isNotEmpty && !tiposSynced)
-              'tipos_inmueble': tiposPendientes.map((t) => t.toJson()).toList(),
           };
 
           final response = await http.post(
-            Uri.parse('$_baseUrl/siniestros/sync'),
+            Uri.parse('$_baseUrl/reportes/sync'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(body),
           );
 
           if (response.statusCode == 200) {
-            tiposSynced = true;
-            await _db.marcarSiniestroSincronizado(siniestro.id);
-            for (final inm in inmuebles) {
-              await _db.marcarInmuebleSincronizado(inm.id);
-              final damns = await _db.getDamnificados(inm.id);
-              for (final d in damns) {
-                await _db.marcarDamnificadoSincronizado(d.id);
-              }
+            await _db.marcarReporteSincronizado(reporte.id);
+            for (final d in damnificados) {
+              await _db.marcarDamnificadoSincronizado(d.id);
             }
             subidos++;
-          } else {
-            errores++;
-          }
-        } catch (e) {
-          errores++;
-        }
-      }
-
-      if (tiposPendientes.isNotEmpty && !tiposSynced) {
-        try {
-          final response = await http.post(
-            Uri.parse('$_baseUrl/siniestros/sync'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'dispositivo_id': did,
-              'siniestros': [],
-              'tipos_inmueble': tiposPendientes.map((t) => t.toJson()).toList(),
-            }),
-          );
-          if (response.statusCode == 200) {
-            tiposSynced = true;
           } else {
             errores++;
           }
@@ -129,7 +86,8 @@ class SyncService {
     if (descargados > 0) partes.add('$descargados descargado(s)');
     if (subidos > 0) partes.add('$subidos subido(s)');
     if (errores > 0) partes.add('$errores error(es)');
-    final msg = partes.isNotEmpty ? partes.join(', ') : 'Sincronizado correctamente';
+    final msg =
+        partes.isNotEmpty ? partes.join(', ') : 'Sincronizado correctamente';
 
     return SyncResult(subidos: subidos, errores: errores, mensaje: msg);
   }
@@ -137,7 +95,7 @@ class SyncService {
   Future<int> _descargar(String did) async {
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/siniestros/pull?dispositivo=$did'),
+        Uri.parse('$_baseUrl/reportes/pull?dispositivo=$did'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -150,75 +108,52 @@ class SyncService {
         final folio = item['folio'] as String?;
         if (folio == null) continue;
 
-        final existentes = await _db.getSiniestros();
-        final yaExiste = existentes.any((s) => s.folio == folio);
+        final existentes = await _db.getReportes();
+        final yaExiste = existentes.any((r) => r.folio == folio);
         if (yaExiste) continue;
 
-        final siniestroId = _uuid.v4();
-        final siniestro = Siniestro(
-          id: siniestroId,
+        final reporteId = _uuid.v4();
+        final reporte = Reporte(
+          id: reporteId,
           folio: folio,
-          fecha: DateTime.tryParse(item['fecha'] as String? ?? '') ?? DateTime.now(),
-          lat: (item['lat'] as num?)?.toDouble() ?? 0,
-          lng: (item['lng'] as num?)?.toDouble() ?? 0,
-          direccion: item['direccion'] as String? ?? '',
-          municipio: item['municipio'] as String? ?? '',
-          estado: item['estado'] as String? ?? '',
-          descripcion: item['descripcion'] as String? ?? '',
+          fecha: DateTime.tryParse(item['fecha'] as String? ?? '') ??
+              DateTime.now(),
+          nombreCapturista: item['nombre_capturista'] as String? ?? '',
+          area: item['area'] as String? ?? '',
+          calleNumero: item['calle_numero'] as String? ?? '',
+          colonia: item['colonia'] as String? ?? '',
+          alcaldia: item['alcaldia'] as String? ?? '',
+          codigoPostal: item['codigo_postal'] as String? ?? '',
+          lat: (item['lat'] as num?)?.toDouble(),
+          lng: (item['lng'] as num?)?.toDouble(),
+          usoInmueble: item['uso_inmueble'] as String? ?? '',
+          otroUso: item['otro_uso'] as String?,
+          fechaConstruccion: item['fecha_construccion'] as String? ?? '',
+          numeroNiveles: item['numero_niveles'] as int? ?? 1,
+          danosObservados: item['danos_observados'] as String? ?? '',
+          condicionSeguridad: item['condicion_seguridad'] as String? ?? '',
+          observaciones: item['observaciones'] as String? ?? '',
+          fotos: item['fotos'] as String? ?? '',
           sincronizado: true,
         );
-        await _db.insertSiniestro(siniestro);
+        await _db.insertReporte(reporte);
 
-        final inmueblesData = item['inmuebles'] as List? ?? [];
-        for (final inmData in inmueblesData) {
-          final inmuebleId = _uuid.v4();
-          final inmueble = Inmueble(
-            id: inmuebleId,
-            siniestroId: siniestroId,
-            tipo: inmData['tipo'] as String? ?? '',
-            tipoInmuebleId: inmData['tipoInmuebleId'] as String?,
-            numeroNiveles: inmData['numeroNiveles'] as int? ?? 1,
-            tipoUnidad: inmData['tipoUnidad'] as String? ?? '',
-            esPadre: (inmData['esPadre'] as int? ?? 0) == 1,
-            padreId: inmData['padreId'] as String?,
-            identificador: inmData['identificador'] as String? ?? '',
-            estadoAfectacion: inmData['estadoAfectacion'] as String? ?? 'sin_daños',
-            observaciones: inmData['observaciones'] as String? ?? '',
+        final damnificadosData = item['damnificados'] as List? ?? [];
+        for (final d in damnificadosData) {
+          final damnificado = Damnificado(
+            id: _uuid.v4(),
+            reporteId: reporteId,
+            nombre: d['nombre'] as String? ?? '',
+            edad: d['edad'] as int? ?? 0,
+            sexo: d['sexo'] as String? ?? '',
+            tipoIdentificacion: d['tipo_identificacion'] as String? ?? '',
+            numeroIdentificacion: d['numero_identificacion'] as String? ?? '',
+            estado: d['estado'] as String? ?? 'ileso',
+            requiereTraslado: (d['requiere_traslado'] as int? ?? 0) == 1,
+            observaciones: d['observaciones'] as String? ?? '',
             sincronizado: true,
           );
-          await _db.insertInmueble(inmueble);
-
-          final valores = inmData['valores_caracteristica'] as List? ?? [];
-          for (final v in valores) {
-            final valor = ValorCaracteristica(
-              id: _uuid.v4(),
-              inmuebleId: inmuebleId,
-              caracteristicaId: v['caracteristicaId'] as String? ?? '',
-              valorTexto: v['valorTexto'] as String?,
-              valorNumero: (v['valorNumero'] as num?)?.toDouble(),
-              valorBooleano: v['valorBooleano'] == null ? null : (v['valorBooleano'] as int) == 1,
-              valorSeleccion: v['valorSeleccion'] as String?,
-            );
-            await _db.insertValorCaracteristica(valor);
-          }
-
-          final damnificadosData = inmData['damnificados'] as List? ?? [];
-          for (final d in damnificadosData) {
-            final damnificado = Damnificado(
-              id: _uuid.v4(),
-              inmuebleId: inmuebleId,
-              nombre: d['nombre'] as String? ?? '',
-              edad: d['edad'] as int? ?? 0,
-              sexo: d['sexo'] as String? ?? '',
-              tipoIdentificacion: d['tipoIdentificacion'] as String? ?? '',
-              numeroIdentificacion: d['numeroIdentificacion'] as String? ?? '',
-              estado: d['estado'] as String? ?? 'ileso',
-              requiereTraslado: (d['requiereTraslado'] as int? ?? 0) == 1,
-              observaciones: d['observaciones'] as String? ?? '',
-              sincronizado: true,
-            );
-            await _db.insertDamnificado(damnificado);
-          }
+          await _db.insertDamnificado(damnificado);
         }
         count++;
       }
@@ -234,5 +169,6 @@ class SyncResult {
   final int errores;
   final String mensaje;
 
-  SyncResult({required this.subidos, required this.errores, required this.mensaje});
+  SyncResult(
+      {required this.subidos, required this.errores, required this.mensaje});
 }

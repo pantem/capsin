@@ -1,6 +1,6 @@
 class Damnificado {
   final String id;
-  final String inmuebleId;
+  final String reporteId;
   final String nombre;
   final int edad;
   final String sexo;
@@ -13,7 +13,7 @@ class Damnificado {
 
   Damnificado({
     required this.id,
-    required this.inmuebleId,
+    required this.reporteId,
     this.nombre = '',
     this.edad = 0,
     this.sexo = '',
@@ -27,7 +27,7 @@ class Damnificado {
 
   Map<String, dynamic> toMap() => {
         'id': id,
-        'inmuebleId': inmuebleId,
+        'reporteId': reporteId,
         'nombre': nombre,
         'edad': edad,
         'sexo': sexo,
@@ -41,7 +41,7 @@ class Damnificado {
 
   factory Damnificado.fromMap(Map<String, dynamic> map) => Damnificado(
         id: map['id'] as String,
-        inmuebleId: map['inmuebleId'] as String,
+        reporteId: map['reporteId'] as String,
         nombre: map['nombre'] as String? ?? '',
         edad: map['edad'] as int? ?? 0,
         sexo: map['sexo'] as String? ?? '',

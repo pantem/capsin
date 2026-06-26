@@ -1,0 +1,56 @@
+COSTOS DE DESPLIEGUE 24/7/365
+==============================
+
+El sistema tiene 3 componentes con costo para operacion continua
+(plan posterior al gratuito).
+
+----------------------------------------------------------------------
+1. MONGODB ATLAS (Base de datos)
+----------------------------------------------------------------------
+Tier actual:       M0 (gratuito, 512 MB, sin replicacion)
+Tier recomendado:  M2 Serverless
+Costo:             ~$9 USD/mes
+- 2 GB de almacenamiento
+- Replicacion automatica (alta disponibilidad 24/7)
+- Auto-escalado
+
+----------------------------------------------------------------------
+2. HOSTING DEL BACKEND + DASHBOARD (Node.js + Express)
+----------------------------------------------------------------------
+Plataformas recomendadas:
+  Render (Starter):  $7 USD/mes
+  Railway (Starter): $5 USD/mes
+
+Costo estimado: ~$5-7 USD/mes
+- Sin tiempos de inactividad por sleeping
+- El frontend (dashboard) se sirve como archivo estatico
+  desde el mismo servidor, sin costo adicional
+
+----------------------------------------------------------------------
+3. DOMINIO (Opcional)
+----------------------------------------------------------------------
+Costo: ~$10-15 USD/año (~$1 USD/mes)
+- Solo si se requiere un dominio personalizado
+
+----------------------------------------------------------------------
+RESUMEN MENSUAL
+----------------------------------------------------------------------
+Concepto                     Costo/mes (USD)
+---------------------------- ---------------
+MongoDB Atlas M2             $9
+Hosting backend              $7
+Dominio (prorrateado)        $1
+---------------------------- ---------------
+Total estimado               ~$17 USD
+
+----------------------------------------------------------------------
+NOTAS
+----------------------------------------------------------------------
+- La aplicacion movil (Flutter) se instala en los dispositivos
+  de los inspectores y no requiere hosting.
+- El plan gratuito de Render tiene 750 h/mes y duerme tras 15 min
+  de inactividad, por lo que no es viable para 24/7/365.
+- MongoDB M0 gratuito no tiene replicacion; si el nodo falla,
+  los datos se pierden hasta que se recupere.
+- Precios actualizados a junio 2026, sujetos a cambios de cada
+  proveedor.

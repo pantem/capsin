@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
-import '../models/siniestro.dart';
+import '../models/reporte.dart';
 import '../services/sync_service.dart';
-import 'nuevo_siniestro_screen.dart';
+import 'nuevo_reporte_screen.dart';
 import 'detalle_siniestro_screen.dart';
-import 'admin_tipos_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final DatabaseService _db = DatabaseService();
-  List<Siniestro> _siniestros = [];
+  List<Reporte> _reportes = [];
   bool _loading = true;
 
   @override
@@ -26,9 +25,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _cargar() async {
     setState(() => _loading = true);
-    final data = await _db.getSiniestros();
+    final data = await _db.getReportes();
     setState(() {
-      _siniestros = data;
+      _reportes = data;
       _loading = false;
     });
   }
@@ -59,22 +58,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _sincronizar,
             tooltip: 'Sincronizar',
           ),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminTiposScreen()),
-              );
-              _cargar();
-            },
-            tooltip: 'Administrar',
-          ),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _siniestros.isEmpty
+          : _reportes.isEmpty
               ? const Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -90,28 +78,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   onRefresh: _cargar,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(12),
-                    itemCount: _siniestros.length,
+                    itemCount: _reportes.length,
                     itemBuilder: (_, i) {
-                      final s = _siniestros[i];
+                      final r = _reportes[i];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
                         child: ListTile(
-                          title: Text(s.folio,
+                          title: Text(r.folio,
                               style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(
-                            '${s.direccion}\n${s.municipio}',
+                            '${r.calleNumero}\n${r.colonia}',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (!s.sincronizado)
+                              if (!r.sincronizado)
                                 const Icon(Icons.cloud_off, size: 18, color: Colors.grey),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                                 onPressed: () async {
-                                  await _db.deleteSiniestro(s.id);
+                                  await _db.deleteReporte(r.id);
                                   _cargar();
                                 },
                               ),
@@ -121,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => DetalleSiniestroScreen(siniestroId: s.id),
+                                builder: (_) => DetalleSiniestroScreen(reporteId: r.id),
                               ),
                             );
                             _cargar();
@@ -135,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const NuevoSiniestroScreen()),
+            MaterialPageRoute(builder: (_) => const NuevoReporteScreen()),
           );
           _cargar();
         },

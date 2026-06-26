@@ -11,6 +11,7 @@ const siniestroSchema = new mongoose.Schema({
     estado: { type: String, default: '' },
   },
   descripcion: { type: String, default: '' },
+  dispositivo_id: { type: String, default: null, index: true },
   sincronizado: { type: Boolean, default: true },
   creado_en: { type: Date, default: Date.now },
   actualizado_en: { type: Date, default: Date.now },

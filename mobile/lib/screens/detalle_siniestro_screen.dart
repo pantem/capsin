@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/database_service.dart';
-import '../models/siniestro.dart';
-import '../models/inmueble.dart';
+import '../models/reporte.dart';
 import '../models/damnificado.dart';
-import '../models/valor_caracteristica.dart';
-import 'nuevo_inmueble_screen.dart';
 import 'nuevo_damnificado_screen.dart';
 
 class DetalleSiniestroScreen extends StatefulWidget {
-  final String siniestroId;
+  final String reporteId;
 
-  const DetalleSiniestroScreen({super.key, required this.siniestroId});
+  const DetalleSiniestroScreen({super.key, required this.reporteId});
 
   @override
   State<DetalleSiniestroScreen> createState() => _DetalleSiniestroScreenState();
@@ -18,9 +16,44 @@ class DetalleSiniestroScreen extends StatefulWidget {
 
 class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
   final DatabaseService _db = DatabaseService();
-  Siniestro? _siniestro;
-  List<Inmueble> _inmuebles = [];
+  Reporte? _reporte;
+  List<Damnificado> _damnificados = [];
   bool _loading = true;
+
+  static const Map<String, String> _usosLabel = {
+    'vivienda_unifamiliar': 'Vivienda Unifamiliar',
+    'vivienda_multifamiliar': 'Vivienda Multifamiliar',
+    'escuela': 'Escuela',
+    'hospital': 'Hospital',
+    'oficina': 'Oficina',
+    'comercio': 'Comercio',
+    'otro': 'Otro',
+  };
+
+  static const Map<String, String> _danosLabel = {
+    'grietas_leves': 'Grietas leves',
+    'grietas_estructurales': 'Grietas estructurales',
+    'desprendimiento_acabados': 'Desprendimiento de acabados',
+    'dano_columnas': 'Daño en columnas',
+    'dano_trabes': 'Daño en trabes',
+    'inclinacion': 'Inclinación',
+    'colapso_parcial': 'Colapso parcial',
+    'colapso_total': 'Colapso total',
+  };
+
+  static const Map<String, String> _condLabel = {
+    'segura': 'Edificación segura',
+    'riesgo_alto': 'Riesgo alto',
+    'riesgo_medio': 'Riesgo medio',
+    'riesgo_bajo': 'Riesgo bajo',
+  };
+
+  static const Map<String, Color> _condColor = {
+    'segura': Colors.green,
+    'riesgo_alto': Colors.red,
+    'riesgo_medio': Colors.orange,
+    'riesgo_bajo': Colors.yellow,
+  };
 
   @override
   void initState() {
@@ -30,71 +63,13 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
 
   Future<void> _cargar() async {
     setState(() => _loading = true);
-    final s = await _db.getSiniestro(widget.siniestroId);
-    final inmuebles = await _db.getInmuebles(widget.siniestroId);
+    final r = await _db.getReporte(widget.reporteId);
+    final damns = await _db.getDamnificados(widget.reporteId);
     setState(() {
-      _siniestro = s;
-      _inmuebles = inmuebles;
+      _reporte = r;
+      _damnificados = damns;
       _loading = false;
     });
-  }
-
-  Color _colorAfectacion(String estado) {
-    switch (estado) {
-      case 'critico':
-        return Colors.red;
-      case 'moderado':
-        return Colors.orange;
-      default:
-        return Colors.green;
-    }
-  }
-
-  String _labelAfectacion(String estado) {
-    switch (estado) {
-      case 'critico':
-        return 'Crítico';
-      case 'moderado':
-        return 'Moderado';
-      default:
-        return 'Sin daños';
-    }
-  }
-
-  String _labelEstado(String estado) {
-    switch (estado) {
-      case 'fallecido':
-        return 'Fallecido';
-      case 'lesionado_grave':
-        return 'Lesionado Grave';
-      case 'lesionado_leve':
-        return 'Lesionado Leve';
-      default:
-        return 'Ileso';
-    }
-  }
-
-  Future<void> _agregarInmueble({String? padreId, String? siniestroId}) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => NuevoInmuebleScreen(
-          siniestroId: siniestroId ?? widget.siniestroId,
-          padreId: padreId,
-        ),
-      ),
-    );
-    _cargar();
-  }
-
-  Future<void> _agregarDamnificado(String inmuebleId) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => NuevoDamnificadoScreen(inmuebleId: inmuebleId),
-      ),
-    );
-    _cargar();
   }
 
   @override
@@ -106,16 +81,16 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
       );
     }
 
-    final s = _siniestro;
-    if (s == null) {
+    final r = _reporte;
+    if (r == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Error')),
-        body: const Center(child: Text('Siniestro no encontrado')),
+        body: const Center(child: Text('Reporte no encontrado')),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.folio)),
+      appBar: AppBar(title: Text(r.folio)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -125,12 +100,14 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(s.folio, style: Theme.of(context).textTheme.titleLarge),
+                  Text(r.folio,
+                      style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  _infoRow(Icons.location_on, s.direccion),
-                  _infoRow(Icons.map, '${s.municipio}, ${s.estado}'),
-                  _infoRow(Icons.description, s.descripcion),
-                  if (!s.sincronizado)
+                  _infoRow(Icons.person, 'Capturista: ${r.nombreCapturista}'),
+                  _infoRow(Icons.work, 'Área: ${r.area}'),
+                  _infoRow(Icons.calendar_today,
+                      'Fecha: ${DateFormat('dd/MM/yyyy HH:mm').format(r.fecha)}'),
+                  if (!r.sincronizado)
                     Chip(
                       label: const Text('Sin sincronizar'),
                       avatar: const Icon(Icons.cloud_off, size: 16),
@@ -140,29 +117,172 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Inmueble afectado',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  _infoRow(Icons.location_on, r.calleNumero),
+                  _infoRow(Icons.map, 'Col. ${r.colonia}, ${r.alcaldia}'),
+                  if (r.codigoPostal.isNotEmpty)
+                    _infoRow(Icons.markunread_mailbox, 'CP ${r.codigoPostal}'),
+                  if (r.lat != null && r.lng != null)
+                    _infoRow(Icons.gps_fixed,
+                        '${r.lat!.toStringAsFixed(5)}, ${r.lng!.toStringAsFixed(5)}'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Uso del Inmueble',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  _infoRow(Icons.home,
+                      _usosLabel[r.usoInmueble] ?? r.usoInmueble),
+                  if (r.usoInmueble == 'otro' && r.otroUso != null && r.otroUso!.isNotEmpty)
+                    _infoRow(Icons.edit, r.otroUso!),
+                  _infoRow(Icons.stairs, '${r.numeroNiveles} nivel(es)'),
+                  if (r.fechaConstruccion.isNotEmpty)
+                    _infoRow(Icons.calendar_view_month, 'Construcción: ${r.fechaConstruccion}'),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Daños observados',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  if (r.danosObservados.isEmpty)
+                    const Text('Ninguno', style: TextStyle(color: Colors.grey))
+                  else
+                    ...r.danosObservados.split(',').map(
+                          (d) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 1),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warning_amber, size: 16, color: Colors.red),
+                                const SizedBox(width: 6),
+                                Text(_danosLabel[d.trim()] ?? d.trim()),
+                              ],
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Condición de seguridad',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  Chip(
+                    label: Text(_condLabel[r.condicionSeguridad] ?? r.condicionSeguridad),
+                    backgroundColor:
+                        (_condColor[r.condicionSeguridad] ?? Colors.grey).withOpacity(0.2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (r.observaciones.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Observaciones',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    Text(r.observaciones),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (r.fotos.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Fotografías',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    ...r.fotos.split(',').map(
+                          (f) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 1),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.image, size: 16),
+                                const SizedBox(width: 6),
+                                Expanded(child: Text(f.trim(), overflow: TextOverflow.ellipsis)),
+                              ],
+                            ),
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Inmuebles (${_inmuebles.length})',
+              Text('Damnificados (${_damnificados.length})',
                   style: Theme.of(context).textTheme.titleMedium),
               FilledButton.tonalIcon(
-                onPressed: () => _agregarInmueble(padreId: null, siniestroId: s.id),
-                icon: const Icon(Icons.add, size: 18),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NuevoDamnificadoScreen(reporteId: r.id),
+                    ),
+                  );
+                  _cargar();
+                },
+                icon: const Icon(Icons.person_add, size: 18),
                 label: const Text('Agregar'),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          if (_inmuebles.isEmpty)
+          if (_damnificados.isEmpty)
             const Card(
               child: Padding(
                 padding: EdgeInsets.all(24),
-                child: Center(child: Text('Sin inmuebles registrados')),
+                child: Center(child: Text('Sin damnificados registrados')),
               ),
             )
           else
-            ..._inmuebles.map((inm) => _buildInmuebleCard(inm)),
+            ..._damnificados.map((d) => _buildDamnificadoCard(d)),
         ],
       ),
     );
@@ -181,124 +301,51 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     );
   }
 
-  Widget _buildInmuebleCard(Inmueble inm) {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        _db.getDamnificados(inm.id),
-        _db.getValoresCaracteristica(inm.id),
-      ]),
-      builder: (ctx, snap) {
-        final damnificados = snap.data?[0] as List<Damnificado>? ?? [];
-        final valores = snap.data?[1] as List<ValorCaracteristica>? ?? [];
-        final esEdificio = inm.tipo == 'edificio';
-        final esPadre = inm.esPadre;
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ExpansionTile(
-            leading: CircleAvatar(
-              backgroundColor: _colorAfectacion(inm.estadoAfectacion).withOpacity(0.2),
-              child: Icon(
-                esEdificio ? Icons.apartment : Icons.home,
-                color: _colorAfectacion(inm.estadoAfectacion),
-              ),
-            ),
-            title: Text(
-              inm.tipo.isNotEmpty
-                  ? '${inm.tipo} - ${inm.identificador}'
-                  : inm.identificador.isNotEmpty
-                      ? inm.identificador
-                      : 'Sin identificar',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              '${inm.numeroNiveles} nivel(es)${inm.tipoUnidad.isNotEmpty ? ' · ${inm.tipoUnidad == "vivienda" ? "Vivienda" : "Oficina"}' : ''} · ${_labelAfectacion(inm.estadoAfectacion)}',
-            ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (valores.isNotEmpty) ...[
-                      const Divider(),
-                      Text('Características',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      ...valores.map((v) => _buildValorRow(v)),
-                    ],
-                    if (damnificados.isNotEmpty) ...[
-                      const Divider(),
-                      Text('Damnificados (${damnificados.length})',
-                          style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 4),
-                      ...damnificados.map(
-                        (d) => ListTile(
-                          dense: true,
-                          title: Text(d.nombre.isNotEmpty ? d.nombre : 'Sin nombre'),
-                          subtitle: Text(
-                            '${d.edad > 0 ? '${d.edad} años' : ''} ${d.sexo.isNotEmpty ? '· ${d.sexo}' : ''}',
-                          ),
-                          trailing: Chip(
-                            label: Text(_labelEstado(d.estado),
-                                style: const TextStyle(fontSize: 11)),
-                            backgroundColor:
-                                _colorAfectacion(d.estado == 'fallecido' || d.estado == 'lesionado_grave'
-                                        ? 'critico'
-                                        : d.estado == 'ileso'
-                                            ? 'sin_daños'
-                                            : 'moderado')
-                                    .withOpacity(0.2),
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
-                      ),
-                    ],
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.person_add, size: 18),
-                          label: const Text('Damnificado'),
-                          onPressed: () => _agregarDamnificado(inm.id),
-                        ),
-                        if (esEdificio && esPadre)
-                          TextButton.icon(
-                            icon: const Icon(Icons.add_business, size: 18),
-                            label: const Text('Departamento'),
-                            onPressed: () => _agregarInmueble(
-                              padreId: inm.id,
-                              siniestroId: widget.siniestroId,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+  Widget _buildDamnificadoCard(Damnificado d) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.blue.withOpacity(0.2),
+          child: const Icon(Icons.person, color: Colors.blue),
+        ),
+        title: Text(d.nombre.isNotEmpty ? d.nombre : 'Sin nombre',
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+          '${d.edad > 0 ? '${d.edad} años' : ''} ${d.sexo.isNotEmpty ? '· ${d.sexo == "M" ? "Masculino" : "Femenino"}' : ''}',
+        ),
+        trailing: Chip(
+          label: Text(_labelEstado(d.estado), style: const TextStyle(fontSize: 11)),
+          backgroundColor: _colorEstado(d.estado).withOpacity(0.2),
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
     );
   }
 
-  Widget _buildValorRow(ValorCaracteristica v) {
-    String label;
-    if (v.valorTexto != null) {
-      label = v.valorTexto!;
-    } else if (v.valorNumero != null) {
-      label = v.valorNumero.toString();
-    } else if (v.valorBooleano != null) {
-      label = v.valorBooleano! ? 'Sí' : 'No';
-    } else if (v.valorSeleccion != null) {
-      label = v.valorSeleccion!;
-    } else {
-      label = '-';
+  String _labelEstado(String estado) {
+    switch (estado) {
+      case 'fallecido':
+        return 'Fallecido';
+      case 'lesionado_grave':
+        return 'Lesionado Grave';
+      case 'lesionado_leve':
+        return 'Lesionado Leve';
+      default:
+        return 'Ileso';
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1),
-      child: Text('• $label', style: const TextStyle(fontSize: 13)),
-    );
+  }
+
+  Color _colorEstado(String estado) {
+    switch (estado) {
+      case 'fallecido':
+        return Colors.black;
+      case 'lesionado_grave':
+        return Colors.red;
+      case 'lesionado_leve':
+        return Colors.orange;
+      default:
+        return Colors.green;
+    }
   }
 }

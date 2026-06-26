@@ -15,6 +15,82 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/pull', async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.dispositivo) {
+      filter.dispositivo_id = req.query.dispositivo;
+    }
+    const siniestros = await Siniestro.find(filter).sort({ fecha: -1 }).lean();
+    const results = [];
+
+    for (const s of siniestros) {
+      const inmuebles = await Inmueble.find({ siniestro: s._id }).lean();
+      const inmueblesData = [];
+
+      for (const inm of inmuebles) {
+        const damnificados = await Damnificado.find({ inmueble: inm._id }).lean();
+        const valores = await ValorCaracteristica.find({ inmueble: inm._id }).lean();
+
+        inmueblesData.push({
+          id: inm._id.toString(),
+          siniestroId: s._id.toString(),
+          tipo: inm.tipo || '',
+          tipoInmuebleId: inm.tipo_inmueble_ref ? inm.tipo_inmueble_ref.toString() : null,
+          numeroNiveles: inm.numero_niveles || 1,
+          tipoUnidad: inm.tipo_unidad || '',
+          esPadre: inm.es_padre ? 1 : 0,
+          padreId: inm.padre ? inm.padre.toString() : null,
+          identificador: inm.identificador || '',
+          estadoAfectacion: inm.estado_afectacion || 'sin_daños',
+          observaciones: inm.observaciones || '',
+          sincronizado: 1,
+          damnificados: damnificados.map(d => ({
+            id: d._id.toString(),
+            inmuebleId: inm._id.toString(),
+            nombre: d.nombre || '',
+            edad: d.edad || 0,
+            sexo: d.sexo || '',
+            tipoIdentificacion: d.tipo_identificacion || '',
+            numeroIdentificacion: d.numero_identificacion || '',
+            estado: d.estado || 'ileso',
+            requiereTraslado: d.requiere_traslado ? 1 : 0,
+            observaciones: d.observaciones || '',
+            sincronizado: 1,
+          })),
+          valores_caracteristica: valores.map(v => ({
+            id: v._id.toString(),
+            inmuebleId: inm._id.toString(),
+            caracteristicaId: v.caracteristica ? v.caracteristica.toString() : '',
+            valorTexto: v.valor_texto || null,
+            valorNumero: v.valor_numero || null,
+            valorBooleano: v.valor_booleano == null ? null : (v.valor_booleano ? 1 : 0),
+            valorSeleccion: v.valor_seleccion || null,
+          })),
+        });
+      }
+
+      results.push({
+        id: s._id.toString(),
+        folio: s.folio,
+        fecha: s.fecha ? new Date(s.fecha).toISOString() : new Date().toISOString(),
+        lat: s.ubicacion?.lat || 0,
+        lng: s.ubicacion?.lng || 0,
+        direccion: s.ubicacion?.direccion || '',
+        municipio: s.ubicacion?.municipio || '',
+        estado: s.ubicacion?.estado || '',
+        descripcion: s.descripcion || '',
+        sincronizado: 1,
+        inmuebles: inmueblesData,
+      });
+    }
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const siniestro = await Siniestro.findById(req.params.id);
@@ -61,7 +137,7 @@ router.delete('/:id', async (req, res) => {
 
 router.post('/sync', async (req, res) => {
   try {
-    const { siniestros, tipos_inmueble } = req.body;
+    const { siniestros, tipos_inmueble, dispositivo_id } = req.body;
 
     if (tipos_inmueble) {
       for (const t of tipos_inmueble) {
@@ -78,10 +154,13 @@ router.post('/sync', async (req, res) => {
       const { inmuebles, ...siniestroData } = item;
       const exists = await Siniestro.findOne({ folio: siniestroData.folio });
       let siniestro;
+      const dataToSave = dispositivo_id
+        ? { ...siniestroData, dispositivo_id, sincronizado: true }
+        : { ...siniestroData, sincronizado: true };
       if (exists) {
-        siniestro = await Siniestro.findByIdAndUpdate(exists._id, siniestroData, { new: true });
+        siniestro = await Siniestro.findByIdAndUpdate(exists._id, dataToSave, { new: true });
       } else {
-        siniestro = new Siniestro({ ...siniestroData, sincronizado: true });
+        siniestro = new Siniestro(dataToSave);
         siniestro = await siniestro.save();
       }
       if (inmuebles) {

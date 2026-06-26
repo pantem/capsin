@@ -1,7 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../services/database_service.dart';
 import '../models/reporte.dart';
 import '../models/caracteristica_tipo.dart';
@@ -38,6 +42,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   double? _lng;
   bool _obteniendoUbicacion = false;
   bool _cargandoCaracts = true;
+
+  final List<String> _fotos = [];
+  final ImagePicker _picker = ImagePicker();
+  static const String _apiBase = 'https://capsin.onrender.com/api';
+
+  List<Map<String, dynamic>> _colonias = [];
+  bool _cargandoColonias = false;
+  String? _coloniaSeleccionada;
 
   TipoInmueble? _tipoGenerico;
   List<CaracteristicaTipo> _caracteristicas = [];
@@ -122,6 +134,40 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     }
   }
 
+  Future<void> _buscarColonias(String cp) async {
+    if (cp.length < 5) {
+      setState(() {
+        _colonias = [];
+        _coloniaSeleccionada = null;
+      });
+      return;
+    }
+    setState(() => _cargandoColonias = true);
+    try {
+      final uri = Uri.parse('$_apiBase/codigos-postales?codigo=$cp');
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = (jsonDecode(response.body) as List)
+            .cast<Map<String, dynamic>>();
+        setState(() {
+          _colonias = data;
+          _coloniaSeleccionada = null;
+          if (data.isNotEmpty) {
+            if (data.length == 1) {
+              _coloniaSeleccionada = data.first['colonia'] as String?;
+              _coloniaCtrl.text = _coloniaSeleccionada!;
+              _alcaldiaCtrl.text = data.first['municipio'] as String? ?? '';
+            }
+          }
+        });
+      }
+    } catch (_) {
+      setState(() => _colonias = []);
+    } finally {
+      setState(() => _cargandoColonias = false);
+    }
+  }
+
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -180,7 +226,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       danosObservados: '',
       condicionSeguridad: '',
       observaciones: _observacionesCtrl.text,
-      fotos: '',
+      fotos: _fotos.join(','),
     );
 
     await _db.insertReporte(reporte);
@@ -391,6 +437,65 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
+                  controller: _codigoPostalCtrl,
+                  decoration: InputDecoration(
+                    labelText: 'Código Postal',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: _cargandoColonias
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : null,
+                  ),
+                  keyboardType: TextInputType.number,
+                  maxLength: 5,
+                  onChanged: _buscarColonias,
+                ),
+                if (_colonias.length > 1 && _coloniaSeleccionada == null) ...[
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Selecciona la colonia',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _colonias.map((c) => DropdownMenuItem(
+                      value: c['colonia'] as String,
+                      child: Text(c['colonia'] as String),
+                    )).toList(),
+                    onChanged: (v) {
+                      setState(() {
+                        _coloniaSeleccionada = v;
+                        _coloniaCtrl.text = v ?? '';
+                        final sel = _colonias.firstWhere(
+                            (c) => c['colonia'] == v,
+                            orElse: () => <String, dynamic>{});
+                        if (sel.isNotEmpty) {
+                          _alcaldiaCtrl.text =
+                              sel['municipio'] as String? ?? '';
+                        }
+                      });
+                    },
+                  ),
+                ],
+                if (_coloniaSeleccionada != null && _colonias.length > 1) ...[
+                  const SizedBox(height: 8),
+                  Chip(
+                    label: Text(_coloniaSeleccionada!),
+                    onDeleted: () => setState(() {
+                      _coloniaSeleccionada = null;
+                      _colonias = [];
+                      _codigoPostalCtrl.clear();
+                    }),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                TextFormField(
                   controller: _coloniaCtrl,
                   decoration: const InputDecoration(
                     labelText: 'Colonia',
@@ -408,16 +513,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _codigoPostalCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Código Postal',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  maxLength: 5,
                 ),
               ],
             ),
@@ -552,11 +647,91 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 const Text('6. Fotografías',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 12),
-                const Text(
-                  'Función de captura próximamente disponible',
-                  style: TextStyle(color: Colors.grey),
+                Row(
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: () => _tomarFoto(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Cámara'),
+                    ),
+                    const SizedBox(width: 12),
+                    FilledButton.tonalIcon(
+                      onPressed: () => _tomarFoto(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Galería'),
+                    ),
+                  ],
                 ),
+                if (_fotos.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text('Fotos capturadas (${_fotos.length})',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _fotos.asMap().entries.map((e) =>
+                      _buildFotoThumb(e.key, e.value)
+                    ).toList(),
+                  ),
+                ],
               ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _tomarFoto(ImageSource source) async {
+    try {
+      final xfile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 80,
+      );
+      if (xfile != null) {
+        setState(() => _fotos.add(xfile.path));
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al capturar foto: $e')),
+      );
+    }
+  }
+
+  Widget _buildFotoThumb(int index, String path) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            File(path),
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: 100,
+              height: 100,
+              color: Colors.grey[200],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          right: 0,
+          child: GestureDetector(
+            onTap: () => setState(() => _fotos.removeAt(index)),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(4),
+              child: const Icon(Icons.close, size: 16, color: Colors.white),
             ),
           ),
         ),

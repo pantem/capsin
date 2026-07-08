@@ -27,7 +27,7 @@ function createColoredIcon(color) {
 async function cargarLimiteCDMX() {
   if (cdmxBoundaryLayer) return;
   try {
-    const res = await fetch('https://nominatim.openstreetmap.org/lookup?osm_ids=R1375350&format=geojson');
+    const res = await fetch('https://nominatim.openstreetmap.org/lookup?osm_ids=R17483459&format=geojson&polygon_geojson=1');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     cdmxBoundaryLayer = L.geoJSON(data, {

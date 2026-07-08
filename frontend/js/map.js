@@ -1,5 +1,6 @@
 let map = null;
 let markersLayer = null;
+let cdmxBoundaryLayer = null;
 
 function getMarkerColor(color) {
   if (color === 'red') return '#d32f2f';
@@ -23,9 +24,29 @@ function createColoredIcon(color) {
   });
 }
 
+async function cargarLimiteCDMX() {
+  if (cdmxBoundaryLayer) return;
+  try {
+    const res = await fetch('https://nominatim.openstreetmap.org/lookup?osm_ids=R1375350&format=geojson');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    cdmxBoundaryLayer = L.geoJSON(data, {
+      style: {
+        fillColor: '#9e9e9e',
+        fillOpacity: 0.15,
+        color: '#757575',
+        weight: 2,
+      },
+    }).addTo(map);
+  } catch (err) {
+    console.warn('No se pudo cargar el límite de CDMX:', err);
+  }
+}
+
 async function initMap() {
   if (!map) {
-    map = L.map('map').setView([19.4326, -99.1332], 6);
+    map = L.map('map').setView([19.4326, -99.1332], 10);
+    cargarLimiteCDMX();
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       maxZoom: 19,

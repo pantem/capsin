@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config.dart';
 import 'database_service.dart';
 import '../models/reporte.dart';
 import '../models/damnificado.dart';
@@ -10,7 +11,7 @@ import '../models/caracteristica_tipo.dart';
 import '../models/valor_caracteristica.dart';
 
 class SyncService {
-  static const String _baseUrl = 'https://capsin.onrender.com/api';
+  String get _baseUrl => AppConfig.apiBaseUrl;
   static const String _deviceIdKey = 'dispositivo_id';
 
   final DatabaseService _db = DatabaseService();

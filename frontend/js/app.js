@@ -158,7 +158,7 @@ async function showDetail(siniestroId) {
   }
 }
 
-document.querySelector('.close').addEventListener('click', () => {
+document.querySelector('#modal .close').addEventListener('click', () => {
   document.getElementById('modal').classList.add('hidden');
 });
 document.getElementById('modal').addEventListener('click', (e) => {
@@ -336,7 +336,13 @@ async function abrirFormTipo(id) {
     const tipo = await fetchJSON(`${API}/tipos-inmueble/${id}`);
     nombre = tipo.nombre || '';
     descripcion = tipo.descripcion || '';
-    _caractsTemp = await fetchJSON(`${API}/tipos-inmueble/${id}/caracteristicas`);
+    const raw = await fetchJSON(`${API}/tipos-inmueble/${id}/caracteristicas`);
+    _caractsTemp = raw.map(c => ({
+      nombre: c.nombre,
+      tipoDato: c.tipo_dato,
+      opciones: c.opciones || [],
+      requerido: c.requerido || false,
+    }));
   }
 
   body.innerHTML = `
@@ -377,11 +383,12 @@ function renderCaractsLista() {
   }
   container.innerHTML = _caractsTemp.map((c, i) => {
     const tipoLabel = { texto: 'Texto', numero: 'Número', booleano: 'Sí/No', seleccion: 'Selección', multiseleccion: 'Multiselección' };
+    const td = c.tipoDato || c.tipo_dato || '';
     return `
       <div class="caract-item">
         <div class="caract-info">
           <div class="caract-nombre">${c.nombre}</div>
-          <div class="caract-detalle">${tipoLabel[c.tipoDato] || c.tipoDato} ${c.requerido ? '· Requerido' : ''}              ${(c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}</div>
+          <div class="caract-detalle">${tipoLabel[td] || td} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}</div>
         </div>
         <div class="caract-acciones">
           <button class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
@@ -398,7 +405,7 @@ function abrirFormCaract(idx) {
   const modalBody = document.getElementById('modal-tipo-body');
   const form = document.getElementById('form-tipo');
 
-  const opcionesStr = c.tipoDato === 'seleccion' ? (c.opciones || []).join('\n') : '';
+  const opcionesStr = (c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion') ? (c.opciones || []).join('\n') : '';
 
   const section = document.createElement('div');
   section.id = 'caract-form-section';
@@ -425,7 +432,7 @@ function abrirFormCaract(idx) {
         <label>Requerido</label>
       </div>
     </div>
-    <div class="form-group" id="caract-opciones-group" style="${c.tipoDato === 'seleccion' ? '' : 'display:none;'}">
+    <div class="form-group" id="caract-opciones-group" style="${c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion' ? '' : 'display:none;'}">
       <label>Opciones (una por línea)</label>
       <textarea id="caract-opciones" rows="3">${opcionesStr}</textarea>
     </div>
@@ -502,22 +509,24 @@ async function guardarTipo() {
       tipoId = created._id;
     }
 
-    await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
-      method: 'DELETE'
-    }).catch(() => {});
-
-    for (const c of _caractsTemp) {
+    if (_caractsTemp.length > 0) {
       await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: c.nombre,
-          tipo_dato: c.tipoDato,
-          opciones: c.opciones,
-          requerido: c.requerido,
-          orden: _caractsTemp.indexOf(c),
-        }),
-      });
+        method: 'DELETE'
+      }).catch(() => {});
+
+      for (const c of _caractsTemp) {
+        await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: c.nombre,
+            tipo_dato: c.tipoDato,
+            opciones: c.opciones,
+            requerido: c.requerido,
+            orden: _caractsTemp.indexOf(c),
+          }),
+        });
+      }
     }
 
     cerrarModal('modal-tipo');

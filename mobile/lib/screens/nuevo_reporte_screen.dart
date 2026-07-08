@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import '../config.dart';
 import '../services/database_service.dart';
 import '../models/reporte.dart';
 import '../models/caracteristica_tipo.dart';
@@ -45,7 +46,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   final List<String> _fotos = [];
   final ImagePicker _picker = ImagePicker();
-  static const String _apiBase = 'https://capsin.onrender.com/api';
+  String get _apiBase => AppConfig.apiBaseUrl;
 
   List<Map<String, dynamic>> _colonias = [];
   bool _cargandoColonias = false;
@@ -120,10 +121,51 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       }
 
       final pos = await Geolocator.getCurrentPosition();
-      setState(() {
-        _lat = pos.latitude;
-        _lng = pos.longitude;
-      });
+      _lat = pos.latitude;
+      _lng = pos.longitude;
+
+      // Reverse geocoding con Nominatim (OpenStreetMap)
+      try {
+        final geoUri = Uri.parse(
+            'https://nominatim.openstreetmap.org/reverse?format=json&lat=$_lat&lon=$_lng&addressdetails=1');
+        final geoResp = await http.get(geoUri, headers: {
+          'User-Agent': 'SiniestrosSismoApp/1.0',
+        });
+        if (geoResp.statusCode == 200) {
+          final geoData = jsonDecode(geoResp.body) as Map<String, dynamic>;
+          final address = geoData['address'] as Map<String, dynamic>? ?? {};
+          final road = (address['road'] as String? ?? '').trim();
+          final houseNum = (address['house_number'] as String? ?? '').trim();
+          final colonia = address['suburb'] as String? ??
+              address['neighbourhood'] as String? ??
+              address['hamlet'] as String? ??
+              '';
+          final alcaldia = address['city'] as String? ??
+              address['town'] as String? ??
+              address['municipality'] as String? ??
+              '';
+          final cp = (address['postcode'] as String? ?? '').trim();
+
+          if (road.isNotEmpty || houseNum.isNotEmpty) {
+            _calleNumeroCtrl.text = [road, houseNum]
+                .where((s) => s.isNotEmpty)
+                .join(' ');
+          }
+          if (colonia.isNotEmpty) {
+            _coloniaCtrl.text = colonia;
+          }
+          if (alcaldia.isNotEmpty) {
+            _alcaldiaCtrl.text = alcaldia;
+          }
+          if (cp.isNotEmpty) {
+            _codigoPostalCtrl.text = cp;
+          }
+        }
+      } catch (_) {
+        // Si falla el reverse geocoding, solo usamos las coordenadas
+      }
+
+      setState(() {});
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,8 +203,12 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           }
         });
       }
-    } catch (_) {
+    } catch (e) {
       setState(() => _colonias = []);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al buscar CP: $e')),
+      );
     } finally {
       setState(() => _cargandoColonias = false);
     }
@@ -664,7 +710,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 ),
                 if (_fotos.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  const Text('Fotos capturadas (${_fotos.length})',
+                  Text('Fotos capturadas (${_fotos.length})',
                       style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   Wrap(

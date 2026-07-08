@@ -32,10 +32,10 @@ async function cargarLimiteCDMX() {
     const data = await res.json();
     cdmxBoundaryLayer = L.geoJSON(data, {
       style: {
-        fillColor: '#9e9e9e',
-        fillOpacity: 0.15,
-        color: '#757575',
-        weight: 2,
+        fillColor: '#616161',
+        fillOpacity: 0.2,
+        color: '#424242',
+        weight: 3,
       },
     }).addTo(map);
   } catch (err) {

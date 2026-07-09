@@ -219,10 +219,23 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
     final caractsRequeridas = _caracteristicas.where((c) => c.requerido);
     for (final c in caractsRequeridas) {
+      int tabIndex = 1;
+      if (c.orden >= 8 && c.orden <= 10) {
+        tabIndex = 1;
+      } else if (c.orden == 11) {
+        tabIndex = 2;
+      } else if (c.orden == 12) {
+        tabIndex = 3;
+      } else if (c.orden == 13) {
+        tabIndex = 4;
+      } else if (c.orden == 14) {
+        tabIndex = 5;
+      }
+
       if (c.tipoDato == 'seleccion') {
         final val = _valoresCaracteristica[c.id] as String?;
         if (val == null || val.isEmpty) {
-          _tabController.animateTo(c.orden <= 2 ? 1 : c.orden == 3 ? 2 : 3);
+          _tabController.animateTo(tabIndex);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Selecciona: ${c.nombre}')),
           );
@@ -231,7 +244,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       } else if (c.tipoDato == 'multiseleccion') {
         final val = _valoresCaracteristica[c.id] as Set<String>?;
         if (val == null || val.isEmpty) {
-          _tabController.animateTo(c.orden <= 2 ? 1 : c.orden == 3 ? 2 : 3);
+          _tabController.animateTo(tabIndex);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Selecciona: ${c.nombre}')),
           );
@@ -240,7 +253,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
         final ctrl = _textControllers[c.id];
         if (ctrl == null || ctrl.text.trim().isEmpty) {
-          _tabController.animateTo(c.orden <= 2 ? 1 : c.orden == 3 ? 2 : 3);
+          _tabController.animateTo(tabIndex);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Completa: ${c.nombre}')),
           );
@@ -445,7 +458,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Widget _buildTab2() {
     final caractsTab2 =
-        _caracteristicas.where((c) => c.orden <= 2).toList();
+        _caracteristicas.where((c) => c.orden >= 8 && c.orden <= 10).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -593,7 +606,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Widget _buildTab3() {
     final caractsTab3 =
-        _caracteristicas.where((c) => c.orden == 3).toList();
+        _caracteristicas.where((c) => c.orden == 11).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -625,7 +638,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Widget _buildTab4() {
     final caractsTab4 =
-        _caracteristicas.where((c) => c.orden == 4).toList();
+        _caracteristicas.where((c) => c.orden == 12).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -652,6 +665,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab5() {
+    final caractsTab5 =
+        _caracteristicas.where((c) => c.orden == 13).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -672,6 +688,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                   maxLines: 8,
                 ),
+                ...caractsTab5.map((c) => _buildCampoDinamico(c)),
               ],
             ),
           ),
@@ -681,6 +698,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab6() {
+    final caractsTab6 =
+        _caracteristicas.where((c) => c.orden == 14).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -721,6 +741,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     ).toList(),
                   ),
                 ],
+                ...caractsTab6.map((c) => _buildCampoDinamico(c)),
               ],
             ),
           ),

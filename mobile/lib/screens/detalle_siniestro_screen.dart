@@ -67,8 +67,6 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     final caractsTab2 = _caracteristicas.where((c) => c.orden >= 8 && c.orden <= 10).toList();
     final caractsTab3 = _caracteristicas.where((c) => c.orden == 11).toList();
     final caractsTab4 = _caracteristicas.where((c) => c.orden == 12).toList();
-    final caractsTab5 = _caracteristicas.where((c) => c.orden == 13).toList();
-    final caractsTab6 = _caracteristicas.where((c) => c.orden == 14).toList();
 
     final valorIndex = <String, ValorCaracteristica>{
       for (final v in _valores) v.caracteristicaId: v
@@ -159,40 +157,6 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     ...caractsTab4.map((c) => _buildValorRow(c, valorIndex[c.id])),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (caractsTab5.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(caractsTab5.first.nombre,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                    const SizedBox(height: 8),
-                    ...caractsTab5.map((c) => _buildValorRow(c, valorIndex[c.id])),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (caractsTab6.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(caractsTab6.first.nombre,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                    const SizedBox(height: 8),
-                    ...caractsTab6.map((c) => _buildValorRow(c, valorIndex[c.id])),
                   ],
                 ),
               ),

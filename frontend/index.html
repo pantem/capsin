@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
   <header>
     <h1>Siniestros por Sismo</h1>
@@ -14,7 +16,7 @@
       <button class="active" data-view="dashboard">Dashboard</button>
       <button data-view="mapa">Mapa</button>
       <button data-view="lista">Lista de Reportes</button>
-      <button data-view="tipos">Tipos</button>
+      <!--button data-view="tipos">Tipos</button-->
       <button data-view="catalogo">Catálogo CDMX</button>
     </nav>
   </header>
@@ -22,14 +24,38 @@
   <main>
     <section id="view-dashboard" class="view active">
       <div class="cards">
-        <div class="card red"><h3>Fallecidos</h3><p id="stat-fallecidos">0</p></div>
-        <div class="card orange"><h3>Lesionados Graves</h3><p id="stat-lesionados-grave">0</p></div>
-        <div class="card yellow"><h3>Lesionados Leves</h3><p id="stat-lesionados-leve">0</p></div>
-        <div class="card green"><h3>Ilesos</h3><p id="stat-ilesos">0</p></div>
-        <div class="card blue"><h3>Inmuebles Críticos</h3><p id="stat-inmuebles-criticos">0</p></div>
-        <div class="card blue-light"><h3>Inmuebles Moderados</h3><p id="stat-inmuebles-moderados">0</p></div>
-        <div class="card gray"><h3>Sin Daños</h3><p id="stat-inmuebles-sin-danos">0</p></div>
-        <div class="card dark"><h3>Total Siniestros</h3><p id="stat-total-siniestros">0</p></div>
+        <div class="card red">
+          <h3>Fallecidos</h3>
+          <p id="stat-fallecidos">0</p>
+        </div>
+        <div class="card orange">
+          <h3>Lesionados Graves</h3>
+          <p id="stat-lesionados-grave">0</p>
+        </div>
+        <div class="card yellow">
+          <h3>Lesionados Leves</h3>
+          <p id="stat-lesionados-leve">0</p>
+        </div>
+        <div class="card green">
+          <h3>Ilesos</h3>
+          <p id="stat-ilesos">0</p>
+        </div>
+        <div class="card blue">
+          <h3>Inmuebles Críticos</h3>
+          <p id="stat-inmuebles-criticos">0</p>
+        </div>
+        <div class="card blue-light">
+          <h3>Inmuebles Moderados</h3>
+          <p id="stat-inmuebles-moderados">0</p>
+        </div>
+        <div class="card gray">
+          <h3>Sin Daños</h3>
+          <p id="stat-inmuebles-sin-danos">0</p>
+        </div>
+        <div class="card dark">
+          <h3>Total Siniestros</h3>
+          <p id="stat-total-siniestros">0</p>
+        </div>
       </div>
     </section>
 
@@ -51,36 +77,38 @@
     </section>
   </main>
 
-    <section id="view-catalogo" class="view">
-      <div class="toolbar">
-        <h2 style="display:inline;margin-right:1rem;">Catálogo de Direcciones CDMX</h2>
-      </div>
-      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
-        <input type="text" id="cp-search" placeholder="Buscar por código postal o colonia..." style="flex:1;min-width:200px;padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;" />
-        <select id="cp-municipio" style="padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;min-width:180px;">
-          <option value="">Todos los municipios</option>
-        </select>
-      </div>
-      <div id="cp-resultados">
-        <p style="color:#777;">Escribe un código postal o nombre de colonia para buscar.</p>
-      </div>
-      <p id="cp-count" style="font-size:0.85rem;color:#999;"></p>
-    </section>
-
-    <section id="view-tipos" class="view">
-      <div class="toolbar">
-        <h2 style="display:inline;margin-right:1rem;">Tipos de Inmueble</h2>
-        <button class="btn-primary" onclick="abrirFormTipo()">+ Nuevo Tipo</button>
-      </div>
-      <div id="tipos-lista"></div>
-    </section>
-
-    <div id="modal-tipo" class="modal hidden">
-      <div class="modal-content">
-        <span class="close" onclick="cerrarModal('modal-tipo')">&times;</span>
-        <div id="modal-tipo-body"></div>
-      </div>
+  <section id="view-catalogo" class="view">
+    <div class="toolbar">
+      <h2 style="display:inline;margin-right:1rem;">Catálogo de Direcciones CDMX</h2>
     </div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <input type="text" id="cp-search" placeholder="Buscar por código postal o colonia..."
+        style="flex:1;min-width:200px;padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;" />
+      <select id="cp-municipio"
+        style="padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;min-width:180px;">
+        <option value="">Todos los municipios</option>
+      </select>
+    </div>
+    <div id="cp-resultados">
+      <p style="color:#777;">Escribe un código postal o nombre de colonia para buscar.</p>
+    </div>
+    <p id="cp-count" style="font-size:0.85rem;color:#999;"></p>
+  </section>
+
+  <section id="view-tipos" class="view">
+    <div class="toolbar">
+      <h2 style="display:inline;margin-right:1rem;">Tipos de Inmueble</h2>
+      <button class="btn-primary" onclick="abrirFormTipo()">+ Nuevo Tipo</button>
+    </div>
+    <div id="tipos-lista"></div>
+  </section>
+
+  <div id="modal-tipo" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal('modal-tipo')">&times;</span>
+      <div id="modal-tipo-body"></div>
+    </div>
+  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-content">
@@ -93,4 +121,5 @@
   <script src="js/app.js"></script>
   <script src="js/map.js"></script>
 </body>
+
 </html>

@@ -5,6 +5,8 @@ const USUARIOS = [
     nombre: 'Administrador',
     username: 'admin',
     password: 'admin123',
+    area: 'Protección Civil',
+    rol: 'admin',
     activo: true,
   },
 ];

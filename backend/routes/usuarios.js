@@ -23,13 +23,13 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { nombre, username, password } = req.body;
+    const { nombre, username, password, area, rol } = req.body;
     if (!nombre || !username || !password) {
       return res.status(400).json({ error: 'Nombre, usuario y contraseña requeridos' });
     }
     const existe = await Usuario.findOne({ username });
     if (existe) return res.status(400).json({ error: 'El nombre de usuario ya existe' });
-    const usuario = new Usuario({ nombre, username, password, activo: true });
+    const usuario = new Usuario({ nombre, username, password, area: area || '', rol: rol || 'capturista', activo: true });
     await usuario.save();
     res.status(201).json(usuario.toJSON());
   } catch (err) {
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const { nombre, username, password, activo } = req.body;
+    const { nombre, username, password, area, rol, activo } = req.body;
     const update = {};
     if (nombre !== undefined) update.nombre = nombre;
     if (username !== undefined) {
@@ -47,6 +47,8 @@ router.put('/:id', async (req, res) => {
       if (duplicado) return res.status(400).json({ error: 'El nombre de usuario ya existe' });
       update.username = username;
     }
+    if (area !== undefined) update.area = area;
+    if (rol !== undefined) update.rol = rol;
     if (activo !== undefined) update.activo = activo;
     if (password) {
       const usuario = await Usuario.findById(req.params.id);
@@ -54,6 +56,8 @@ router.put('/:id', async (req, res) => {
       usuario.password = password;
       usuario.nombre = update.nombre || usuario.nombre;
       usuario.username = update.username || usuario.username;
+      if (area !== undefined) usuario.area = area;
+      if (rol !== undefined) usuario.rol = rol;
       if (activo !== undefined) usuario.activo = activo;
       await usuario.save();
       return res.json(usuario.toJSON());

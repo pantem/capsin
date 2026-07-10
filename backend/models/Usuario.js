@@ -5,6 +5,8 @@ const usuarioSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  area: { type: String, default: '' },
+  rol: { type: String, enum: ['admin', 'capturista', 'visor'], default: 'capturista' },
   activo: { type: Boolean, default: true },
   creado_en: { type: Date, default: Date.now },
 });

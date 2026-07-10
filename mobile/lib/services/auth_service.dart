@@ -7,6 +7,8 @@ class AuthService {
   static const String _tokenKey = 'auth_token';
   static const String _userNombreKey = 'auth_user_nombre';
   static const String _userUsernameKey = 'auth_user_username';
+  static const String _userAreaKey = 'auth_user_area';
+  static const String _userRolKey = 'auth_user_rol';
 
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
@@ -28,8 +30,9 @@ class AuthService {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_tokenKey, token);
         await prefs.setString(_userNombreKey, usuario['nombre'] as String? ?? '');
-        await prefs.setString(
-            _userUsernameKey, usuario['username'] as String? ?? '');
+        await prefs.setString(_userUsernameKey, usuario['username'] as String? ?? '');
+        await prefs.setString(_userAreaKey, usuario['area'] as String? ?? '');
+        await prefs.setString(_userRolKey, usuario['rol'] as String? ?? '');
         return {'ok': 'true', 'nombre': usuario['nombre'] as String? ?? ''};
       }
 
@@ -45,10 +48,22 @@ class AuthService {
     return prefs.getString(_userNombreKey) ?? '';
   }
 
+  Future<String> getUserArea() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userAreaKey) ?? '';
+  }
+
+  Future<String> getUserRol() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userRolKey) ?? '';
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userNombreKey);
     await prefs.remove(_userUsernameKey);
+    await prefs.remove(_userAreaKey);
+    await prefs.remove(_userRolKey);
   }
 }

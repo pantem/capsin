@@ -11,14 +11,19 @@
 
 <body>
   <header>
-    <h1>Siniestros por Sismo</h1>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <h1>Siniestros por Sismo</h1>
+      <span id="header-user" style="color:#fff;font-size:0.85rem;"></span>
+      <button id="btn-login" class="btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:6px;cursor:pointer;">Iniciar sesión</button>
+      <button id="btn-logout" class="btn-sm" style="display:none;padding:0.3rem 0.8rem;font-size:0.8rem;">Cerrar sesión</button>
+    </div>
     <nav>
       <button class="active" data-view="dashboard">Dashboard</button>
       <button data-view="mapa">Mapa</button>
       <button data-view="lista">Lista de Reportes</button>
       <!--button data-view="tipos">Tipos</button-->
       <button data-view="catalogo">Catálogo CDMX</button>
-      <button data-view="usuarios">Usuarios</button>
+      <button data-view="usuarios" id="nav-usuarios" style="display:none;">Usuarios</button>
     </nav>
   </header>
 
@@ -130,6 +135,13 @@
     <div class="modal-content">
       <span class="close" onclick="cerrarModal('modal-usuario')">&times;</span>
       <div id="modal-usuario-body"></div>
+    </div>
+  </div>
+
+  <div id="modal-login" class="modal hidden">
+    <div class="modal-content" style="max-width:400px;">
+      <span class="close" onclick="cerrarModal('modal-login')">&times;</span>
+      <div id="modal-login-body"></div>
     </div>
   </div>
 

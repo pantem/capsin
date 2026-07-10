@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../config.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import '../models/reporte.dart';
 import '../models/caracteristica_tipo.dart';
 import '../models/tipo_inmueble.dart';
@@ -60,6 +61,18 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
     _cargarCaracteristicas();
+    _cargarDatosUsuario();
+  }
+
+  Future<void> _cargarDatosUsuario() async {
+    final auth = AuthService();
+    final nombre = await auth.getUserNombre();
+    final area = await auth.getUserArea();
+    if (!mounted) return;
+    setState(() {
+      _nombreCapturistaCtrl.text = nombre;
+      _areaCtrl.text = area;
+    });
   }
 
   Future<void> _cargarCaracteristicas() async {

@@ -178,6 +178,89 @@ document.querySelectorAll('nav button').forEach((btn) => {
   });
 });
 
+/* ---------- Dashboard Auth ---------- */
+
+function actualizarHeaderAuth() {
+  const userStr = sessionStorage.getItem('dashboard_user');
+  const headerUser = document.getElementById('header-user');
+  const btnLogin = document.getElementById('btn-login');
+  const btnLogout = document.getElementById('btn-logout');
+  const navUsuarios = document.getElementById('nav-usuarios');
+
+  if (userStr) {
+    const user = JSON.parse(userStr);
+    headerUser.textContent = `${user.nombre} (${user.rol})`;
+    btnLogin.style.display = 'none';
+    btnLogout.style.display = '';
+    navUsuarios.style.display = user.rol === 'admin' ? '' : 'none';
+  } else {
+    headerUser.textContent = '';
+    btnLogin.style.display = '';
+    btnLogout.style.display = 'none';
+    navUsuarios.style.display = 'none';
+  }
+}
+
+document.getElementById('btn-login').addEventListener('click', () => {
+  const body = document.getElementById('modal-login-body');
+  body.innerHTML = `
+    <h2>Iniciar sesión</h2>
+    <form id="form-login" onsubmit="event.preventDefault(); loginDashboard();">
+      <div class="form-group">
+        <label>Usuario</label>
+        <input type="text" id="login-username" required>
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <p id="login-error" style="color:#d32f2f;display:none;"></p>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button type="submit" class="btn-primary">Ingresar</button>
+        <button type="button" class="btn-sm" onclick="cerrarModal('modal-login')">Cancelar</button>
+      </div>
+    </form>
+  `;
+  document.getElementById('modal-login').classList.remove('hidden');
+  setTimeout(() => document.getElementById('login-username').focus(), 100);
+});
+
+async function loginDashboard() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+
+  if (!username || !password) { errorEl.textContent = 'Ingresa usuario y contraseña'; errorEl.style.display = ''; return; }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errorEl.textContent = data.error || 'Error'; errorEl.style.display = ''; return; }
+
+    sessionStorage.setItem('dashboard_user', JSON.stringify(data.usuario));
+    cerrarModal('modal-login');
+    actualizarHeaderAuth();
+  } catch (err) {
+    errorEl.textContent = 'Error de conexión al servidor';
+    errorEl.style.display = '';
+  }
+}
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  sessionStorage.removeItem('dashboard_user');
+  actualizarHeaderAuth();
+});
+
+document.getElementById('modal-login').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-login');
+});
+
+actualizarHeaderAuth();
+
 document.getElementById('search-input').addEventListener('input', (e) => {
   loadReportesList(e.target.value);
 });
@@ -570,16 +653,21 @@ async function loadUsuarios() {
   }
 }
 
+const AREAS = ['Protección Civil', 'Bomberos', 'Cruz Roja', 'Seguridad Pública', 'Salud', 'Educación', 'Otro'];
+const ROLES = ['admin', 'capturista', 'visor'];
+
 async function abrirFormUsuario(id) {
   _editandoUsuarioId = id || null;
   const body = document.getElementById('modal-usuario-body');
 
-  let nombre = '', username = '', password = '';
+  let nombre = '', username = '', password = '', area = '', rol = 'capturista';
 
   if (id) {
     const u = await fetchJSON(`${API}/usuarios/${id}`);
     nombre = u.nombre || '';
     username = u.username || '';
+    area = u.area || '';
+    rol = u.rol || 'capturista';
   }
 
   body.innerHTML = `
@@ -597,6 +685,19 @@ async function abrirFormUsuario(id) {
         <label>Contraseña ${id ? '(dejar vacío para mantener actual)' : ''}</label>
         <input type="password" id="usuario-password" ${id ? '' : 'required'}>
       </div>
+      <div class="form-group">
+        <label>Área</label>
+        <select id="usuario-area">
+          <option value="">Seleccionar área...</option>
+          ${AREAS.map(a => `<option value="${a}" ${area === a ? 'selected' : ''}>${a}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Rol</label>
+        <select id="usuario-rol">
+          ${ROLES.map(r => `<option value="${r}" ${rol === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select>
+      </div>
       <div style="display:flex;gap:0.5rem;margin-top:1rem;">
         <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Usuario'}</button>
         <button type="button" class="btn-sm" onclick="cerrarModal('modal-usuario')">Cancelar</button>
@@ -605,6 +706,38 @@ async function abrirFormUsuario(id) {
   `;
 
   document.getElementById('modal-usuario').classList.remove('hidden');
+}
+
+async function guardarUsuario() {
+  const nombre = document.getElementById('usuario-nombre').value.trim();
+  const username = document.getElementById('usuario-username').value.trim();
+  const password = document.getElementById('usuario-password').value;
+  const area = document.getElementById('usuario-area').value;
+  const rol = document.getElementById('usuario-rol').value;
+
+  if (!nombre || !username) { alert('Nombre y usuario son requeridos'); return; }
+  if (!_editandoUsuarioId && !password) { alert('La contraseña es requerida'); return; }
+
+  try {
+    if (_editandoUsuarioId) {
+      await fetch(`${API}/usuarios/${_editandoUsuarioId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, password: password || undefined, area, rol }),
+      });
+    } else {
+      await fetch(`${API}/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, password, area, rol }),
+      });
+    }
+
+    cerrarModal('modal-usuario');
+    loadUsuarios();
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  }
 }
 
 async function guardarUsuario() {

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/database_service.dart';
 import '../models/reporte.dart';
 import '../services/sync_service.dart';
+import '../services/auth_service.dart';
 import 'nuevo_reporte_screen.dart';
 import 'detalle_siniestro_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,13 +16,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final DatabaseService _db = DatabaseService();
+  final AuthService _auth = AuthService();
   List<Reporte> _reportes = [];
   bool _loading = true;
+  String _userNombre = '';
 
   @override
   void initState() {
     super.initState();
     _cargar();
+    _cargarUsuario();
+  }
+
+  Future<void> _cargarUsuario() async {
+    final nombre = await _auth.getUserNombre();
+    if (!mounted) return;
+    setState(() => _userNombre = nombre);
+  }
+
+  Future<void> _logout() async {
+    await _auth.logout();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
   }
 
   Future<void> _cargar() async {
@@ -51,12 +71,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Siniestros Sismo'),
+        title: Text(_userNombre.isNotEmpty ? _userNombre : 'Siniestros Sismo'),
         actions: [
           IconButton(
             icon: const Icon(Icons.sync),
             onPressed: _sincronizar,
             tooltip: 'Sincronizar',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),

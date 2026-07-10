@@ -29,6 +29,7 @@ app.use('/api/caracteristicas', caracteristicasRouter);
 app.use('/api', catalogosRouter);
 app.use('/api/reportes', require('./routes/reportes'));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/usuarios', require('./routes/usuarios'));
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 

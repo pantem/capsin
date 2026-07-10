@@ -192,11 +192,15 @@ function cerrarModal(id) {
 document.getElementById('modal-tipo').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) cerrarModal('modal-tipo');
 });
+document.getElementById('modal-usuario').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-usuario');
+});
 
 document.querySelectorAll('nav button').forEach((btn) => {
   btn.addEventListener('click', () => {
     if (btn.dataset.view === 'tipos') setTimeout(loadTipos, 50);
     if (btn.dataset.view === 'catalogo') setTimeout(loadCatalogo, 50);
+    if (btn.dataset.view === 'usuarios') setTimeout(loadUsuarios, 50);
   });
 });
 
@@ -533,5 +537,112 @@ async function guardarTipo() {
     loadTipos();
   } catch (err) {
     alert('Error al guardar: ' + err.message);
+  }
+}
+
+/* ---------- Usuarios CRUD ---------- */
+
+let _editandoUsuarioId = null;
+
+async function loadUsuarios() {
+  const container = document.getElementById('usuarios-lista');
+  try {
+    const usuarios = await fetchJSON(`${API}/usuarios`);
+    if (usuarios.length === 0) {
+      container.innerHTML = '<p style="color:#777;">No hay usuarios registrados.</p>';
+      return;
+    }
+    container.innerHTML = usuarios.map(u => `
+      <div class="tipo-card ${u.activo ? '' : 'inactivo'}">
+        <div>
+          <div class="tipo-nombre">${u.nombre}</div>
+          <div class="tipo-desc">@${u.username}</div>
+          <div class="tipo-meta">${u.activo ? 'Activo' : 'Inactivo'}</div>
+        </div>
+        <div class="acciones">
+          <button class="btn-sm" onclick="abrirFormUsuario('${u._id}')">✏️</button>
+          <button class="btn-danger" onclick="eliminarUsuario('${u._id}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<p style="color:#d32f2f;">Error: ${err.message}</p>`;
+  }
+}
+
+async function abrirFormUsuario(id) {
+  _editandoUsuarioId = id || null;
+  const body = document.getElementById('modal-usuario-body');
+
+  let nombre = '', username = '', password = '';
+
+  if (id) {
+    const u = await fetchJSON(`${API}/usuarios/${id}`);
+    nombre = u.nombre || '';
+    username = u.username || '';
+  }
+
+  body.innerHTML = `
+    <h2>${id ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
+    <form id="form-usuario" onsubmit="event.preventDefault(); guardarUsuario();">
+      <div class="form-group">
+        <label>Nombre completo</label>
+        <input type="text" id="usuario-nombre" value="${nombre}" required>
+      </div>
+      <div class="form-group">
+        <label>Nombre de usuario</label>
+        <input type="text" id="usuario-username" value="${username}" required>
+      </div>
+      <div class="form-group">
+        <label>Contraseña ${id ? '(dejar vacío para mantener actual)' : ''}</label>
+        <input type="password" id="usuario-password" ${id ? '' : 'required'}>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Usuario'}</button>
+        <button type="button" class="btn-sm" onclick="cerrarModal('modal-usuario')">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById('modal-usuario').classList.remove('hidden');
+}
+
+async function guardarUsuario() {
+  const nombre = document.getElementById('usuario-nombre').value.trim();
+  const username = document.getElementById('usuario-username').value.trim();
+  const password = document.getElementById('usuario-password').value;
+
+  if (!nombre || !username) { alert('Nombre y usuario son requeridos'); return; }
+  if (!_editandoUsuarioId && !password) { alert('La contraseña es requerida'); return; }
+
+  try {
+    if (_editandoUsuarioId) {
+      await fetch(`${API}/usuarios/${_editandoUsuarioId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, password: password || undefined }),
+      });
+    } else {
+      await fetch(`${API}/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, password }),
+      });
+    }
+
+    cerrarModal('modal-usuario');
+    loadUsuarios();
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  }
+}
+
+async function eliminarUsuario(id) {
+  if (!confirm('¿Eliminar este usuario?')) return;
+  try {
+    await fetch(`${API}/usuarios/${id}`, { method: 'DELETE' });
+    loadUsuarios();
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
   }
 }

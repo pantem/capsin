@@ -18,6 +18,7 @@
       <button data-view="lista">Lista de Reportes</button>
       <!--button data-view="tipos">Tipos</button-->
       <button data-view="catalogo">Catálogo CDMX</button>
+      <button data-view="usuarios">Usuarios</button>
     </nav>
   </header>
 
@@ -114,6 +115,21 @@
     <div class="modal-content">
       <span class="close">&times;</span>
       <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <section id="view-usuarios" class="view">
+    <div class="toolbar">
+      <h2 style="display:inline;margin-right:1rem;">Usuarios</h2>
+      <button class="btn-primary" onclick="abrirFormUsuario()">+ Nuevo Usuario</button>
+    </div>
+    <div id="usuarios-lista"></div>
+  </section>
+
+  <div id="modal-usuario" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal('modal-usuario')">&times;</span>
+      <div id="modal-usuario-body"></div>
     </div>
   </div>
 

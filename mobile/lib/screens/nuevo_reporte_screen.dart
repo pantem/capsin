@@ -93,6 +93,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             _valoresCaracteristica[c.id] = <String>{};
           } else if (c.tipoDato == 'booleano') {
             _valoresCaracteristica[c.id] = false;
+          } else if (c.tipoDato == 'date') {
+            _valoresCaracteristica[c.id] =
+                DateFormat('yyyy-MM-dd').format(DateTime.now());
           } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
             _textControllers[c.id] = TextEditingController();
           }
@@ -357,6 +360,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         case 'multiseleccion':
           final set = raw as Set<String>?;
           valorSeleccion = set?.join(', ') ?? '';
+          break;
+        case 'date':
+          valorTexto = raw as String?;
           break;
       }
 
@@ -898,6 +904,41 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 setState(() => _valoresCaracteristica[c.id] = v),
             contentPadding: EdgeInsets.zero,
             dense: true,
+          ),
+        );
+      case 'date':
+        final fechaStr = _valoresCaracteristica[c.id] as String? ??
+            DateFormat('yyyy-MM-dd').format(DateTime.now());
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                locale: const Locale('es', 'MX'),
+                initialDate: DateTime.tryParse(fechaStr) ?? DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) {
+                setState(() {
+                  _valoresCaracteristica[c.id] =
+                      DateFormat('yyyy-MM-dd').format(picked);
+                });
+              }
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: c.nombre,
+                border: const OutlineInputBorder(),
+                suffixIcon: const Icon(Icons.calendar_today),
+              ),
+              child: Text(
+                DateFormat('dd-MM-yyyy')
+                    .format(DateTime.tryParse(fechaStr) ?? DateTime.now()),
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
           ),
         );
       case 'seleccion':

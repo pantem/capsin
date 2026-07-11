@@ -76,7 +76,7 @@ const CARACTERISTICAS = [
   },
   {
     nombre: 'Fecha aproximada de construcción',
-    tipo_dato: 'texto',
+    tipo_dato: 'date',
     opciones: [],
     requerido: false,
     orden: 10,

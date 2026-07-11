@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const caracteristicaTipoSchema = new mongoose.Schema({
   tipo_inmueble: { type: mongoose.Schema.Types.ObjectId, ref: 'TipoInmueble', required: true },
   nombre: { type: String, required: true },
-  tipo_dato: { type: String, enum: ['texto', 'numero', 'booleano', 'seleccion', 'multiseleccion'], required: true },
+  tipo_dato: { type: String, enum: ['texto', 'numero', 'booleano', 'seleccion', 'multiseleccion', 'date'], required: true },
   opciones: { type: [String], default: [] },
   requerido: { type: Boolean, default: false },
   orden: { type: Number, default: 0 },

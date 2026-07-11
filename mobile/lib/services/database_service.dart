@@ -24,7 +24,7 @@ class DatabaseService {
     final path = join(dbPath, 'siniestros_sismo.db');
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
     );
@@ -52,6 +52,7 @@ class DatabaseService {
         condicionSeguridad TEXT DEFAULT '',
         observaciones TEXT DEFAULT '',
         fotos TEXT DEFAULT '',
+        estadoAfectacion TEXT DEFAULT 'sin_daños',
         sincronizado INTEGER DEFAULT 0
       )
     ''');
@@ -123,6 +124,11 @@ class DatabaseService {
     }
     if (oldVersion == 4) {
       await _crearTablasDinamicas(db);
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('ALTER TABLE reportes ADD COLUMN estadoAfectacion TEXT DEFAULT \'sin_daños\'');
+      } catch (_) {}
     }
   }
 

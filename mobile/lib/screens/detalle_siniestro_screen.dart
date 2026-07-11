@@ -89,13 +89,56 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   _infoRow(Icons.person, 'Capturista: ${r.nombreCapturista}'),
                   _infoRow(Icons.work, 'Área: ${r.area}'),
                   _infoRow(Icons.calendar_today,
-                      'Fecha: ${DateFormat('dd/MM/yyyy HH:mm').format(r.fecha)}'),
+                      'Fecha: ${DateFormat('dd-MM-yyyy').format(r.fecha)}'),
                   if (!r.sincronizado)
                     Chip(
                       label: const Text('Sin sincronizar'),
                       avatar: const Icon(Icons.cloud_off, size: 16),
                       backgroundColor: Colors.orange.shade100,
                     ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.warning, size: 16,
+                          color: r.estadoAfectacion == 'critico'
+                              ? Colors.red
+                              : r.estadoAfectacion == 'moderado'
+                                  ? Colors.orange
+                                  : Colors.green),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Nivel de afectación: ',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: r.estadoAfectacion == 'critico'
+                              ? Colors.red.shade100
+                              : r.estadoAfectacion == 'moderado'
+                                  ? Colors.orange.shade100
+                                  : Colors.green.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          r.estadoAfectacion == 'critico'
+                              ? 'Crítico'
+                              : r.estadoAfectacion == 'moderado'
+                                  ? 'Moderado'
+                                  : 'Sin daños',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: r.estadoAfectacion == 'critico'
+                                ? Colors.red.shade800
+                                : r.estadoAfectacion == 'moderado'
+                                    ? Colors.orange.shade800
+                                    : Colors.green.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

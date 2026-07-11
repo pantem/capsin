@@ -176,6 +176,7 @@ class SyncService {
           fechaConstruccion: item['fecha_construccion'] as String? ?? '',
           numeroNiveles: item['numero_niveles'] as int? ?? 1,
           danosObservados: item['danos_observados'] as String? ?? '',
+          estadoAfectacion: item['estado_afectacion'] as String? ?? 'sin_daños',
           condicionSeguridad: item['condicion_seguridad'] as String? ?? '',
           observaciones: item['observaciones'] as String? ?? '',
           fotos: item['fotos'] as String? ?? '',

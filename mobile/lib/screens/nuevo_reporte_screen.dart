@@ -45,6 +45,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   bool _obteniendoUbicacion = false;
   bool _cargandoCaracts = true;
 
+  DateTime _fechaSeleccionada = DateTime.now();
+  String _estadoAfectacion = 'sin_daños';
+
   final List<String> _fotos = [];
   final ImagePicker _picker = ImagePicker();
   String get _apiBase => AppConfig.apiBaseUrl;
@@ -228,6 +231,19 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     }
   }
 
+  Future<void> _seleccionarFecha() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _fechaSeleccionada,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      locale: const Locale('es', 'MX'),
+    );
+    if (picked != null) {
+      setState(() => _fechaSeleccionada = picked);
+    }
+  }
+
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -274,13 +290,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     }
 
     final folio =
-        'SIS-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}-${_uuid.v4().substring(0, 4).toUpperCase()}';
+        'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
     final reporteId = _uuid.v4();
 
     final reporte = Reporte(
       id: reporteId,
       folio: folio,
-      fecha: DateTime.now(),
+      fecha: _fechaSeleccionada,
       nombreCapturista: _nombreCapturistaCtrl.text,
       area: _areaCtrl.text,
       calleNumero: _calleNumeroCtrl.text,
@@ -294,6 +310,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       fechaConstruccion: '',
       numeroNiveles: 1,
       danosObservados: '',
+      estadoAfectacion: _estadoAfectacion,
       condicionSeguridad: '',
       observaciones: _observacionesCtrl.text,
       fotos: _fotos.join(','),
@@ -457,9 +474,19 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'Fecha y hora: ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
-                  style: TextStyle(color: Colors.grey[600]),
+                InkWell(
+                  onTap: _seleccionarFecha,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha del reporte',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      DateFormat('dd-MM-yyyy').format(_fechaSeleccionada),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -641,6 +668,25 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   const Text('Sin características configuradas',
                       style: TextStyle(color: Colors.grey)),
                 ],
+                const Divider(height: 24),
+                const Text('Nivel de afectación',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                const SizedBox(height: 4),
+                ...['sin_daños', 'moderado', 'critico'].map((nivel) {
+                  final label = nivel == 'sin_daños'
+                      ? 'Sin daños'
+                      : nivel == 'moderado'
+                          ? 'Moderado'
+                          : 'Crítico';
+                  return RadioListTile<String>(
+                    title: Text(label),
+                    value: nivel,
+                    groupValue: _estadoAfectacion,
+                    onChanged: (v) => setState(() => _estadoAfectacion = v!),
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                  );
+                }),
               ],
             ),
           ),

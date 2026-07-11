@@ -23,6 +23,7 @@ class Reporte {
 
   // 3. Evaluación preliminar de daños
   final String danosObservados;
+  final String estadoAfectacion; // sin_daños, moderado, critico
 
   // 4. Condición de seguridad
   final String condicionSeguridad;
@@ -52,16 +53,21 @@ class Reporte {
     this.fechaConstruccion = '',
     this.numeroNiveles = 1,
     this.danosObservados = '',
+    this.estadoAfectacion = 'sin_daños',
     this.condicionSeguridad = '',
     this.observaciones = '',
     this.fotos = '',
     this.sincronizado = false,
   });
 
+  String get fechaDisplay => '${fecha.day.toString().padLeft(2, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.year}';
+
+  String get fechaDb => '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'folio': folio,
-        'fecha': fecha.toIso8601String(),
+        'fecha': fechaDb,
         'nombreCapturista': nombreCapturista,
         'area': area,
         'calleNumero': calleNumero,
@@ -75,6 +81,7 @@ class Reporte {
         'fechaConstruccion': fechaConstruccion,
         'numeroNiveles': numeroNiveles,
         'danosObservados': danosObservados,
+        'estadoAfectacion': estadoAfectacion,
         'condicionSeguridad': condicionSeguridad,
         'observaciones': observaciones,
         'fotos': fotos,
@@ -84,7 +91,7 @@ class Reporte {
   factory Reporte.fromMap(Map<String, dynamic> map) => Reporte(
         id: map['id'] as String,
         folio: map['folio'] as String,
-        fecha: DateTime.parse(map['fecha'] as String),
+        fecha: DateTime.tryParse(map['fecha'] as String? ?? '') ?? DateTime.now(),
         nombreCapturista: map['nombreCapturista'] as String? ?? '',
         area: map['area'] as String? ?? '',
         calleNumero: map['calleNumero'] as String? ?? '',
@@ -98,6 +105,7 @@ class Reporte {
         fechaConstruccion: map['fechaConstruccion'] as String? ?? '',
         numeroNiveles: map['numeroNiveles'] as int? ?? 1,
         danosObservados: map['danosObservados'] as String? ?? '',
+        estadoAfectacion: map['estadoAfectacion'] as String? ?? 'sin_daños',
         condicionSeguridad: map['condicionSeguridad'] as String? ?? '',
         observaciones: map['observaciones'] as String? ?? '',
         fotos: map['fotos'] as String? ?? '',
@@ -106,7 +114,7 @@ class Reporte {
 
   Map<String, dynamic> toJson() => {
         'folio': folio,
-        'fecha': fecha.toIso8601String(),
+        'fecha': fechaDb,
         'nombre_capturista': nombreCapturista,
         'area': area,
         'calle_numero': calleNumero,
@@ -120,6 +128,7 @@ class Reporte {
         'fecha_construccion': fechaConstruccion,
         'numero_niveles': numeroNiveles,
         'danos_observados': danosObservados,
+        'estado_afectacion': estadoAfectacion,
         'condicion_seguridad': condicionSeguridad,
         'observaciones': observaciones,
         'fotos': fotos,

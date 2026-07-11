@@ -50,7 +50,7 @@ router.post('/sync', async (req, res) => {
         tipo_inmueble_ref: tipoGenerico ? tipoGenerico._id : null,
         numero_niveles: reporteData.numero_niveles || 1,
         identificador: '',
-        estado_afectacion: 'sin_daños',
+        estado_afectacion: reporteData.estado_afectacion || 'sin_daños',
         observaciones: '',
         sincronizado: true,
       };
@@ -130,6 +130,7 @@ router.get('/pull', async (req, res) => {
         otro_uso: null,
         fecha_construccion: '',
         numero_niveles: primerInmueble?.numero_niveles || 1,
+        estado_afectacion: primerInmueble?.estado_afectacion || 'sin_daños',
         danos_observados: '',
         condicion_seguridad: '',
         observaciones: s.descripcion || '',

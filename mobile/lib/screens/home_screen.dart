@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 import '../models/reporte.dart';
 import '../services/sync_service.dart';
@@ -111,10 +112,52 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: ListTile(
                           title: Text(r.folio,
                               style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(
-                            '${r.calleNumero}\n${r.colonia}',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${r.calleNumero}\n${r.colonia}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: r.estadoAfectacion == 'critico'
+                                          ? Colors.red.shade100
+                                          : r.estadoAfectacion == 'moderado'
+                                              ? Colors.orange.shade100
+                                              : Colors.green.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      r.estadoAfectacion == 'critico'
+                                          ? 'Crítico'
+                                          : r.estadoAfectacion == 'moderado'
+                                              ? 'Moderado'
+                                              : 'Sin daños',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: r.estadoAfectacion == 'critico'
+                                            ? Colors.red.shade800
+                                            : r.estadoAfectacion == 'moderado'
+                                                ? Colors.orange.shade800
+                                                : Colors.green.shade800,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateFormat('dd-MM-yyyy').format(r.fecha),
+                                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,

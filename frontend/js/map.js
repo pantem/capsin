@@ -1,6 +1,7 @@
 let map = null;
 let markersLayer = null;
 let cdmxBoundaryLayer = null;
+let cdmxMaskLayer = null;
 
 function getMarkerColor(color) {
   if (color === 'red') return '#d32f2f';
@@ -24,22 +25,78 @@ function createColoredIcon(color) {
   });
 }
 
+function extraerAnillosCDMX(geojson) {
+  const anillos = [];
+  function recorrer(geom) {
+    if (!geom) return;
+    if (geom.type === 'Polygon') {
+      anillos.push(geom.coordinates[0]);
+    } else if (geom.type === 'MultiPolygon') {
+      geom.coordinates.forEach(p => anillos.push(p[0]));
+    } else if (geom.type === 'GeometryCollection') {
+      geom.geometries.forEach(recorrer);
+    }
+  }
+  if (geojson.type === 'FeatureCollection') {
+    geojson.features.forEach(f => recorrer(f.geometry));
+  } else if (geojson.type === 'Feature') {
+    recorrer(geojson.geometry);
+  } else {
+    recorrer(geojson);
+  }
+  return anillos;
+}
+
+function crearMascaraCDMX(geojson) {
+  if (cdmxMaskLayer) {
+    map.removeLayer(cdmxMaskLayer);
+    cdmxMaskLayer = null;
+  }
+
+  const anillos = extraerAnillosCDMX(geojson);
+  if (anillos.length === 0) return;
+
+  const holesLngLat = anillos.map(ring => ring.map(c => [c[1], c[0]]));
+  const world = [[-89, -180], [89, -180], [89, 180], [-89, 180], [-89, -180]];
+
+  cdmxMaskLayer = L.polygon([world, ...holesLngLat], {
+    color: '#111',
+    fillColor: '#111',
+    fillOpacity: 0.55,
+    weight: 0,
+    interactive: false,
+  }).addTo(map);
+}
+
+function agregarLimiteCDMX(geojson) {
+  cdmxBoundaryLayer = L.geoJSON(geojson, {
+    style: { fillColor: '#616161', fillOpacity: 0.25, color: '#424242', weight: 3 },
+  }).addTo(map);
+  crearMascaraCDMX(geojson);
+}
+
 async function cargarLimiteCDMX() {
   if (cdmxBoundaryLayer) return;
   try {
-    const res = await fetch('https://nominatim.openstreetmap.org/lookup?osm_ids=R2419080&format=geojson&polygon_geojson=1');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const query = `[out:json];relation(1376330);out geom;`;
+    const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, { signal: controller.signal });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    cdmxBoundaryLayer = L.geoJSON(data, {
-      style: {
-        fillColor: '#616161',
-        fillOpacity: 0.2,
-        color: '#424242',
-        weight: 3,
-      },
-    }).addTo(map);
+    const geojson = osmtogeojson(data);
+    agregarLimiteCDMX(geojson);
   } catch (err) {
-    console.warn('No se pudo cargar el límite de CDMX:', err);
+    console.warn('Overpass falló, usando Nominatim:', err.message);
+    try {
+      const res2 = await fetch('https://nominatim.openstreetmap.org/lookup?osm_ids=R1376330&format=geojson&polygon_geojson=1');
+      if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+      const data2 = await res2.json();
+      agregarLimiteCDMX(data2);
+    } catch (err2) {
+      console.warn('No se pudo cargar el límite de CDMX:', err2.message);
+    }
   }
 }
 

@@ -21,9 +21,11 @@
       <button class="active" data-view="dashboard">Dashboard</button>
       <button data-view="mapa">Mapa</button>
       <button data-view="lista">Lista de Reportes</button>
-      <!--button data-view="tipos">Tipos</button-->
       <button data-view="catalogo">Catálogo CDMX</button>
+      <button data-view="tipos" id="nav-tipos" style="display:none;">Tipos</button>
       <button data-view="usuarios" id="nav-usuarios" style="display:none;">Usuarios</button>
+      <button data-view="areas" id="nav-areas" style="display:none;">Áreas</button>
+      <button data-view="roles" id="nav-roles" style="display:none;">Roles</button>
     </nav>
   </header>
 
@@ -135,6 +137,36 @@
     <div class="modal-content">
       <span class="close" onclick="cerrarModal('modal-usuario')">&times;</span>
       <div id="modal-usuario-body"></div>
+    </div>
+  </div>
+
+  <section id="view-areas" class="view">
+    <div class="toolbar">
+      <h2 style="display:inline;margin-right:1rem;">Áreas</h2>
+      <button class="btn-primary" onclick="abrirFormArea()">+ Nueva Área</button>
+    </div>
+    <div id="areas-lista"></div>
+  </section>
+
+  <section id="view-roles" class="view">
+    <div class="toolbar">
+      <h2 style="display:inline;margin-right:1rem;">Roles y Permisos</h2>
+      <button class="btn-primary" onclick="abrirFormRol()">+ Nuevo Rol</button>
+    </div>
+    <div id="roles-lista"></div>
+  </section>
+
+  <div id="modal-area" class="modal hidden">
+    <div class="modal-content" style="max-width:500px;">
+      <span class="close" onclick="cerrarModal('modal-area')">&times;</span>
+      <div id="modal-area-body"></div>
+    </div>
+  </div>
+
+  <div id="modal-rol" class="modal hidden">
+    <div class="modal-content" style="max-width:600px;">
+      <span class="close" onclick="cerrarModal('modal-rol')">&times;</span>
+      <div id="modal-rol-body"></div>
     </div>
   </div>
 

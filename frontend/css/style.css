@@ -267,3 +267,24 @@ main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
   transition: 0.3s;
 }
 .switch input:checked + .slider::before { transform: translateX(18px); }
+
+.permisos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.5rem;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+.permiso-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+.permiso-checkbox:hover { background: #e8eaf6; }
+.permiso-checkbox input { width: auto; }
+.permiso-checkbox span { font-size: 0.9rem; }

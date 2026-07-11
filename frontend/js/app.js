@@ -185,19 +185,34 @@ function actualizarHeaderAuth() {
   const headerUser = document.getElementById('header-user');
   const btnLogin = document.getElementById('btn-login');
   const btnLogout = document.getElementById('btn-logout');
-  const navUsuarios = document.getElementById('nav-usuarios');
+
+  const navButtons = [
+    { id: 'nav-tipos', perm: 'ver_tipos' },
+    { id: 'nav-usuarios', perm: 'ver_usuarios' },
+    { id: 'nav-areas', perm: 'ver_areas' },
+    { id: 'nav-roles', perm: 'ver_roles' },
+  ];
 
   if (userStr) {
     const user = JSON.parse(userStr);
-    headerUser.textContent = `${user.nombre} (${user.rol})`;
+    const permisos = user.permisos || [];
+    const rolNombre = user.rol && typeof user.rol === 'object' ? user.rol.nombre : (user.rol || '');
+    headerUser.textContent = `${user.nombre} (${rolNombre})`;
     btnLogin.style.display = 'none';
     btnLogout.style.display = '';
-    navUsuarios.style.display = user.rol === 'admin' ? '' : 'none';
+
+    navButtons.forEach(nb => {
+      const el = document.getElementById(nb.id);
+      if (el) el.style.display = permisos.includes(nb.perm) ? '' : 'none';
+    });
   } else {
     headerUser.textContent = '';
     btnLogin.style.display = '';
     btnLogout.style.display = 'none';
-    navUsuarios.style.display = 'none';
+    navButtons.forEach(nb => {
+      const el = document.getElementById(nb.id);
+      if (el) el.style.display = 'none';
+    });
   }
 }
 
@@ -278,12 +293,20 @@ document.getElementById('modal-tipo').addEventListener('click', (e) => {
 document.getElementById('modal-usuario').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) cerrarModal('modal-usuario');
 });
+document.getElementById('modal-area').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-area');
+});
+document.getElementById('modal-rol').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-rol');
+});
 
 document.querySelectorAll('nav button').forEach((btn) => {
   btn.addEventListener('click', () => {
     if (btn.dataset.view === 'tipos') setTimeout(loadTipos, 50);
     if (btn.dataset.view === 'catalogo') setTimeout(loadCatalogo, 50);
     if (btn.dataset.view === 'usuarios') setTimeout(loadUsuarios, 50);
+    if (btn.dataset.view === 'areas') setTimeout(loadAreas, 50);
+    if (btn.dataset.view === 'roles') setTimeout(loadRoles, 50);
   });
 });
 
@@ -635,39 +658,45 @@ async function loadUsuarios() {
       container.innerHTML = '<p style="color:#777;">No hay usuarios registrados.</p>';
       return;
     }
-    container.innerHTML = usuarios.map(u => `
+    container.innerHTML = usuarios.map(u => {
+      const areaNombre = u.area && typeof u.area === 'object' ? u.area.nombre : (u.area || '');
+      const rolNombre = u.rol && typeof u.rol === 'object' ? u.rol.nombre : (u.rol || '');
+      return `
       <div class="tipo-card ${u.activo ? '' : 'inactivo'}">
         <div>
           <div class="tipo-nombre">${u.nombre}</div>
-          <div class="tipo-desc">@${u.username}</div>
-          <div class="tipo-meta">${u.activo ? 'Activo' : 'Inactivo'}</div>
+          <div class="tipo-desc">@${u.username} · ${rolNombre}</div>
+          <div class="tipo-meta">${areaNombre} · ${u.activo ? 'Activo' : 'Inactivo'}</div>
         </div>
         <div class="acciones">
           <button class="btn-sm" onclick="abrirFormUsuario('${u._id}')">✏️</button>
           <button class="btn-danger" onclick="eliminarUsuario('${u._id}')">🗑</button>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   } catch (err) {
     container.innerHTML = `<p style="color:#d32f2f;">Error: ${err.message}</p>`;
   }
 }
 
-const AREAS = ['Protección Civil', 'Bomberos', 'Cruz Roja', 'Seguridad Pública', 'Salud', 'Educación', 'Otro'];
-const ROLES = ['admin', 'capturista', 'visor'];
-
 async function abrirFormUsuario(id) {
   _editandoUsuarioId = id || null;
   const body = document.getElementById('modal-usuario-body');
 
-  let nombre = '', username = '', password = '', area = '', rol = 'capturista';
+  let nombre = '', username = '', password = '', areaId = '', rolId = '';
+  let areas = [], roles = [];
+
+  try {
+    areas = await fetchJSON(`${API}/areas`);
+    roles = await fetchJSON(`${API}/roles`);
+  } catch { }
 
   if (id) {
     const u = await fetchJSON(`${API}/usuarios/${id}`);
     nombre = u.nombre || '';
     username = u.username || '';
-    area = u.area || '';
-    rol = u.rol || 'capturista';
+    areaId = u.area && typeof u.area === 'object' ? u.area._id : (u.area || '');
+    rolId = u.rol && typeof u.rol === 'object' ? u.rol._id : (u.rol || '');
   }
 
   body.innerHTML = `
@@ -689,13 +718,13 @@ async function abrirFormUsuario(id) {
         <label>Área</label>
         <select id="usuario-area">
           <option value="">Seleccionar área...</option>
-          ${AREAS.map(a => `<option value="${a}" ${area === a ? 'selected' : ''}>${a}</option>`).join('')}
+          ${areas.map(a => `<option value="${a._id}" ${areaId === a._id ? 'selected' : ''}>${a.nombre}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
         <label>Rol</label>
         <select id="usuario-rol">
-          ${ROLES.map(r => `<option value="${r}" ${rol === r ? 'selected' : ''}>${r}</option>`).join('')}
+          ${roles.map(r => `<option value="${r._id}" ${rolId === r._id ? 'selected' : ''}>${r.nombre}</option>`).join('')}
         </select>
       </div>
       <div style="display:flex;gap:0.5rem;margin-top:1rem;">
@@ -740,36 +769,6 @@ async function guardarUsuario() {
   }
 }
 
-async function guardarUsuario() {
-  const nombre = document.getElementById('usuario-nombre').value.trim();
-  const username = document.getElementById('usuario-username').value.trim();
-  const password = document.getElementById('usuario-password').value;
-
-  if (!nombre || !username) { alert('Nombre y usuario son requeridos'); return; }
-  if (!_editandoUsuarioId && !password) { alert('La contraseña es requerida'); return; }
-
-  try {
-    if (_editandoUsuarioId) {
-      await fetch(`${API}/usuarios/${_editandoUsuarioId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, username, password: password || undefined }),
-      });
-    } else {
-      await fetch(`${API}/usuarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, username, password }),
-      });
-    }
-
-    cerrarModal('modal-usuario');
-    loadUsuarios();
-  } catch (err) {
-    alert('Error al guardar: ' + err.message);
-  }
-}
-
 async function eliminarUsuario(id) {
   if (!confirm('¿Eliminar este usuario?')) return;
   try {
@@ -777,5 +776,273 @@ async function eliminarUsuario(id) {
     loadUsuarios();
   } catch (err) {
     alert('Error al eliminar: ' + err.message);
+  }
+}
+
+/* ---------- Áreas CRUD ---------- */
+
+let _editandoAreaId = null;
+
+async function loadAreas() {
+  const container = document.getElementById('areas-lista');
+  try {
+    const areas = await fetchJSON(`${API}/areas`);
+    if (areas.length === 0) {
+      container.innerHTML = '<p style="color:#777;">No hay áreas registradas.</p>';
+      return;
+    }
+    container.innerHTML = areas.map(a => `
+      <div class="tipo-card ${a.activo ? '' : 'inactivo'}">
+        <div>
+          <div class="tipo-nombre">${a.nombre}</div>
+          <div class="tipo-desc">${a.descripcion || 'Sin descripción'}</div>
+          <div class="tipo-meta">${a.activo ? 'Activo' : 'Inactivo'}</div>
+        </div>
+        <div class="acciones">
+          <label class="switch">
+            <input type="checkbox" ${a.activo ? 'checked' : ''} onchange="toggleActivoArea('${a._id}', this.checked)">
+            <span class="slider"></span>
+          </label>
+          <button class="btn-sm" onclick="abrirFormArea('${a._id}')">✏️</button>
+          <button class="btn-danger" onclick="eliminarArea('${a._id}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<p style="color:#d32f2f;">Error: ${err.message}</p>`;
+  }
+}
+
+async function toggleActivoArea(id, activo) {
+  try {
+    await fetch(`${API}/areas/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo }),
+    });
+    loadAreas();
+  } catch (err) {
+    alert('Error al actualizar: ' + err.message);
+  }
+}
+
+async function eliminarArea(id) {
+  if (!confirm('¿Eliminar esta área?')) return;
+  try {
+    const res = await fetch(`${API}/areas/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error); return; }
+    loadAreas();
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
+  }
+}
+
+async function abrirFormArea(id) {
+  _editandoAreaId = id || null;
+  const body = document.getElementById('modal-area-body');
+
+  let nombre = '', descripcion = '';
+
+  if (id) {
+    const a = await fetchJSON(`${API}/areas/${id}`);
+    nombre = a.nombre || '';
+    descripcion = a.descripcion || '';
+  }
+
+  body.innerHTML = `
+    <h2>${id ? 'Editar Área' : 'Nueva Área'}</h2>
+    <form id="form-area" onsubmit="event.preventDefault(); guardarArea();">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="area-nombre" value="${nombre}" required>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="area-desc">${descripcion}</textarea>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Área'}</button>
+        <button type="button" class="btn-sm" onclick="cerrarModal('modal-area')">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById('modal-area').classList.remove('hidden');
+}
+
+async function guardarArea() {
+  const nombre = document.getElementById('area-nombre').value.trim();
+  const descripcion = document.getElementById('area-desc').value.trim();
+
+  if (!nombre) { alert('El nombre es requerido'); return; }
+
+  try {
+    if (_editandoAreaId) {
+      await fetch(`${API}/areas/${_editandoAreaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion }),
+      });
+    } else {
+      await fetch(`${API}/areas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion }),
+      });
+    }
+
+    cerrarModal('modal-area');
+    loadAreas();
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  }
+}
+
+/* ---------- Roles y Permisos CRUD ---------- */
+
+const PERMISOS_LABELS = {
+  ver_dashboard: 'Dashboard',
+  ver_mapa: 'Mapa',
+  ver_lista: 'Lista de Reportes',
+  ver_catalogo: 'Catálogo CDMX',
+  ver_usuarios: 'Usuarios',
+  ver_tipos: 'Tipos de Inmueble',
+  ver_areas: 'Áreas',
+  ver_roles: 'Roles y Permisos',
+};
+
+let _editandoRolId = null;
+
+async function loadRoles() {
+  const container = document.getElementById('roles-lista');
+  try {
+    const roles = await fetchJSON(`${API}/roles`);
+    if (roles.length === 0) {
+      container.innerHTML = '<p style="color:#777;">No hay roles registrados.</p>';
+      return;
+    }
+    container.innerHTML = roles.map(r => {
+      const permisosLista = (r.permisos || []).map(p => PERMISOS_LABELS[p] || p).join(', ');
+      return `
+      <div class="tipo-card ${r.activo ? '' : 'inactivo'}">
+        <div>
+          <div class="tipo-nombre">${r.nombre}</div>
+          <div class="tipo-desc">${r.descripcion || 'Sin descripción'}</div>
+          <div class="tipo-meta">Permisos: ${permisosLista || 'Ninguno'} · ${r.activo ? 'Activo' : 'Inactivo'}</div>
+        </div>
+        <div class="acciones">
+          <label class="switch">
+            <input type="checkbox" ${r.activo ? 'checked' : ''} onchange="toggleActivoRol('${r._id}', this.checked)">
+            <span class="slider"></span>
+          </label>
+          <button class="btn-sm" onclick="abrirFormRol('${r._id}')">✏️</button>
+          <button class="btn-danger" onclick="eliminarRol('${r._id}')">🗑</button>
+        </div>
+      </div>
+    `}).join('');
+  } catch (err) {
+    container.innerHTML = `<p style="color:#d32f2f;">Error: ${err.message}</p>`;
+  }
+}
+
+async function toggleActivoRol(id, activo) {
+  try {
+    await fetch(`${API}/roles/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo }),
+    });
+    loadRoles();
+  } catch (err) {
+    alert('Error al actualizar: ' + err.message);
+  }
+}
+
+async function eliminarRol(id) {
+  if (!confirm('¿Eliminar este rol?')) return;
+  try {
+    const res = await fetch(`${API}/roles/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error); return; }
+    loadRoles();
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
+  }
+}
+
+async function abrirFormRol(id) {
+  _editandoRolId = id || null;
+  const body = document.getElementById('modal-rol-body');
+
+  let nombre = '', descripcion = '', permisos = [];
+
+  if (id) {
+    const r = await fetchJSON(`${API}/roles/${id}`);
+    nombre = r.nombre || '';
+    descripcion = r.descripcion || '';
+    permisos = r.permisos || [];
+  }
+
+  const permisosCheckboxes = Object.entries(PERMISOS_LABELS).map(([key, label]) => `
+    <label class="permiso-checkbox">
+      <input type="checkbox" name="permiso" value="${key}" ${permisos.includes(key) ? 'checked' : ''}>
+      <span>${label}</span>
+    </label>
+  `).join('');
+
+  body.innerHTML = `
+    <h2>${id ? 'Editar Rol' : 'Nuevo Rol'}</h2>
+    <form id="form-rol" onsubmit="event.preventDefault(); guardarRol();">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="rol-nombre" value="${nombre}" required>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="rol-desc">${descripcion}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Permisos (pestañas que puede ver)</label>
+        <div class="permisos-grid">
+          ${permisosCheckboxes}
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Rol'}</button>
+        <button type="button" class="btn-sm" onclick="cerrarModal('modal-rol')">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById('modal-rol').classList.remove('hidden');
+}
+
+async function guardarRol() {
+  const nombre = document.getElementById('rol-nombre').value.trim();
+  const descripcion = document.getElementById('rol-desc').value.trim();
+  const permisos = Array.from(document.querySelectorAll('input[name="permiso"]:checked')).map(cb => cb.value);
+
+  if (!nombre) { alert('El nombre es requerido'); return; }
+
+  try {
+    if (_editandoRolId) {
+      await fetch(`${API}/roles/${_editandoRolId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion, permisos }),
+      });
+    } else {
+      await fetch(`${API}/roles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, descripcion, permisos }),
+      });
+    }
+
+    cerrarModal('modal-rol');
+    loadRoles();
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
   }
 }

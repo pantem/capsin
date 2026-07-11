@@ -141,7 +141,7 @@ async function showDetail(siniestroId) {
               <p style="font-weight:600;margin-top:0.5rem;">Departamentos/Unidades (${hijos.length}):</p>
               ${hijos.map(h => `
                 <div style="background:#fff;padding:0.5rem;border-radius:6px;margin:0.3rem 0;border-left:3px solid ${h.estado_afectacion === 'critico' ? '#d32f2f' : h.estado_afectacion === 'moderado' ? '#f57c00' : '#388e3c'};">
-                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion}</p>
+                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Crítico' : h.estado_afectacion === 'moderado' ? 'Moderado' : 'Sin daños'}</p>
                 </div>
               `).join('')}
             ` : ''}

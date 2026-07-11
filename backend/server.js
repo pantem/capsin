@@ -86,7 +86,12 @@ app.get('/api/mapa', async (req, res) => {
       let lesionadosLeve = 0;
       let ilesos = 0;
 
+      let peorEstado = 'sin_daños';
       for (const inm of inmuebles) {
+        const ea = inm.estado_afectacion || 'sin_daños';
+        if (ea === 'critico') peorEstado = 'critico';
+        else if (ea === 'moderado' && peorEstado !== 'critico') peorEstado = 'moderado';
+
         const damns = await Damnificado.find({ inmueble: inm._id }).lean();
         totalDamnificados += damns.length;
         for (const d of damns) {
@@ -97,12 +102,7 @@ app.get('/api/mapa', async (req, res) => {
         }
       }
 
-      let color = 'green';
-      if (fallecidos > 0 || lesionadosGrave > 0) {
-        color = 'red';
-      } else if (lesionadosLeve > 0) {
-        color = 'yellow';
-      }
+      const color = peorEstado === 'critico' ? 'red' : peorEstado === 'moderado' ? 'yellow' : 'green';
 
       results.push({
         _id: s._id,

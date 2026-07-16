@@ -10,106 +10,265 @@
 </head>
 
 <body>
-  <header>
-    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-      <h1>Siniestros por Sismo</h1>
-      <span id="header-user" style="color:#fff;font-size:0.85rem;"></span>
-      <button id="btn-login" class="btn-primary" style="padding:0.3rem 0.8rem;font-size:0.8rem;background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:6px;cursor:pointer;">Iniciar sesión</button>
-      <button id="btn-logout" class="btn-sm" style="display:none;padding:0.3rem 0.8rem;font-size:0.8rem;">Cerrar sesión</button>
-    </div>
-    <nav>
-      <button class="active" data-view="dashboard">Dashboard</button>
-      <button data-view="mapa">Mapa</button>
-      <button data-view="lista">Lista de Reportes</button>
-      <button data-view="catalogo">Catálogo CDMX</button>
-      <button data-view="tipos" id="nav-tipos" style="display:none;">Tipos</button>
-      <button data-view="usuarios" id="nav-usuarios" style="display:none;">Usuarios</button>
-      <button data-view="areas" id="nav-areas" style="display:none;">Áreas</button>
-      <button data-view="roles" id="nav-roles" style="display:none;">Roles</button>
-    </nav>
-  </header>
-
-  <main>
-    <section id="view-dashboard" class="view active">
-      <div class="cards">
-        <div class="card red">
-          <h3>Fallecidos</h3>
-          <p id="stat-fallecidos">0</p>
+  <div class="app-container">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 75H25V45C25 43.8954 25.8954 43 27 43H38C39.1046 43 40 43.8954 40 45V75" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            <path d="M40 75H45V30C45 28.8954 45.8954 28 47 28H58C59.1046 28 60 28.8954 60 30V75" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            <path d="M60 75H65V55C65 53.8954 65.8954 53 67 53H78C79.1046 53 80 53.8954 80 55V75" stroke="white" stroke-width="4" stroke-linecap="round"/>
+            <path d="M10 82C15 82 18 78 22 84C26 90 28 72 32 87C36 102 40 68 44 85C48 102 51 79 55 83C59 87 61 80 65 82H90" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
-        <div class="card orange">
-          <h3>Lesionados Graves</h3>
-          <p id="stat-lesionados-grave">0</p>
-        </div>
-        <div class="card yellow">
-          <h3>Lesionados Leves</h3>
-          <p id="stat-lesionados-leve">0</p>
-        </div>
-        <div class="card green">
-          <h3>Ilesos</h3>
-          <p id="stat-ilesos">0</p>
-        </div>
-        <div class="card blue">
-          <h3>Inmuebles Críticos</h3>
-          <p id="stat-inmuebles-criticos">0</p>
-        </div>
-        <div class="card blue-light">
-          <h3>Inmuebles Moderados</h3>
-          <p id="stat-inmuebles-moderados">0</p>
-        </div>
-        <div class="card gray">
-          <h3>Sin Daños</h3>
-          <p id="stat-inmuebles-sin-danos">0</p>
-        </div>
-        <div class="card dark">
-          <h3>Total Siniestros</h3>
-          <p id="stat-total-siniestros">0</p>
+        <div class="brand-text">
+          <span class="brand-title">SAS</span>
+          <span class="brand-bullet">•</span>
+          <span class="brand-subtitle">Sistema de Afectaciones por Sismo</span>
         </div>
       </div>
-    </section>
+      <nav>
+        <button class="active" data-view="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-dashboard" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Dashboard
+        </button>
+        <button data-view="mapa">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-mapa" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          Mapa
+        </button>
+        <button data-view="lista">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-lista" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          Lista de Reportes
+        </button>
+        <button data-view="catalogo">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-catalogo" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4c0-.5.2-1 .6-1.4C5 2.2 5.5 2 6 2h12c.5 0 1 .2 1.4.6.4.4.6.9.6 1.4v18"></path><path d="M18 10H6"></path><path d="M12 6H6"></path><path d="M14 14H6"></path><path d="M22 22H2"></path></svg>
+          Catálogo CDMX
+        </button>
+        <button data-view="tipos" id="nav-tipos" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-tipos" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+          Tipos
+        </button>
+        <button data-view="usuarios" id="nav-usuarios" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-usuarios" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Usuarios
+        </button>
+        <button data-view="areas" id="nav-areas" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-areas" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          Áreas
+        </button>
+        <button data-view="roles" id="nav-roles" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-roles" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Roles
+        </button>
 
-    <section id="view-mapa" class="view">
-      <div id="map"></div>
-      <div id="map-legend">
-        <h4>Leyenda</h4>
-        <p><span class="dot red-dot"></span> Crítico (fallecidos/graves)</p>
-        <p><span class="dot yellow-dot"></span> Moderado (lesiones leves)</p>
-        <p><span class="dot green-dot"></span> Sin daños</p>
-      </div>
-    </section>
+        <span id="header-user" style="color:#fff;font-size:0.85rem;margin-left:0.5rem;font-weight:600;"></span>
+        <button id="btn-login" style="padding:0.5rem 1rem;font-size:0.85rem;background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:background 0.2s;">Iniciar sesión</button>
+        <button id="btn-logout" class="btn-sm" style="display:none;padding:0.5rem 1rem;font-size:0.85rem;margin-left:0.5rem;">Cerrar sesión</button>
+      </nav>
+    </header>
 
-    <section id="view-lista" class="view">
-      <div class="toolbar">
-        <input type="text" id="search-input" placeholder="Buscar por folio, dirección..." />
-      </div>
-      <div id="reportes-lista"></div>
-    </section>
-  </main>
+    <main>
+      <section id="view-dashboard" class="view active">
+        <div class="cards">
+          <!-- Fallecidos -->
+          <div class="card c-fallecidos">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 22H6V9c0-3.3 2.7-6 6-6s6 2.7 6 6v13z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M12 7v7M10 9h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 22h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Fallecidos</h3>
+            <div class="card-value-container">
+              <p id="stat-fallecidos">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
 
-  <section id="view-catalogo" class="view">
-    <div class="toolbar">
-      <h2 style="display:inline;margin-right:1rem;">Catálogo de Direcciones CDMX</h2>
-    </div>
-    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
-      <input type="text" id="cp-search" placeholder="Buscar por código postal o colonia..."
-        style="flex:1;min-width:200px;padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;" />
-      <select id="cp-municipio"
-        style="padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;min-width:180px;">
-        <option value="">Todos los municipios</option>
-      </select>
-    </div>
-    <div id="cp-resultados">
-      <p style="color:#777;">Escribe un código postal o nombre de colonia para buscar.</p>
-    </div>
-    <p id="cp-count" style="font-size:0.85rem;color:#999;"></p>
-  </section>
+          <!-- Lesionados Graves -->
+          <div class="card c-graves">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="2" width="12" height="20" rx="6" transform="rotate(45 12 12)" fill="none" stroke="currentColor" stroke-width="2"/>
+                <rect x="10" y="10" width="4" height="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="11" cy="11" r="0.5" fill="currentColor"/>
+                <circle cx="13" cy="11" r="0.5" fill="currentColor"/>
+                <circle cx="11" cy="13" r="0.5" fill="currentColor"/>
+                <circle cx="13" cy="13" r="0.5" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3>Lesionados Graves</h3>
+            <div class="card-value-container">
+              <p id="stat-lesionados-grave">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
 
-  <section id="view-tipos" class="view">
-    <div class="toolbar">
-      <h2 style="display:inline;margin-right:1rem;">Tipos de Inmueble</h2>
-      <button class="btn-primary" onclick="abrirFormTipo()">+ Nuevo Tipo</button>
-    </div>
-    <div id="tipos-lista"></div>
-  </section>
+          <!-- Lesionados Leves -->
+          <div class="card c-leves">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            <h3>Lesionados Leves</h3>
+            <div class="card-value-container">
+              <p id="stat-lesionados-leve">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
+
+          <!-- Ilesos -->
+          <div class="card c-ilesos">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <polyline points="9 11 11 13 15 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Ilesos</h3>
+            <div class="card-value-container">
+              <p id="stat-ilesos">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
+
+          <!-- Inmuebles Críticos -->
+          <div class="card c-criticos">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 22H6V8l5-3 7 3v14z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M10 10h1v2h-1zm4 0h1v2h-1zm-4 4h1v2h-1zm4 0h1v2h-1z" fill="currentColor"/>
+                <path d="M12 8l-2 3 3 2-2 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Inmuebles Críticos</h3>
+            <div class="card-value-container">
+              <p id="stat-inmuebles-criticos">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
+
+          <!-- Inmuebles Moderados -->
+          <div class="card c-moderados">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="2" width="16" height="20" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="9" y1="22" x2="9" y2="16" stroke="currentColor" stroke-width="2"/>
+                <line x1="15" y1="22" x2="15" y2="16" stroke="currentColor" stroke-width="2"/>
+                <path d="M8 6h2v2H8zm6 0h2v2h-2zm-6 5h2v2H8zm6 0h2v2h-2z" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3>Inmuebles Moderados</h3>
+            <div class="card-value-container">
+              <p id="stat-inmuebles-moderados">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
+
+          <!-- Sin Daños -->
+          <div class="card c-sindanos">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Sin Daños</h3>
+            <div class="card-value-container">
+              <p id="stat-inmuebles-sin-danos">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
+
+          <!-- Total Siniestros -->
+          <div class="card c-total">
+            <div class="card-icon-container">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3>Total Siniestros</h3>
+            <div class="card-value-container">
+              <p id="stat-total-siniestros">0</p>
+              <div class="card-divider"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-mapa" class="view">
+        <div id="map"></div>
+        <div id="map-legend">
+          <h4>Leyenda</h4>
+          <p><span class="dot red-dot"></span> Crítico (fallecidos/graves)</p>
+          <p><span class="dot yellow-dot"></span> Moderado (lesiones leves)</p>
+          <p><span class="dot green-dot"></span> Sin daños</p>
+        </div>
+      </section>
+
+      <section id="view-lista" class="view">
+        <div class="toolbar">
+          <input type="text" id="search-input" placeholder="Buscar por folio, dirección..." />
+        </div>
+        <div id="reportes-lista"></div>
+      </section>
+
+      <section id="view-catalogo" class="view">
+        <div class="toolbar">
+          <h2>Catálogo de Direcciones CDMX</h2>
+        </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <input type="text" id="cp-search" placeholder="Buscar por código postal o colonia..."
+            style="flex:1;min-width:200px;padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;" />
+          <select id="cp-municipio"
+            style="padding:0.7rem 1rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;min-width:180px;">
+            <option value="">Todos los municipios</option>
+          </select>
+        </div>
+        <div id="cp-resultados">
+          <p style="color:#777;">Escribe un código postal o nombre de colonia para buscar.</p>
+        </div>
+        <p id="cp-count" style="font-size:0.85rem;color:#999;"></p>
+      </section>
+
+      <section id="view-tipos" class="view">
+        <div class="toolbar">
+          <h2>Tipos de Inmueble</h2>
+          <button class="btn-primary" onclick="abrirFormTipo()">+ Nuevo Tipo</button>
+        </div>
+        <div id="tipos-lista"></div>
+      </section>
+
+      <section id="view-usuarios" class="view">
+        <div class="toolbar">
+          <h2>Usuarios</h2>
+          <button class="btn-primary" onclick="abrirFormUsuario()">+ Nuevo Usuario</button>
+        </div>
+        <div id="usuarios-lista"></div>
+      </section>
+
+      <section id="view-areas" class="view">
+        <div class="toolbar">
+          <h2>Áreas</h2>
+          <button class="btn-primary" onclick="abrirFormArea()">+ Nueva Área</button>
+        </div>
+        <div id="areas-lista"></div>
+      </section>
+
+      <section id="view-roles" class="view">
+        <div class="toolbar">
+          <h2>Roles y Permisos</h2>
+          <button class="btn-primary" onclick="abrirFormRol()">+ Nuevo Rol</button>
+        </div>
+        <div id="roles-lista"></div>
+      </section>
+    </main>
+  </div>
 
   <div id="modal-tipo" class="modal hidden">
     <div class="modal-content">
@@ -125,36 +284,12 @@
     </div>
   </div>
 
-  <section id="view-usuarios" class="view">
-    <div class="toolbar">
-      <h2 style="display:inline;margin-right:1rem;">Usuarios</h2>
-      <button class="btn-primary" onclick="abrirFormUsuario()">+ Nuevo Usuario</button>
-    </div>
-    <div id="usuarios-lista"></div>
-  </section>
-
   <div id="modal-usuario" class="modal hidden">
     <div class="modal-content">
       <span class="close" onclick="cerrarModal('modal-usuario')">&times;</span>
       <div id="modal-usuario-body"></div>
     </div>
   </div>
-
-  <section id="view-areas" class="view">
-    <div class="toolbar">
-      <h2 style="display:inline;margin-right:1rem;">Áreas</h2>
-      <button class="btn-primary" onclick="abrirFormArea()">+ Nueva Área</button>
-    </div>
-    <div id="areas-lista"></div>
-  </section>
-
-  <section id="view-roles" class="view">
-    <div class="toolbar">
-      <h2 style="display:inline;margin-right:1rem;">Roles y Permisos</h2>
-      <button class="btn-primary" onclick="abrirFormRol()">+ Nuevo Rol</button>
-    </div>
-    <div id="roles-lista"></div>
-  </section>
 
   <div id="modal-area" class="modal hidden">
     <div class="modal-content" style="max-width:500px;">

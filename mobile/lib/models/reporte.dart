@@ -19,7 +19,8 @@ class Reporte {
   final String usoInmueble;
   final String? otroUso;
   final String fechaConstruccion;
-  final int numeroNiveles;
+  final int sobreNivelBanqueta;
+  final int bajoNivelBanqueta;
 
   // 3. Evaluación preliminar de daños
   final String danosObservados;
@@ -51,7 +52,8 @@ class Reporte {
     this.usoInmueble = '',
     this.otroUso,
     this.fechaConstruccion = '',
-    this.numeroNiveles = 1,
+    this.sobreNivelBanqueta = 0,
+    this.bajoNivelBanqueta = 0,
     this.danosObservados = '',
     this.estadoAfectacion = 'sin_daños',
     this.condicionSeguridad = '',
@@ -79,7 +81,8 @@ class Reporte {
         'usoInmueble': usoInmueble,
         'otroUso': otroUso,
         'fechaConstruccion': fechaConstruccion,
-        'numeroNiveles': numeroNiveles,
+        'sobreNivelBanqueta': sobreNivelBanqueta,
+        'bajoNivelBanqueta': bajoNivelBanqueta,
         'danosObservados': danosObservados,
         'estadoAfectacion': estadoAfectacion,
         'condicionSeguridad': condicionSeguridad,
@@ -103,7 +106,8 @@ class Reporte {
         usoInmueble: map['usoInmueble'] as String? ?? '',
         otroUso: map['otroUso'] as String?,
         fechaConstruccion: map['fechaConstruccion'] as String? ?? '',
-        numeroNiveles: map['numeroNiveles'] as int? ?? 1,
+        sobreNivelBanqueta: map['sobreNivelBanqueta'] as int? ?? 0,
+        bajoNivelBanqueta: map['bajoNivelBanqueta'] as int? ?? 0,
         danosObservados: map['danosObservados'] as String? ?? '',
         estadoAfectacion: map['estadoAfectacion'] as String? ?? 'sin_daños',
         condicionSeguridad: map['condicionSeguridad'] as String? ?? '',
@@ -126,7 +130,8 @@ class Reporte {
         'uso_inmueble': usoInmueble,
         'otro_uso': otroUso,
         'fecha_construccion': fechaConstruccion,
-        'numero_niveles': numeroNiveles,
+        'sobre_nivel_banqueta': sobreNivelBanqueta,
+        'bajo_nivel_banqueta': bajoNivelBanqueta,
         'danos_observados': danosObservados,
         'estado_afectacion': estadoAfectacion,
         'condicion_seguridad': condicionSeguridad,

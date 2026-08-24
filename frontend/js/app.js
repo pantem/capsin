@@ -121,7 +121,7 @@ async function showDetail(siniestroId) {
                 ${inm.estado_afectacion === 'critico' ? 'Crítico' : inm.estado_afectacion === 'moderado' ? 'Moderado' : 'Sin daños'}
               </span>
             </p>
-            <p style="font-size:0.9rem;color:#555;">Niveles: ${inm.numero_niveles}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
+            <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Total: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
             ${damnificados.length > 0 ? `
               <table>
                 <tr><th>Nombre</th><th>Edad</th><th>Sexo</th><th>Estado</th><th>Traslado</th></tr>

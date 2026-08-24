@@ -89,7 +89,7 @@ const CARACTERISTICAS = [
   {
     nombre: 'Condición de seguridad',
     tipo_dato: 'seleccion',
-    opciones: ['Edificación segura', 'Riesgo alto', 'Riesgo medio', 'Riesgo bajo'],
+    opciones: ['Riesgo bajo', 'Riesgo medio', 'Riesgo alto', 'Alto riesgo de colapso'],
     requerido: true,
     orden: 12,
   },

@@ -38,6 +38,8 @@ router.get('/pull', async (req, res) => {
           tipo: inm.tipo || '',
           tipoInmuebleId: inm.tipo_inmueble_ref ? inm.tipo_inmueble_ref.toString() : null,
           numeroNiveles: inm.numero_niveles || 1,
+          sobreNivelBanqueta: inm.sobre_nivel_banqueta || 0,
+          bajoNivelBanqueta: inm.bajo_nivel_banqueta || 0,
           tipoUnidad: inm.tipo_unidad || '',
           esPadre: inm.es_padre ? 1 : 0,
           padreId: inm.padre ? inm.padre.toString() : null,

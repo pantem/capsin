@@ -75,7 +75,7 @@ app.get('/api/mapa', async (req, res) => {
     const Inmueble = require('./models/Inmueble');
     const Damnificado = require('./models/Damnificado');
 
-    const siniestros = await Siniestro.find().lean();
+    const siniestros = await Siniestro.find().sort({ fecha: -1 }).lean();
     const results = [];
 
     for (const s of siniestros) {

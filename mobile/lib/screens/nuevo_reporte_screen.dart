@@ -47,6 +47,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   DateTime _fechaSeleccionada = DateTime.now();
   String _estadoAfectacion = 'sin_daños';
+  int _sobreNivelBanqueta = 0;
+  int _bajoNivelBanqueta = 0;
 
   final List<String> _fotos = [];
   final ImagePicker _picker = ImagePicker();
@@ -311,9 +313,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       usoInmueble: '',
       otroUso: null,
       fechaConstruccion: '',
-      numeroNiveles: 1,
       danosObservados: '',
       estadoAfectacion: _estadoAfectacion,
+      sobreNivelBanqueta: _sobreNivelBanqueta,
+      bajoNivelBanqueta: _bajoNivelBanqueta,
       condicionSeguridad: '',
       observaciones: _observacionesCtrl.text,
       fotos: _fotos.join(','),
@@ -618,6 +621,40 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _sobreNivelBanqueta,
+                        decoration: const InputDecoration(
+                          labelText: 'Sobre nivel de banqueta',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: List.generate(101, (i) => DropdownMenuItem(
+                          value: i,
+                          child: Text('$i'),
+                        )),
+                        onChanged: (v) => setState(() => _sobreNivelBanqueta = v ?? 0),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: _bajoNivelBanqueta,
+                        decoration: const InputDecoration(
+                          labelText: 'Bajo nivel de banqueta',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: List.generate(101, (i) => DropdownMenuItem(
+                          value: i,
+                          child: Text('$i'),
+                        )),
+                        onChanged: (v) => setState(() => _bajoNivelBanqueta = v ?? 0),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

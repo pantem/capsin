@@ -5,6 +5,8 @@ const inmuebleSchema = new mongoose.Schema({
   tipo: { type: String, default: '' },
   tipo_inmueble_ref: { type: mongoose.Schema.Types.ObjectId, ref: 'TipoInmueble', default: null },
   numero_niveles: { type: Number, default: 1 },
+  sobre_nivel_banqueta: { type: Number, default: 0 },
+  bajo_nivel_banqueta: { type: Number, default: 0 },
   tipo_unidad: { type: String, default: '' },
   es_padre: { type: Boolean, default: false },
   padre: { type: mongoose.Schema.Types.ObjectId, ref: 'Inmueble', default: null },

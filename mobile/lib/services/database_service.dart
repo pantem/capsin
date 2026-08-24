@@ -24,7 +24,7 @@ class DatabaseService {
     final path = join(dbPath, 'siniestros_sismo.db');
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
     );
@@ -47,7 +47,8 @@ class DatabaseService {
         usoInmueble TEXT DEFAULT '',
         otroUso TEXT,
         fechaConstruccion TEXT DEFAULT '',
-        numeroNiveles INTEGER DEFAULT 1,
+        sobreNivelBanqueta INTEGER DEFAULT 0,
+        bajoNivelBanqueta INTEGER DEFAULT 0,
         danosObservados TEXT DEFAULT '',
         condicionSeguridad TEXT DEFAULT '',
         observaciones TEXT DEFAULT '',
@@ -128,6 +129,12 @@ class DatabaseService {
     if (oldVersion < 6) {
       try {
         await db.execute('ALTER TABLE reportes ADD COLUMN estadoAfectacion TEXT DEFAULT \'sin_daños\'');
+      } catch (_) {}
+    }
+    if (oldVersion < 7) {
+      try {
+        await db.execute('ALTER TABLE reportes ADD COLUMN sobreNivelBanqueta INTEGER DEFAULT 0');
+        await db.execute('ALTER TABLE reportes ADD COLUMN bajoNivelBanqueta INTEGER DEFAULT 0');
       } catch (_) {}
     }
   }

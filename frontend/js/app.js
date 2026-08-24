@@ -53,10 +53,10 @@ async function loadReportesList(filter = '') {
     allSiniestros = mapaData;
     const filtered = filter
       ? mapaData.filter((s) =>
-          (s.folio || '').toLowerCase().includes(filter.toLowerCase()) ||
-          (s.ubicacion?.direccion || '').toLowerCase().includes(filter.toLowerCase()) ||
-          (s.ubicacion?.municipio || '').toLowerCase().includes(filter.toLowerCase())
-        )
+        (s.folio || '').toLowerCase().includes(filter.toLowerCase()) ||
+        (s.ubicacion?.direccion || '').toLowerCase().includes(filter.toLowerCase()) ||
+        (s.ubicacion?.municipio || '').toLowerCase().includes(filter.toLowerCase())
+      )
       : mapaData;
 
     if (filtered.length === 0) {
@@ -326,7 +326,7 @@ async function loadCatalogo() {
       fetchJSON(`${API}/codigos-postales?q=&limit=1000`),
     ]);
     const select = document.getElementById('cp-municipio');
-    select.innerHTML = '<option value="">Todos los municipios</option>' +
+    select.innerHTML = '<option value="">Todas las alcald&iacute;as</option>' +
       municipios.map(m => `<option value="${m}">${m}</option>`).join('');
     mostrarResultados(data);
   } catch (err) {
@@ -561,7 +561,7 @@ function abrirFormCaract(idx) {
 function onCaractTipoChange() {
   const tipo = document.getElementById('caract-tipo').value;
   const group = document.getElementById('caract-opciones-group');
-      group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
+  group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
 }
 
 function cancelarCaractForm() {
@@ -622,7 +622,7 @@ async function guardarTipo() {
     if (_caractsTemp.length > 0) {
       await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
         method: 'DELETE'
-      }).catch(() => {});
+      }).catch(() => { });
 
       for (const c of _caractsTemp) {
         await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {

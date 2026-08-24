@@ -103,6 +103,7 @@ async function showDetail(siniestroId) {
       <p><strong>Dirección:</strong> ${siniestro.ubicacion?.direccion || ''}, ${siniestro.ubicacion?.municipio || ''}, ${siniestro.ubicacion?.estado || ''}</p>
       <p><strong>Coordenadas:</strong> ${siniestro.ubicacion?.lat}, ${siniestro.ubicacion?.lng}</p>
       <p><strong>Descripción:</strong> ${siniestro.descripcion || 'Sin descripción'}</p>
+      ${siniestro.dispositivo_id ? `<p><strong>Dispositivo:</strong> ${siniestro.dispositivo_id}</p>` : ''}
       <h3>Inmuebles (${inmuebles.length})</h3>
     `;
 
@@ -110,7 +111,10 @@ async function showDetail(siniestroId) {
       html += '<p>No hay inmuebles registrados.</p>';
     } else {
       for (const inm of inmuebles) {
-        const damnificados = await fetchJSON(`${API}/damnificados?inmueble=${inm._id}`);
+        const [damnificados, valores] = await Promise.all([
+          fetchJSON(`${API}/damnificados?inmueble=${inm._id}`),
+          fetchJSON(`${API}/valores-caracteristica?inmueble=${inm._id}`),
+        ]);
         const hijos = inm.tipo === 'edificio' && inm.es_padre ? await fetchJSON(`${API}/inmuebles/${inm._id}/hijos`) : [];
 
         html += `
@@ -122,7 +126,26 @@ async function showDetail(siniestroId) {
               </span>
             </p>
             <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Total: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
+            ${valores.length > 0 ? `
+              <div style="margin-top:0.5rem;">
+                <p style="font-weight:600;font-size:0.9rem;">Características capturadas:</p>
+                <table style="font-size:0.85rem;">
+                  <tr><th>Característica</th><th>Valor</th></tr>
+                  ${valores.map(v => {
+                    const nombre = v.caracteristica?.nombre || 'Sin nombre';
+                    let valor = '';
+                    if (v.valor_texto != null && v.valor_texto !== '') valor = v.valor_texto;
+                    else if (v.valor_numero != null) valor = v.valor_numero.toString();
+                    else if (v.valor_booleano != null) valor = v.valor_booleano ? 'Sí' : 'No';
+                    else if (v.valor_seleccion != null && v.valor_seleccion !== '') valor = v.valor_seleccion;
+                    else valor = '—';
+                    return `<tr><td>${nombre}</td><td>${valor}</td></tr>`;
+                  }).join('')}
+                </table>
+              </div>
+            ` : ''}
             ${damnificados.length > 0 ? `
+              <p style="font-weight:600;margin-top:0.5rem;font-size:0.9rem;">Damnificados (${damnificados.length}):</p>
               <table>
                 <tr><th>Nombre</th><th>Edad</th><th>Sexo</th><th>Estado</th><th>Traslado</th></tr>
                 ${damnificados.map(d => `

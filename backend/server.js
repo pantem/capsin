@@ -32,6 +32,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/areas', require('./routes/areas'));
 app.use('/api/roles', require('./routes/roles'));
+app.use('/api/valores-caracteristica', require('./routes/valores_caracteristica'));
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 

@@ -38,6 +38,12 @@ router.post('/sync', async (req, res) => {
 
       if (exists) {
         siniestro = await Siniestro.findByIdAndUpdate(exists._id, siniestroData, { new: true });
+        const inmueblesViejos = await Inmueble.find({ siniestro: siniestro._id }).select('_id');
+        const inmuebleIds = inmueblesViejos.map(i => i._id);
+        if (inmuebleIds.length > 0) {
+          await Damnificado.deleteMany({ inmueble: { $in: inmuebleIds } });
+          await ValorCaracteristica.deleteMany({ inmueble: { $in: inmuebleIds } });
+        }
         await Inmueble.deleteMany({ siniestro: siniestro._id });
       } else {
         siniestro = new Siniestro(siniestroData);

@@ -388,8 +388,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Colors.blue.withOpacity(0.2),
-          child: const Icon(Icons.person, color: Colors.blue),
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+          child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(d.nombre.isNotEmpty ? d.nombre : 'Sin nombre',
             style: const TextStyle(fontWeight: FontWeight.w600)),

@@ -169,6 +169,8 @@ class DatabaseService {
     final db = await database;
     await db.insert('damnificados', d.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.update('reportes', {'sincronizado': 0},
+        where: 'id = ?', whereArgs: [d.reporteId]);
     return d.id;
   }
 

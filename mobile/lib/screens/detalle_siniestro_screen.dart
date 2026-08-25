@@ -160,6 +160,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   if (r.lat != null && r.lng != null)
                     _infoRow(Icons.gps_fixed,
                         '${r.lat!.toStringAsFixed(5)}, ${r.lng!.toStringAsFixed(5)}'),
+                  _infoRow(Icons.layers, 'Sobre banqueta: ${r.sobreNivelBanqueta} | Bajo banqueta: ${r.bajoNivelBanqueta} | Total: ${r.sobreNivelBanqueta + r.bajoNivelBanqueta}'),
                   if (caractsTab2.isNotEmpty) ...[
                     const Divider(height: 24),
                     const Text('Características',

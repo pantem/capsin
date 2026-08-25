@@ -62,7 +62,7 @@
           </svg>
           Lista de Reportes
         </button>
-        <button data-view="catalogo">
+        <button data-view="catalogo" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" class="icon-catalogo" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 22V4c0-.5.2-1 .6-1.4C5 2.2 5.5 2 6 2h12c.5 0 1 .2 1.4.6.4.4.6.9.6 1.4v18"></path>
@@ -72,6 +72,14 @@
             <path d="M22 22H2"></path>
           </svg>
           Catálogo CDMX
+        </button>
+        <button data-view="ubicacion">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-ubicacion" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Ubicación
         </button>
         <button data-view="tipos" id="nav-tipos" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" class="icon-tipos" stroke="currentColor" stroke-width="2"
@@ -284,7 +292,31 @@
         <div id="reportes-lista"></div>
       </section>
 
-      <section id="view-catalogo" class="view">
+      <section id="view-ubicacion" class="view">
+        <div class="toolbar">
+          <h2>Ubicación de Inmuebles</h2>
+        </div>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <select id="ubic-alcaldia" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+            <option value="">Todas las alcaldías</option>
+          </select>
+          <select id="ubic-colonia" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+            <option value="">Todas las colonias</option>
+          </select>
+          <input type="text" id="ubic-cp" placeholder="Código postal" maxlength="5"
+            style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;width:120px;" />
+          <select id="ubic-dano" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+            <option value="">Todos los daños</option>
+            <option value="sin_daños">Sin daños</option>
+            <option value="moderado">Moderado</option>
+            <option value="critico">Crítico</option>
+          </select>
+        </div>
+        <p id="ubic-count" style="font-size:0.85rem;color:#999;margin-bottom:0.5rem;"></p>
+        <div id="ubic-resultados"></div>
+      </section>
+
+      <section id="view-catalogo" class="view" style="display:none;">
         <div class="toolbar">
           <h2>Catálogo de Direcciones CDMX</h2>
         </div>

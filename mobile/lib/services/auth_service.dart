@@ -31,7 +31,7 @@ class AuthService {
         await prefs.setString(_tokenKey, token);
         await prefs.setString(_userNombreKey, usuario['nombre'] as String? ?? '');
         await prefs.setString(_userUsernameKey, usuario['username'] as String? ?? '');
-        await prefs.setString(_userAreaKey, usuario['area'] as String? ?? '');
+        await prefs.setString(_userAreaKey, (usuario['area'] is Map ? usuario['area']['nombre'] as String? ?? '' : usuario['area'] as String? ?? ''));
         await prefs.setString(_userRolKey, usuario['rol'] as String? ?? '');
         return {'ok': 'true', 'nombre': usuario['nombre'] as String? ?? ''};
       }

@@ -9,6 +9,7 @@ const siniestroSchema = new mongoose.Schema({
     direccion: { type: String, default: '' },
     municipio: { type: String, default: '' },
     estado: { type: String, default: '' },
+    codigo_postal: { type: String, default: '' },
   },
   descripcion: { type: String, default: '' },
   dispositivo_id: { type: String, default: null, index: true },

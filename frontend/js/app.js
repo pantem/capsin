@@ -181,6 +181,110 @@ async function showDetail(siniestroId) {
   }
 }
 
+let _ubicData = [];
+
+async function loadUbicacion() {
+  const container = document.getElementById('ubic-resultados');
+  const countEl = document.getElementById('ubic-count');
+  container.innerHTML = '<p style="color:#777;">Cargando...</p>';
+
+  try {
+    const [data, filtros] = await Promise.all([
+      fetchJSON(`${API}/ubicacion`),
+      fetchJSON(`${API}/ubicacion/filtros`),
+    ]);
+
+    _ubicData = data;
+
+    const alcaldiaSelect = document.getElementById('ubic-alcaldia');
+    const coloniaSelect = document.getElementById('ubic-colonia');
+    const currentAlcaldia = alcaldiaSelect.value;
+    const currentColonia = coloniaSelect.value;
+
+    alcaldiaSelect.innerHTML = '<option value="">Todas las alcaldías</option>' +
+      filtros.alcaldias.map(a => `<option value="${a}" ${a === currentAlcaldia ? 'selected' : ''}>${a}</option>`).join('');
+    coloniaSelect.innerHTML = '<option value="">Todas las colonias</option>' +
+      filtros.colonias.map(c => `<option value="${c}" ${c === currentColonia ? 'selected' : ''}>${c}</option>`).join('');
+
+    renderUbicacion(data, countEl, container);
+  } catch (err) {
+    container.innerHTML = `<p style="color:#d32f2f;">Error al cargar: ${err.message}</p>`;
+  }
+}
+
+function renderUbicacion(data, countEl, container) {
+  countEl.textContent = `${data.length} registro(s) encontrado(s)`;
+
+  if (data.length === 0) {
+    container.innerHTML = '<p style="color:#777;">No se encontraron inmuebles con los filtros seleccionados.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead>
+          <tr style="background:#1a237e;color:#fff;text-align:left;">
+            <th style="padding:0.6rem;">Folio</th>
+            <th style="padding:0.6rem;">Fecha</th>
+            <th style="padding:0.6rem;">Alcaldía</th>
+            <th style="padding:0.6rem;">Colonia</th>
+            <th style="padding:0.6rem;">CP</th>
+            <th style="padding:0.6rem;">Uso</th>
+            <th style="padding:0.6rem;">Niveles</th>
+            <th style="padding:0.6rem;">Estado</th>
+            <th style="padding:0.6rem;">Tipo daño</th>
+            <th style="padding:0.6rem;">Damnificados</th>
+            <th style="padding:0.6rem;">Fallecidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.map(d => {
+            const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
+            const estadoLabel = d.estadoAfectacion === 'critico' ? 'Crítico' : d.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daños';
+            return `
+              <tr style="border-bottom:1px solid #e0e0e0;cursor:pointer;" onclick="showDetail('${d.siniestroId}')">
+                <td style="padding:0.5rem;font-weight:600;">${d.folio || '—'}</td>
+                <td style="padding:0.5rem;">${d.fecha ? formatDate(d.fecha) : '—'}</td>
+                <td style="padding:0.5rem;">${d.alcaldia || '—'}</td>
+                <td style="padding:0.5rem;">${d.direccion || '—'}</td>
+                <td style="padding:0.5rem;">${d.codigoPostal || '—'}</td>
+                <td style="padding:0.5rem;">${d.usoInmueble || '—'}</td>
+                <td style="padding:0.5rem;text-align:center;">${d.totalNiveles}</td>
+                <td style="padding:0.5rem;">
+                  <span style="background:${estadoColor}22;color:${estadoColor};padding:2px 8px;border-radius:12px;font-weight:600;font-size:0.8rem;">
+                    ${estadoLabel}
+                  </span>
+                </td>
+                <td style="padding:0.5rem;">${d.tipoDanio || '—'}</td>
+                <td style="padding:0.5rem;text-align:center;">${d.totalDamnificados}</td>
+                <td style="padding:0.5rem;text-align:center;${d.fallecidos > 0 ? 'color:#d32f2f;font-weight:700;' : ''}">${d.fallecidos}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function filtrarUbicacion() {
+  const alcaldia = document.getElementById('ubic-alcaldia').value;
+  const colonia = document.getElementById('ubic-colonia').value;
+  const cp = document.getElementById('ubic-cp').value.trim().toLowerCase();
+  const dano = document.getElementById('ubic-dano').value;
+
+  let filtered = _ubicData;
+  if (alcaldia) filtered = filtered.filter(d => d.alcaldia === alcaldia);
+  if (colonia) filtered = filtered.filter(d => d.direccion.toLowerCase().includes(colonia.toLowerCase()));
+  if (cp) filtered = filtered.filter(d => d.codigoPostal === cp);
+  if (dano) filtered = filtered.filter(d => d.estadoAfectacion === dano);
+
+  const countEl = document.getElementById('ubic-count');
+  const container = document.getElementById('ubic-resultados');
+  renderUbicacion(filtered, countEl, container);
+}
+
 document.querySelector('#modal .close').addEventListener('click', () => {
   document.getElementById('modal').classList.add('hidden');
 });
@@ -197,6 +301,7 @@ document.querySelectorAll('nav button').forEach((btn) => {
 
     if (btn.dataset.view === 'dashboard') loadDashboard();
     if (btn.dataset.view === 'lista') loadReportesList();
+    if (btn.dataset.view === 'ubicacion') loadUbicacion();
     if (btn.dataset.view === 'mapa') setTimeout(initMap, 100);
   });
 });
@@ -1069,3 +1174,10 @@ async function guardarRol() {
     alert('Error al guardar: ' + err.message);
   }
 }
+
+/* ---------- Ubicación Filtros ---------- */
+
+document.getElementById('ubic-alcaldia').addEventListener('change', filtrarUbicacion);
+document.getElementById('ubic-colonia').addEventListener('change', filtrarUbicacion);
+document.getElementById('ubic-cp').addEventListener('input', filtrarUbicacion);
+document.getElementById('ubic-dano').addEventListener('change', filtrarUbicacion);

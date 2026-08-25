@@ -622,40 +622,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        value: _sobreNivelBanqueta,
-                        decoration: const InputDecoration(
-                          labelText: 'Sobre nivel de banqueta',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: List.generate(101, (i) => DropdownMenuItem(
-                          value: i,
-                          child: Text('$i'),
-                        )),
-                        onChanged: (v) => setState(() => _sobreNivelBanqueta = v ?? 0),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        value: _bajoNivelBanqueta,
-                        decoration: const InputDecoration(
-                          labelText: 'Bajo nivel de banqueta',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: List.generate(101, (i) => DropdownMenuItem(
-                          value: i,
-                          child: Text('$i'),
-                        )),
-                        onChanged: (v) => setState(() => _bajoNivelBanqueta = v ?? 0),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -682,6 +648,40 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: _sobreNivelBanqueta,
+                  decoration: const InputDecoration(
+                    labelText: 'Sobre nivel de banqueta',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: List.generate(101, (i) => DropdownMenuItem(
+                    value: i,
+                    child: Text('$i'),
+                  )),
+                  onChanged: (v) => setState(() => _sobreNivelBanqueta = v ?? 0),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  value: _bajoNivelBanqueta,
+                  decoration: const InputDecoration(
+                    labelText: 'Bajo nivel de banqueta',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: List.generate(101, (i) => DropdownMenuItem(
+                    value: i,
+                    child: Text('$i'),
+                  )),
+                  onChanged: (v) => setState(() => _bajoNivelBanqueta = v ?? 0),
+                ),
+              ),
+            ],
           ),
       ],
     );

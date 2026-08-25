@@ -68,13 +68,6 @@ const CARACTERISTICAS = [
     orden: 8,
   },
   {
-    nombre: 'Número de niveles',
-    tipo_dato: 'numero',
-    opciones: [],
-    requerido: true,
-    orden: 9,
-  },
-  {
     nombre: 'Fecha aproximada de construcción',
     tipo_dato: 'date',
     opciones: [],

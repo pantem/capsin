@@ -315,7 +315,6 @@ function actualizarHeaderAuth() {
   const btnLogout = document.getElementById('btn-logout');
 
   const navButtons = [
-    { id: 'nav-tipos', perm: 'ver_tipos' },
     { id: 'nav-usuarios', perm: 'ver_usuarios' },
     { id: 'nav-areas', perm: 'ver_areas' },
     { id: 'nav-roles', perm: 'ver_roles' },

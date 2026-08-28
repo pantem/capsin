@@ -8,7 +8,8 @@ router.get('/', async (req, res) => {
     const filter = {};
     if (req.query.inmueble) filter.inmueble = req.query.inmueble;
     const valores = await ValorCaracteristica.find(filter).populate('caracteristica');
-    res.json(valores);
+    const valoresValidos = valores.filter(v => v.caracteristica != null);
+    res.json(valoresValidos);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

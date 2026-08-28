@@ -132,7 +132,7 @@ async function showDetail(siniestroId) {
                 <p style="font-weight:600;font-size:0.9rem;">Características capturadas:</p>
                 <table style="font-size:0.85rem;">
                   <tr><th>Característica</th><th>Valor</th></tr>
-                  ${valores.map(v => {
+                  ${valores.filter(v => v.caracteristica).map(v => {
                     const nombre = v.caracteristica?.nombre || 'Sin nombre';
                     let valor = '';
                     if (v.valor_texto != null && v.valor_texto !== '') valor = v.valor_texto;

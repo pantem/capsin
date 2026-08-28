@@ -96,6 +96,7 @@ async function showDetail(siniestroId) {
   try {
     const siniestro = await fetchJSON(`${API}/siniestros/${siniestroId}`);
     const inmuebles = await fetchJSON(`${API}/inmuebles?siniestro=${siniestroId}`);
+    const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
 
     let html = `
       <h2>${siniestro.folio || 'Sin folio'}</h2>
@@ -106,8 +107,6 @@ async function showDetail(siniestroId) {
       ${siniestro.dispositivo_id ? `<p><strong>Dispositivo:</strong> ${siniestro.dispositivo_id}</p>` : ''}
       <h3>Inmuebles (${inmueblesPadre.length})</h3>
     `;
-
-    const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
 
     if (inmueblesPadre.length === 0) {
       html += '<p>No hay inmuebles registrados.</p>';

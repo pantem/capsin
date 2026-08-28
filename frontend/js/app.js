@@ -104,13 +104,15 @@ async function showDetail(siniestroId) {
       <p><strong>Coordenadas:</strong> ${siniestro.ubicacion?.lat}, ${siniestro.ubicacion?.lng}</p>
       <p><strong>Descripción:</strong> ${siniestro.descripcion || 'Sin descripción'}</p>
       ${siniestro.dispositivo_id ? `<p><strong>Dispositivo:</strong> ${siniestro.dispositivo_id}</p>` : ''}
-      <h3>Inmuebles (${inmuebles.length})</h3>
+      <h3>Inmuebles (${inmueblesPadre.length})</h3>
     `;
 
-    if (inmuebles.length === 0) {
+    const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
+
+    if (inmueblesPadre.length === 0) {
       html += '<p>No hay inmuebles registrados.</p>';
     } else {
-      for (const inm of inmuebles) {
+      for (const inm of inmueblesPadre) {
         const [damnificados, valores] = await Promise.all([
           fetchJSON(`${API}/damnificados?inmueble=${inm._id}`),
           fetchJSON(`${API}/valores-caracteristica?inmueble=${inm._id}`),

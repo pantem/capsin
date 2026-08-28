@@ -126,22 +126,22 @@ async function showDetail(siniestroId) {
                 ${inm.estado_afectacion === 'critico' ? 'Crítico' : inm.estado_afectacion === 'moderado' ? 'Moderado' : 'Sin daños'}
               </span>
             </p>
-            <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Total: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
+            <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Niveles totales: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
             ${valores.length > 0 ? `
               <div style="margin-top:0.5rem;">
                 <p style="font-weight:600;font-size:0.9rem;">Características capturadas:</p>
                 <table style="font-size:0.85rem;">
                   <tr><th>Característica</th><th>Valor</th></tr>
                   ${valores.filter(v => v.caracteristica).map(v => {
-                    const nombre = v.caracteristica?.nombre || 'Sin nombre';
-                    let valor = '';
-                    if (v.valor_texto != null && v.valor_texto !== '') valor = v.valor_texto;
-                    else if (v.valor_numero != null) valor = v.valor_numero.toString();
-                    else if (v.valor_booleano != null) valor = v.valor_booleano ? 'Sí' : 'No';
-                    else if (v.valor_seleccion != null && v.valor_seleccion !== '') valor = v.valor_seleccion;
-                    else valor = '—';
-                    return `<tr><td>${nombre}</td><td>${valor}</td></tr>`;
-                  }).join('')}
+          const nombre = v.caracteristica?.nombre || 'Sin nombre';
+          let valor = '';
+          if (v.valor_texto != null && v.valor_texto !== '') valor = v.valor_texto;
+          else if (v.valor_numero != null) valor = v.valor_numero.toString();
+          else if (v.valor_booleano != null) valor = v.valor_booleano ? 'Sí' : 'No';
+          else if (v.valor_seleccion != null && v.valor_seleccion !== '') valor = v.valor_seleccion;
+          else valor = '—';
+          return `<tr><td>${nombre}</td><td>${valor}</td></tr>`;
+        }).join('')}
                 </table>
               </div>
             ` : ''}
@@ -241,9 +241,9 @@ function renderUbicacion(data, countEl, container) {
         </thead>
         <tbody>
           ${data.map(d => {
-            const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
-            const estadoLabel = d.estadoAfectacion === 'critico' ? 'Crítico' : d.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daños';
-            return `
+    const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
+    const estadoLabel = d.estadoAfectacion === 'critico' ? 'Crítico' : d.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daños';
+    return `
               <tr style="border-bottom:1px solid #e0e0e0;cursor:pointer;" onclick="showDetail('${d.siniestroId}')">
                 <td style="padding:0.5rem;font-weight:600;">${d.folio || '—'}</td>
                 <td style="padding:0.5rem;">${d.fecha ? formatDate(d.fecha) : '—'}</td>
@@ -262,7 +262,7 @@ function renderUbicacion(data, countEl, container) {
                 <td style="padding:0.5rem;text-align:center;${d.fallecidos > 0 ? 'color:#d32f2f;font-weight:700;' : ''}">${d.fallecidos}</td>
               </tr>
             `;
-          }).join('')}
+  }).join('')}
         </tbody>
       </table>
     </div>

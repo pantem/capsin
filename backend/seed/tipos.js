@@ -67,7 +67,7 @@ const CARACTERISTICAS = [
   {
     nombre: '1.9 Década estimada de la Construcción',
     tipo_dato: 'seleccion',
-    opciones: ['50s o antes', '60s', '70s', '80s', '90s', '2000s', '2010s o más'],
+    opciones: ['50S O ANTES', '60S', '70S', '80S', '90S', '2000S', '2010S O MÁS'],
     requerido: true,
     orden: 9,
   },

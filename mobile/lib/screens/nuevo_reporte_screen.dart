@@ -15,7 +15,8 @@ import '../models/tipo_inmueble.dart';
 import '../models/valor_caracteristica.dart';
 
 class NuevoReporteScreen extends StatefulWidget {
-  const NuevoReporteScreen({super.key});
+  final String? inmueblePadronId;
+  const NuevoReporteScreen({super.key, this.inmueblePadronId});
 
   @override
   State<NuevoReporteScreen> createState() => _NuevoReporteScreenState();
@@ -46,9 +47,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   bool _cargandoCaracts = true;
 
   DateTime _fechaSeleccionada = DateTime.now();
-  String _estadoAfectacion = 'sin_daños';
-  int _sobreNivelBanqueta = 0;
-  int _bajoNivelBanqueta = 0;
 
   final List<String> _fotos = [];
   final ImagePicker _picker = ImagePicker();
@@ -90,7 +88,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         _caracteristicas = caracts;
         _cargandoCaracts = false;
         for (final c in caracts) {
-          if (c.orden < 8 || c.orden > 12) continue;
           if (c.tipoDato == 'multiseleccion') {
             _valoresCaracteristica[c.id] = <String>{};
           } else if (c.tipoDato == 'booleano') {
@@ -146,7 +143,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       _lat = pos.latitude;
       _lng = pos.longitude;
 
-      // Reverse geocoding con Nominatim (OpenStreetMap)
       try {
         final geoUri = Uri.parse(
             'https://nominatim.openstreetmap.org/reverse?format=json&lat=$_lat&lon=$_lng&addressdetails=1');
@@ -173,19 +169,11 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 .where((s) => s.isNotEmpty)
                 .join(' ');
           }
-          if (colonia.isNotEmpty) {
-            _coloniaCtrl.text = colonia;
-          }
-          if (alcaldia.isNotEmpty) {
-            _alcaldiaCtrl.text = alcaldia;
-          }
-          if (cp.isNotEmpty) {
-            _codigoPostalCtrl.text = cp;
-          }
+          if (colonia.isNotEmpty) _coloniaCtrl.text = colonia;
+          if (alcaldia.isNotEmpty) _alcaldiaCtrl.text = alcaldia;
+          if (cp.isNotEmpty) _codigoPostalCtrl.text = cp;
         }
-      } catch (_) {
-        // Si falla el reverse geocoding, solo usamos las coordenadas
-      }
+      } catch (_) {}
 
       setState(() {});
     } catch (e) {
@@ -216,21 +204,15 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         setState(() {
           _colonias = data;
           _coloniaSeleccionada = null;
-          if (data.isNotEmpty) {
-            if (data.length == 1) {
-              _coloniaSeleccionada = data.first['colonia'] as String?;
-              _coloniaCtrl.text = _coloniaSeleccionada!;
-              _alcaldiaCtrl.text = data.first['municipio'] as String? ?? '';
-            }
+          if (data.isNotEmpty && data.length == 1) {
+            _coloniaSeleccionada = data.first['colonia'] as String?;
+            _coloniaCtrl.text = _coloniaSeleccionada!;
+            _alcaldiaCtrl.text = data.first['municipio'] as String? ?? '';
           }
         });
       }
     } catch (e) {
       setState(() => _colonias = []);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al buscar CP: $e')),
-      );
     } finally {
       setState(() => _cargandoColonias = false);
     }
@@ -244,57 +226,12 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       lastDate: DateTime.now(),
       locale: const Locale('es', 'MX'),
     );
-    if (picked != null) {
-      setState(() => _fechaSeleccionada = picked);
-    }
+    if (picked != null) setState(() => _fechaSeleccionada = picked);
   }
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
-
     try {
-      final caractsRequeridas = _caracteristicas
-          .where((c) => c.requerido && c.orden >= 8 && c.orden <= 12);
-      for (final c in caractsRequeridas) {
-        int tabIndex = 1;
-        if (c.orden >= 8 && c.orden <= 10) {
-          tabIndex = 1;
-        } else if (c.orden == 11) {
-          tabIndex = 2;
-        } else if (c.orden == 12) {
-          tabIndex = 3;
-        }
-
-        if (c.tipoDato == 'seleccion') {
-          final val = _valoresCaracteristica[c.id] as String?;
-          if (val == null || val.isEmpty) {
-            _tabController.animateTo(tabIndex);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Selecciona: ${c.nombre}')),
-            );
-            return;
-          }
-        } else if (c.tipoDato == 'multiseleccion') {
-          final val = _valoresCaracteristica[c.id] as Set<String>?;
-          if (val == null || val.isEmpty) {
-            _tabController.animateTo(tabIndex);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Selecciona: ${c.nombre}')),
-            );
-            return;
-          }
-        } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
-          final ctrl = _textControllers[c.id];
-          if (ctrl == null || ctrl.text.trim().isEmpty) {
-            _tabController.animateTo(tabIndex);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Completa: ${c.nombre}')),
-            );
-            return;
-          }
-        }
-      }
-
       final folio =
           'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
       final reporteId = _uuid.v4();
@@ -315,17 +252,16 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         otroUso: null,
         fechaConstruccion: '',
         danosObservados: '',
-        estadoAfectacion: _estadoAfectacion,
-        sobreNivelBanqueta: _sobreNivelBanqueta,
-        bajoNivelBanqueta: _bajoNivelBanqueta,
+        estadoAfectacion: '',
+        sobreNivelBanqueta: 0,
+        bajoNivelBanqueta: 0,
         condicionSeguridad: '',
         observaciones: _observacionesCtrl.text,
         fotos: _fotos.join(','),
       );
 
       await _db.insertReporte(reporte);
-      await _db.insertValoresCaracteristica(
-          _buildValores(reporteId));
+      await _db.insertValoresCaracteristica(_buildValores(reporteId));
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -341,9 +277,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   List<ValorCaracteristica> _buildValores(String reporteId) {
-    return _caracteristicas
-        .where((c) => c.orden >= 8 && c.orden <= 12)
-        .map((c) {
+    return _caracteristicas.map((c) {
       final raw = _valoresCaracteristica[c.id];
       String? valorTexto;
       double? valorNumero;
@@ -355,8 +289,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           valorTexto = _textControllers[c.id]?.text;
           break;
         case 'numero':
-          valorNumero =
-              double.tryParse(_textControllers[c.id]?.text ?? '');
+          valorNumero = double.tryParse(_textControllers[c.id]?.text ?? '');
           break;
         case 'booleano':
           valorBooleano = raw as bool?;
@@ -398,11 +331,11 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           isScrollable: true,
           tabs: const [
             Tab(text: '1. Datos\nGenerales'),
-            Tab(text: '2. Inmueble\nafectado'),
-            Tab(text: '3. Evaluación\nde daños'),
-            Tab(text: '4. Condición\nde seguridad'),
-            Tab(text: '5. Observaciones\nadicionales'),
-            Tab(text: '6. Fotografías'),
+            Tab(text: '2. Inmueble\n(Padrón)'),
+            Tab(text: '3. Estado\nEdificación'),
+            Tab(text: '4. Clasificación\nGlobal'),
+            Tab(text: '5. Recomendaciones'),
+            Tab(text: '6. Fotos +\nObservaciones'),
           ],
         ),
       ),
@@ -513,8 +446,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab2() {
-    final caractsTab2 =
-        _caracteristicas.where((c) => c.orden >= 8 && c.orden <= 10).toList();
+    final caractsTab2 = _caracteristicas
+        .where((c) => c.orden >= 1 && c.orden <= 14)
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -525,15 +459,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('2. Información del inmueble afectado',
+                const Text('2. Información del inmueble',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _obteniendoUbicacion ? null : _obtenerUbicacion,
                   icon: _obteniendoUbicacion
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: 18, height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.gps_fixed),
                   label: Text(_lat != null
@@ -558,12 +491,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     border: const OutlineInputBorder(),
                     suffixIcon: _cargandoColonias
                         ? const SizedBox(
-                            width: 18,
-                            height: 18,
+                            width: 18, height: 18,
                             child: Padding(
                               padding: EdgeInsets.all(12),
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           )
                         : null,
@@ -591,8 +522,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                             (c) => c['colonia'] == v,
                             orElse: () => <String, dynamic>{});
                         if (sel.isNotEmpty) {
-                          _alcaldiaCtrl.text =
-                              sel['municipio'] as String? ?? '';
+                          _alcaldiaCtrl.text = sel['municipio'] as String? ?? '';
                         }
                       });
                     },
@@ -642,8 +572,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('2.1 Características del Inmueble',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 14)),
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 12),
                   ...caractsTab2.map((c) => _buildCampoDinamico(c)),
                 ],
@@ -656,47 +585,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  value: _sobreNivelBanqueta,
-                  decoration: const InputDecoration(
-                    labelText: 'Sobre nivel de banqueta',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: List.generate(101, (i) => DropdownMenuItem(
-                    value: i,
-                    child: Text('$i'),
-                  )),
-                  onChanged: (v) => setState(() => _sobreNivelBanqueta = v ?? 0),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  value: _bajoNivelBanqueta,
-                  decoration: const InputDecoration(
-                    labelText: 'Bajo nivel de banqueta',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: List.generate(101, (i) => DropdownMenuItem(
-                    value: i,
-                    child: Text('$i'),
-                  )),
-                  onChanged: (v) => setState(() => _bajoNivelBanqueta = v ?? 0),
-                ),
-              ),
-            ],
-          ),
       ],
     );
   }
 
   Widget _buildTab3() {
-    final caractsTab3 =
-        _caracteristicas.where((c) => c.orden == 11).toList();
+    final caractsTab3 = _caracteristicas
+        .where((c) => c.orden >= 20 && c.orden <= 40)
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -707,36 +603,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('3. Evaluación preliminar de daños',
+                const Text('3. Estado de la Edificación',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 8),
-                if (caractsTab3.isEmpty)
-                  const Text('Selecciona el tipo de daño observado:'),
-                const SizedBox(height: 12),
-                ...caractsTab3.map((c) => _buildCampoDinamico(c)),
-                if (caractsTab3.isEmpty) ...[
+                if (caractsTab3.isEmpty && !_cargandoCaracts)
                   const Text('Sin características configuradas',
                       style: TextStyle(color: Colors.grey)),
-                ],
-                const Divider(height: 24),
-                const Text('Nivel de afectación',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                const SizedBox(height: 4),
-                ...['sin_daños', 'moderado', 'critico'].map((nivel) {
-                  final label = nivel == 'sin_daños'
-                      ? 'Sin daños'
-                      : nivel == 'moderado'
-                          ? 'Moderado'
-                          : 'Crítico';
-                  return RadioListTile<String>(
-                    title: Text(label),
-                    value: nivel,
-                    groupValue: _estadoAfectacion,
-                    onChanged: (v) => setState(() => _estadoAfectacion = v!),
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                  );
-                }),
+                const SizedBox(height: 12),
+                ...caractsTab3.map((c) => _buildCampoDinamico(c)),
               ],
             ),
           ),
@@ -746,8 +620,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab4() {
-    final caractsTab4 =
-        _caracteristicas.where((c) => c.orden == 12).toList();
+    final caractsTab4 = _caracteristicas
+        .where((c) => c.orden >= 40 && c.orden <= 50)
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -758,13 +633,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('4. Condición de seguridad',
+                const Text('4. Clasificación Global',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
-                ...caractsTab4.map((c) => _buildCampoDinamico(c)),
-                if (caractsTab4.isEmpty)
+                if (caractsTab4.isEmpty && !_cargandoCaracts)
                   const Text('Sin características configuradas',
                       style: TextStyle(color: Colors.grey)),
+                ...caractsTab4.map((c) => _buildCampoDinamico(c)),
               ],
             ),
           ),
@@ -774,6 +649,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab5() {
+    final caractsTab5 = _caracteristicas
+        .where((c) => c.orden >= 50 && c.orden <= 60)
+        .toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -783,17 +662,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('5. Observaciones adicionales',
+                const Text('5. Recomendaciones',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _observacionesCtrl,
-                  decoration: const InputDecoration(
-                    hintText: 'Escribe observaciones adicionales...',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 8,
-                ),
+                const SizedBox(height: 16),
+                if (caractsTab5.isEmpty && !_cargandoCaracts)
+                  const Text('Sin características configuradas',
+                      style: TextStyle(color: Colors.grey)),
+                ...caractsTab5.map((c) => _buildCampoDinamico(c)),
               ],
             ),
           ),
@@ -803,6 +678,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab6() {
+    final caractsTab6 = _caracteristicas
+        .where((c) => c.orden >= 60 && c.orden <= 70)
+        .toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -812,8 +691,32 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('6. Fotografías',
+                const Text('6. Observaciones y Fotografías',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                const SizedBox(height: 12),
+                ...caractsTab6.map((c) => _buildCampoDinamico(c)),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _observacionesCtrl,
+                  decoration: const InputDecoration(
+                    hintText: 'Observaciones adicionales...',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 4,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Fotografías',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -833,14 +736,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 if (_fotos.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text('Fotos capturadas (${_fotos.length})',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
+                      style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _fotos.asMap().entries.map((e) =>
-                      _buildFotoThumb(e.key, e.value)
-                    ).toList(),
+                    children: _fotos.asMap().entries
+                        .map((e) => _buildFotoThumb(e.key, e.value))
+                        .toList(),
                   ),
                 ],
               ],
@@ -859,9 +762,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         maxHeight: 1920,
         imageQuality: 80,
       );
-      if (xfile != null) {
-        setState(() => _fotos.add(xfile.path));
-      }
+      if (xfile != null) setState(() => _fotos.add(xfile.path));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1026,8 +927,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           ),
         );
       case 'multiseleccion':
-        final seleccionados = _valoresCaracteristica[c.id] as Set<String>? ??
-            <String>{};
+        final seleccionados =
+            _valoresCaracteristica[c.id] as Set<String>? ?? <String>{};
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Column(

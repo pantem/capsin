@@ -1277,8 +1277,12 @@ async function abrirFormInmueblePadron(id) {
   const body = document.getElementById('modal-inmueble-padron-body');
   let inm = {};
   let tipos = [];
+  let caracts = [];
   try {
     tipos = await fetchJSON(`${API}/tipos-inmueble?activos=true`);
+    if (tipos.length > 0) {
+      caracts = await fetchJSON(`${API}/tipos-inmueble/${tipos[0]._id}/caracteristicas`);
+    }
   } catch {}
 
   if (id) {
@@ -1289,9 +1293,57 @@ async function abrirFormInmueblePadron(id) {
     `<option value="${t._id}" ${inm.tipo_inmueble_ref === t._id ? 'selected' : ''}>${t.nombre}</option>`
   ).join('');
 
+  const sec1 = caracts.filter(c => c.orden >= 1 && c.orden <= 14);
+  const sec2 = caracts.filter(c => c.orden >= 20 && c.orden <= 40);
+  const sec3 = caracts.filter(c => c.orden >= 40 && c.orden <= 50);
+  const sec4 = caracts.filter(c => c.orden >= 50 && c.orden <= 60);
+  const sec5 = caracts.filter(c => c.orden >= 60 && c.orden <= 70);
+
+  function renderCampo(c, valoresGuardados) {
+    const val = valoresGuardados ? (valoresGuardados[c._id] || '') : '';
+    if (c.tipo_dato === 'seleccion') {
+      return `
+        <div class="form-group">
+          <label>${c.nombre}</label>
+          <select data-caract="${c._id}" style="width:100%;">
+            <option value="">Seleccione</option>
+            ${c.opciones.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+          </select>
+        </div>`;
+    }
+    if (c.tipo_dato === 'texto') {
+      return `
+        <div class="form-group">
+          <label>${c.nombre}</label>
+          <input type="text" data-caract="${c._id}" value="${val}" style="width:100%;">
+        </div>`;
+    }
+    if (c.tipo_dato === 'numero') {
+      return `
+        <div class="form-group">
+          <label>${c.nombre}</label>
+          <input type="number" data-caract="${c._id}" value="${val}" style="width:100%;">
+        </div>`;
+    }
+    return '';
+  }
+
+  let htmlSec2 = sec2.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">2. Estado de la Edificación</h3>` : '';
+  sec2.forEach(c => { htmlSec2 += renderCampo(c); });
+
+  let htmlSec3 = sec3.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">3. Clasificación Global</h3>` : '';
+  sec3.forEach(c => { htmlSec3 += renderCampo(c); });
+
+  let htmlSec4 = sec4.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">4. Recomendaciones</h3>` : '';
+  sec4.forEach(c => { htmlSec4 += renderCampo(c); });
+
+  let htmlSec5 = sec5.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">5. Observaciones</h3>` : '';
+  sec5.forEach(c => { htmlSec5 += renderCampo(c); });
+
   body.innerHTML = `
     <h2>${id ? 'Editar Inmueble' : 'Nuevo Inmueble en Padrón'}</h2>
     <form id="form-padron" onsubmit="event.preventDefault(); guardarInmueblePadron('${id || ''}');">
+      <h3 style="margin:0 0 0.5rem;color:#7A0C38;">1. Ubicación y Descripción</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
         <div class="form-group" style="grid-column:1/3;">
           <label>Nombre / Descripción del inmueble</label>
@@ -1299,19 +1351,7 @@ async function abrirFormInmueblePadron(id) {
         </div>
         <div class="form-group">
           <label>Tipo de inmueble</label>
-          <select id="padron-tipo" style="width:100%;">
-            <option value="">Seleccionar...</option>
-            ${tiposOptions}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Uso del inmueble</label>
-          <select id="padron-uso" style="width:100%;">
-            <option value="">Seleccionar...</option>
-            ${['HABITACIÓN UNIFAMILIAR','HABITACIÓN MULTIFAMILIAR','CENTRO DE REUNIÓN','OFICINAS PRIVADAS','INDUSTRIAS','RECREATIVO','COMERCIOS','ESTACIONAMIENTO','EDUCACIÓN','OFICINAS PÚBLICAS','BODEGAS','MIXTO'].map(u =>
-              `<option value="${u}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
-            ).join('')}
-          </select>
+          <select id="padron-tipo" style="width:100%;"><option value="">Seleccionar...</option>${tiposOptions}</select>
         </div>
         <div class="form-group">
           <label>Calle y Número</label>
@@ -1346,37 +1386,60 @@ async function abrirFormInmueblePadron(id) {
           <input type="number" step="any" id="padron-lng" value="${inm.ubicacion?.coordinates?.[0] || ''}" style="width:100%;">
         </div>
         <div class="form-group">
-          <label>Niveles sobre terreno</label>
-          <select id="padron-niveles" style="width:100%;">
-            ${Array.from({length:20}, (_,i) => `<option value="${i+1}" ${inm.niveles === i+1 ? 'selected' : ''}>${i+1}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Sótanos</label>
-          <select id="padron-sotanos" style="width:100%;">
-            ${Array.from({length:10}, (_,i) => `<option value="${i}" ${inm.sotanos === i ? 'selected' : ''}>${i}</option>`).join('')}
+          <label>Uso del Inmueble</label>
+          <select id="padron-uso" style="width:100%;">
+            <option value="">Seleccione</option>
+            ${['HABITACIÓN UNIFAMILIAR','HABITACIÓN MULTIFAMILIAR','CENTRO DE REUNIÓN','OFICINAS PRIVADAS','INDUSTRIAS','RECREATIVO','COMERCIOS','ESTACIONAMIENTO','EDUCACIÓN','OFICINAS PÚBLICAS','BODEGAS','MIXTO'].map(u =>
+              `<option value="${u}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
+            ).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Década de construcción</label>
           <select id="padron-decada" style="width:100%;">
-            <option value="">Seleccionar...</option>
-            ${['50s o antes','60s','70s','80s','90s','2000s','2010s o más'].map(d =>
+            <option value="">Seleccione</option>
+            ${['50S O ANTES','60S','70S','80S','90S','2000S','2010S O MÁS'].map(d =>
               `<option value="${d}" ${inm.decada_construccion === d ? 'selected' : ''}>${d}</option>`
             ).join('')}
           </select>
         </div>
         <div class="form-group">
+          <label>Niveles sobre terreno</label>
+          <select id="padron-niveles" style="width:100%;">
+            ${Array.from({length:100}, (_,i) => `<option value="${i+1}" ${(inm.niveles || 1) === i+1 ? 'selected' : ''}>${i+1}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sótanos</label>
+          <select id="padron-sotanos" style="width:100%;">
+            ${Array.from({length:100}, (_,i) => `<option value="${i}" ${(inm.sotanos || 0) === i ? 'selected' : ''}>${i}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
           <label>Tipo de inspección</label>
           <select id="padron-inspeccion" style="width:100%;">
-            <option value="">Seleccionar...</option>
+            <option value="">Seleccione</option>
             ${['INSPECCIÓN EXTERIOR ÚNICAMENTE','INSPECCIÓN INTERIOR Y EXTERIOR'].map(t =>
               `<option value="${t}" ${inm.tipo_inspeccion === t ? 'selected' : ''}>${t}</option>`
             ).join('')}
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+      ${htmlSec2}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        ${sec2.map(c => renderCampo(c)).join('')}
+      </div>
+      ${htmlSec3}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        ${sec3.map(c => renderCampo(c)).join('')}
+      </div>
+      ${htmlSec4}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        ${sec4.map(c => renderCampo(c)).join('')}
+      </div>
+      ${htmlSec5}
+      ${sec5.map(c => renderCampo(c)).join('')}
+      <div style="display:flex;gap:0.5rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
         <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Inmueble'}</button>
         <button type="button" class="btn-sm" onclick="cerrarModal('modal-inmueble-padron')">Cancelar</button>
       </div>
@@ -1403,7 +1466,12 @@ async function guardarInmueblePadron(editId) {
     sotanos: parseInt(document.getElementById('padron-sotanos').value) || 0,
     decada_construccion: document.getElementById('padron-decada').value,
     tipo_inspeccion: document.getElementById('padron-inspeccion').value,
+    valores_seguimiento: {},
   };
+
+  document.querySelectorAll('#form-padron [data-caract]').forEach(el => {
+    if (el.value) data.valores_seguimiento[el.dataset.caract] = el.value;
+  });
 
   if (!data.nombre) { alert('El nombre es requerido'); return; }
 

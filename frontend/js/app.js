@@ -1462,23 +1462,31 @@ async function abrirFormInmueblePadron(id) {
   document.getElementById('modal-inmueble-padron').classList.remove('hidden');
 }
 
+let _fotosPadron = [];
+
 function previewFotosPadron(input) {
-  const container = document.getElementById('padron-fotos-preview');
-  const archivos = Array.from(input.files);
-  if (archivos.length > 10) {
-    alert('Máximo 10 imágenes');
+  const nuevos = Array.from(input.files);
+  if (_fotosPadron.length + nuevos.length > 10) {
+    alert('Máximo 10 imágenes. Ya tienes ' + _fotosPadron.length + '.');
     input.value = '';
     return;
   }
+  _fotosPadron = _fotosPadron.concat(nuevos);
+  renderFotosPadron();
+  input.value = '';
+}
+
+function renderFotosPadron() {
+  const container = document.getElementById('padron-fotos-preview');
   container.innerHTML = '';
-  archivos.forEach((file, i) => {
+  _fotosPadron.forEach((file, i) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const div = document.createElement('div');
       div.style.cssText = 'position:relative;width:100px;height:100px;';
       div.innerHTML = `
         <img src="${e.target.result}" style="width:100px;height:100px;object-fit:cover;border-radius:6px;">
-        <span style="position:absolute;top:-4px;right:-4px;background:#d32f2f;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;" onclick="this.parentElement.remove();">✕</span>
+        <span style="position:absolute;top:-4px;right:-4px;background:#d32f2f;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;" onclick="_fotosPadron.splice(${i},1);renderFotosPadron();">✕</span>
       `;
       container.appendChild(div);
     };

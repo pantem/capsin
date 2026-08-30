@@ -32,10 +32,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   final _nombreCapturistaCtrl = TextEditingController();
   final _areaCtrl = TextEditingController();
-  final _calleNumeroCtrl = TextEditingController();
-  final _coloniaCtrl = TextEditingController();
-  final _alcaldiaCtrl = TextEditingController();
-  final _codigoPostalCtrl = TextEditingController();
   final _observacionesCtrl = TextEditingController();
 
   final Map<String, dynamic> _valoresCaracteristica = {};
@@ -51,10 +47,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   final List<String> _fotos = [];
   final ImagePicker _picker = ImagePicker();
   String get _apiBase => AppConfig.apiBaseUrl;
-
-  List<Map<String, dynamic>> _colonias = [];
-  bool _cargandoColonias = false;
-  String? _coloniaSeleccionada;
 
   TipoInmueble? _tipoGenerico;
   List<CaracteristicaTipo> _caracteristicas = [];
@@ -110,10 +102,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     _tabController.dispose();
     _nombreCapturistaCtrl.dispose();
     _areaCtrl.dispose();
-    _calleNumeroCtrl.dispose();
-    _coloniaCtrl.dispose();
-    _alcaldiaCtrl.dispose();
-    _codigoPostalCtrl.dispose();
     _observacionesCtrl.dispose();
     for (final ctrl in _textControllers.values) {
       ctrl.dispose();
@@ -164,14 +152,21 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               '';
           final cp = (address['postcode'] as String? ?? '').trim();
 
-          if (road.isNotEmpty || houseNum.isNotEmpty) {
-            _calleNumeroCtrl.text = [road, houseNum]
-                .where((s) => s.isNotEmpty)
-                .join(' ');
+          String calleNum = [road, houseNum].where((s) => s.isNotEmpty).join(' ');
+
+          void _setCaractByNombre(String nombre, String valor) {
+            for (final c in _caracteristicas) {
+              if (c.nombre.contains(nombre) && _textControllers.containsKey(c.id)) {
+                _textControllers[c.id]!.text = valor;
+                break;
+              }
+            }
           }
-          if (colonia.isNotEmpty) _coloniaCtrl.text = colonia;
-          if (alcaldia.isNotEmpty) _alcaldiaCtrl.text = alcaldia;
-          if (cp.isNotEmpty) _codigoPostalCtrl.text = cp;
+
+          if (calleNum.isNotEmpty) _setCaractByNombre('Calle y Número', calleNum);
+          if (colonia.isNotEmpty) _setCaractByNombre('Colonia', colonia);
+          if (alcaldia.isNotEmpty) _setCaractByNombre('Alcaldía', alcaldia);
+          if (cp.isNotEmpty) _setCaractByNombre('Código Postal', cp);
         }
       } catch (_) {}
 
@@ -183,38 +178,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       );
     } finally {
       setState(() => _obteniendoUbicacion = false);
-    }
-  }
-
-  Future<void> _buscarColonias(String cp) async {
-    if (cp.length < 5) {
-      setState(() {
-        _colonias = [];
-        _coloniaSeleccionada = null;
-      });
-      return;
-    }
-    setState(() => _cargandoColonias = true);
-    try {
-      final uri = Uri.parse('$_apiBase/codigos-postales?codigo=$cp');
-      final response = await http.get(uri);
-      if (response.statusCode == 200) {
-        final data = (jsonDecode(response.body) as List)
-            .cast<Map<String, dynamic>>();
-        setState(() {
-          _colonias = data;
-          _coloniaSeleccionada = null;
-          if (data.isNotEmpty && data.length == 1) {
-            _coloniaSeleccionada = data.first['colonia'] as String?;
-            _coloniaCtrl.text = _coloniaSeleccionada!;
-            _alcaldiaCtrl.text = data.first['municipio'] as String? ?? '';
-          }
-        });
-      }
-    } catch (e) {
-      setState(() => _colonias = []);
-    } finally {
-      setState(() => _cargandoColonias = false);
     }
   }
 
@@ -236,16 +199,25 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
       final reporteId = _uuid.v4();
 
+      String _getCaractByNombre(String nombre) {
+        for (final c in _caracteristicas) {
+          if (c.nombre.contains(nombre) && _textControllers.containsKey(c.id)) {
+            return _textControllers[c.id]!.text;
+          }
+        }
+        return '';
+      }
+
       final reporte = Reporte(
         id: reporteId,
         folio: folio,
         fecha: _fechaSeleccionada,
         nombreCapturista: _nombreCapturistaCtrl.text,
         area: _areaCtrl.text,
-        calleNumero: _calleNumeroCtrl.text,
-        colonia: _coloniaCtrl.text,
-        alcaldia: _alcaldiaCtrl.text,
-        codigoPostal: _codigoPostalCtrl.text,
+        calleNumero: _getCaractByNombre('Calle y Número'),
+        colonia: _getCaractByNombre('Colonia'),
+        alcaldia: _getCaractByNombre('Alcaldía'),
+        codigoPostal: _getCaractByNombre('Código Postal'),
         lat: _lat,
         lng: _lng,
         usoInmueble: '',
@@ -472,92 +444,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   label: Text(_lat != null
                       ? '${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}'
                       : 'Obtener coordenadas'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _calleNumeroCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Calle y Número',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _codigoPostalCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Código Postal',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: _cargandoColonias
-                        ? const SizedBox(
-                            width: 18, height: 18,
-                            child: Padding(
-                              padding: EdgeInsets.all(12),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : null,
-                  ),
-                  keyboardType: TextInputType.number,
-                  maxLength: 5,
-                  onChanged: _buscarColonias,
-                ),
-                if (_colonias.length > 1 && _coloniaSeleccionada == null) ...[
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Selecciona la colonia',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _colonias.map((c) => DropdownMenuItem(
-                      value: c['colonia'] as String,
-                      child: Text(c['colonia'] as String),
-                    )).toList(),
-                    onChanged: (v) {
-                      setState(() {
-                        _coloniaSeleccionada = v;
-                        _coloniaCtrl.text = v ?? '';
-                        final sel = _colonias.firstWhere(
-                            (c) => c['colonia'] == v,
-                            orElse: () => <String, dynamic>{});
-                        if (sel.isNotEmpty) {
-                          _alcaldiaCtrl.text = sel['municipio'] as String? ?? '';
-                        }
-                      });
-                    },
-                  ),
-                ],
-                if (_coloniaSeleccionada != null && _colonias.length > 1) ...[
-                  const SizedBox(height: 8),
-                  Chip(
-                    label: Text(_coloniaSeleccionada!),
-                    onDeleted: () => setState(() {
-                      _coloniaSeleccionada = null;
-                      _colonias = [];
-                      _codigoPostalCtrl.clear();
-                    }),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _coloniaCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Colonia',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'Requerido' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _alcaldiaCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Alcaldía',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'Requerido' : null,
                 ),
               ],
             ),

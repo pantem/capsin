@@ -1301,6 +1301,22 @@ async function abrirFormInmueblePadron(id) {
 
   function renderCampo(c) {
     if (c.tipo_dato === 'seleccion') {
+      const esRadio = c.opciones.length === 3 &&
+        c.opciones.includes('Sí') && c.opciones.includes('No') && c.opciones.includes('Existen dudas');
+      if (esRadio) {
+        return `
+          <div class="form-group">
+            <label style="font-weight:600;margin-bottom:0.3rem;display:block;">${c.nombre}</label>
+            <div style="display:flex;gap:1rem;">
+              ${c.opciones.map(o => `
+                <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.9rem;">
+                  <input type="radio" name="caract-${c._id}" data-caract="${c._id}" value="${o}">
+                  ${o}
+                </label>
+              `).join('')}
+            </div>
+          </div>`;
+      }
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
@@ -1459,7 +1475,11 @@ async function guardarInmueblePadron(editId) {
   };
 
   document.querySelectorAll('#form-padron [data-caract]').forEach(el => {
-    if (el.value) data.valores_seguimiento[el.dataset.caract] = el.value;
+    if (el.tagName === 'INPUT' && el.type === 'radio') {
+      if (el.checked) data.valores_seguimiento[el.dataset.caract] = el.value;
+    } else if (el.value) {
+      data.valores_seguimiento[el.dataset.caract] = el.value;
+    }
   });
 
   if (!data.nombre) { alert('El nombre es requerido'); return; }

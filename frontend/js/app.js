@@ -1297,7 +1297,7 @@ async function abrirFormInmueblePadron(id) {
   const sec2 = caracts.filter(c => c.orden >= 20 && c.orden <= 40);
   const sec3 = caracts.filter(c => c.orden >= 40 && c.orden <= 50);
   const sec4 = caracts.filter(c => c.orden >= 50 && c.orden <= 60);
-  const sec5 = caracts.filter(c => c.orden >= 60 && c.orden <= 70);
+  const sec5 = caracts.filter(c => c.orden >= 60 && c.orden <= 70 && !c.nombre.includes('Fotograf'));
 
   function renderCampo(c) {
     if (c.tipo_dato === 'seleccion') {

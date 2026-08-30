@@ -9,6 +9,7 @@ const PERMISOS_DISPONIBLES = [
   'ver_tipos',
   'ver_areas',
   'ver_roles',
+  'ver_alta_inmuebles',
 ];
 
 const rolSchema = new mongoose.Schema({

@@ -16,7 +16,7 @@ const ROLES_DEFAULT = [
   {
     nombre: 'admin',
     descripcion: 'Acceso total al sistema',
-    permisos: ['ver_dashboard', 'ver_mapa', 'ver_lista', 'ver_catalogo', 'ver_usuarios', 'ver_tipos', 'ver_areas', 'ver_roles'],
+    permisos: ['ver_dashboard', 'ver_mapa', 'ver_lista', 'ver_catalogo', 'ver_usuarios', 'ver_tipos', 'ver_areas', 'ver_roles', 'ver_alta_inmuebles'],
   },
   {
     nombre: 'capturista',
@@ -47,7 +47,12 @@ async function seedRoles() {
   const created = [];
   for (const r of ROLES_DEFAULT) {
     let rol = await Rol.findOne({ nombre: r.nombre });
-    if (!rol) {
+    if (rol) {
+      if (JSON.stringify(rol.permisos) !== JSON.stringify(r.permisos)) {
+        await Rol.findByIdAndUpdate(rol._id, { permisos: r.permisos });
+        console.log(`Rol actualizado: ${r.nombre} (${r.permisos.length} permisos)`);
+      }
+    } else {
       rol = await new Rol(r).save();
       console.log(`Rol creado: ${r.nombre}`);
     }

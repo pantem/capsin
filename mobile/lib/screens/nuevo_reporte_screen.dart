@@ -679,7 +679,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Widget _buildTab6() {
     final caractsTab6 = _caracteristicas
-        .where((c) => c.orden >= 60 && c.orden <= 70)
+        .where((c) => c.orden >= 60 && c.orden <= 70 && !c.nombre.contains('Fotograf'))
         .toList();
 
     return ListView(

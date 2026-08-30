@@ -1301,9 +1301,11 @@ async function abrirFormInmueblePadron(id) {
 
   function renderCampo(c) {
     if (c.tipo_dato === 'seleccion') {
-      const esRadio = c.opciones.length === 3 &&
+      const esRadio3 = c.opciones.length === 3 &&
         c.opciones.includes('Sí') && c.opciones.includes('No') && c.opciones.includes('Existen dudas');
-      if (esRadio) {
+      const esRadio2 = c.opciones.length === 2 &&
+        c.opciones.includes('Sí') && c.opciones.includes('No');
+      if (esRadio3 || esRadio2) {
         return `
           <div class="form-group">
             <label style="font-weight:600;margin-bottom:0.3rem;display:block;">${c.nombre}</label>

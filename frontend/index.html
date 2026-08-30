@@ -81,6 +81,15 @@
           </svg>
           Ubicación
         </button>
+        <button data-view="alta-inmuebles" id="nav-alta-inmuebles" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-alta-inmuebles" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <line x1="12" y1="22" x2="12" y2="12"></line>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+          </svg>
+          Alta Inmuebles
+        </button>
         <button data-view="tipos" id="nav-tipos" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" class="icon-tipos" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -316,6 +325,22 @@
         <div id="ubic-resultados"></div>
       </section>
 
+      <section id="view-alta-inmuebles" class="view" style="display:none;">
+        <div class="toolbar">
+          <h2>Alta de Inmuebles</h2>
+          <button class="btn-primary" onclick="abrirFormInmueblePadron()">+ Nuevo Inmueble</button>
+        </div>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <input type="text" id="padron-search" placeholder="Buscar por nombre, colonia, dirección..."
+            style="flex:1;min-width:200px;padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;" />
+          <select id="padron-alcaldia" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+            <option value="">Todas las alcaldías</option>
+          </select>
+        </div>
+        <p id="padron-count" style="font-size:0.85rem;color:#999;margin-bottom:0.5rem;"></p>
+        <div id="padron-lista"></div>
+      </section>
+
       <section id="view-catalogo" class="view" style="display:none;">
         <div class="toolbar">
           <h2>Catálogo de Direcciones CDMX</h2>
@@ -407,6 +432,13 @@
     <div class="modal-content" style="max-width:400px;">
       <span class="close" onclick="cerrarModal('modal-login')">&times;</span>
       <div id="modal-login-body"></div>
+    </div>
+  </div>
+
+  <div id="modal-inmueble-padron" class="modal hidden">
+    <div class="modal-content" style="max-width:700px;">
+      <span class="close" onclick="cerrarModal('modal-inmueble-padron')">&times;</span>
+      <div id="modal-inmueble-padron-body"></div>
     </div>
   </div>
 

@@ -6,6 +6,7 @@ import '../services/sync_service.dart';
 import '../services/auth_service.dart';
 import 'nuevo_reporte_screen.dart';
 import 'detalle_siniestro_screen.dart';
+import 'buscar_inmueble_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -74,6 +75,17 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(_userNombre.isNotEmpty ? _userNombre : 'Siniestros Sismo'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const BuscarInmuebleScreen()),
+              );
+            },
+            tooltip: 'Buscar Inmueble',
+          ),
           IconButton(
             icon: const Icon(Icons.sync),
             onPressed: _sincronizar,
@@ -187,16 +199,35 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const NuevoReporteScreen()),
-          );
-          _cargar();
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo Reporte'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'buscar',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const BuscarInmuebleScreen()),
+              );
+            },
+            tooltip: 'Buscar Inmueble',
+            child: const Icon(Icons.search),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.extended(
+            heroTag: 'nuevo',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NuevoReporteScreen()),
+              );
+              _cargar();
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Nuevo Reporte'),
+          ),
+        ],
       ),
     );
   }

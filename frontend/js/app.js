@@ -319,6 +319,7 @@ function actualizarHeaderAuth() {
     { id: 'nav-usuarios', perm: 'ver_usuarios' },
     { id: 'nav-areas', perm: 'ver_areas' },
     { id: 'nav-roles', perm: 'ver_roles' },
+    { id: 'nav-alta-inmuebles', perm: 'ver_alta_inmuebles' },
   ];
 
   if (userStr) {
@@ -435,6 +436,7 @@ document.querySelectorAll('nav button').forEach((btn) => {
     if (btn.dataset.view === 'usuarios') setTimeout(loadUsuarios, 50);
     if (btn.dataset.view === 'areas') setTimeout(loadAreas, 50);
     if (btn.dataset.view === 'roles') setTimeout(loadRoles, 50);
+    if (btn.dataset.view === 'alta-inmuebles') setTimeout(loadInmueblesPadron, 50);
   });
 });
 
@@ -1038,6 +1040,7 @@ const PERMISOS_LABELS = {
   ver_tipos: 'Tipos de Inmueble',
   ver_areas: 'Áreas',
   ver_roles: 'Roles y Permisos',
+  ver_alta_inmuebles: 'Alta Inmuebles',
 };
 
 let _editandoRolId = null;
@@ -1181,3 +1184,268 @@ document.getElementById('ubic-alcaldia').addEventListener('change', filtrarUbica
 document.getElementById('ubic-colonia').addEventListener('change', filtrarUbicacion);
 document.getElementById('ubic-cp').addEventListener('input', filtrarUbicacion);
 document.getElementById('ubic-dano').addEventListener('change', filtrarUbicacion);
+
+document.getElementById('modal-inmueble-padron').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-inmueble-padron');
+});
+
+document.getElementById('padron-search').addEventListener('input', (e) => {
+  loadInmueblesPadron(e.target.value);
+});
+
+/* ---------- Inmuebles Padrón CRUD ---------- */
+
+let _padronData = [];
+
+async function loadInmueblesPadron(filter = '') {
+  const container = document.getElementById('padron-lista');
+  const countEl = document.getElementById('padron-count');
+  container.innerHTML = '<p style="color:#777;">Cargando...</p>';
+
+  try {
+    const inmuebles = await fetchJSON(`${API}/inmuebles-padron`);
+    _padronData = inmuebles;
+
+    const alcaldiaSelect = document.getElementById('padron-alcaldia');
+    const alcaldias = [...new Set(inmuebles.map(i => i.alcaldia).filter(Boolean))].sort();
+    alcaldiaSelect.innerHTML = '<option value="">Todas las alcaldías</option>' +
+      alcaldias.map(a => `<option value="${a}">${a}</option>`).join('');
+
+    let filtered = inmuebles;
+    if (filter) {
+      const q = filter.toLowerCase();
+      filtered = inmuebles.filter(i =>
+        (i.nombre || '').toLowerCase().includes(q) ||
+        (i.colonia || '').toLowerCase().includes(q) ||
+        (i.direccion || '').toLowerCase().includes(q) ||
+        (i.alcaldia || '').toLowerCase().includes(q)
+      );
+    }
+
+    countEl.textContent = `${filtered.length} inmueble(s) registrado(s)`;
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<p style="color:#777;">No hay inmuebles registrados. Usa "+ Nuevo Inmueble" para agregar uno.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+          <thead>
+            <tr style="background:#1a237e;color:#fff;text-align:left;">
+              <th style="padding:0.6rem;">Nombre</th>
+              <th style="padding:0.6rem;">Dirección</th>
+              <th style="padding:0.6rem;">Colonia</th>
+              <th style="padding:0.6rem;">Alcaldía</th>
+              <th style="padding:0.6rem;">CP</th>
+              <th style="padding:0.6rem;">Niveles</th>
+              <th style="padding:0.6rem;">Último Reporte</th>
+              <th style="padding:0.6rem;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.map(i => {
+              const ultimoReporte = i.fecha_ultimo_reporte
+                ? formatDate(i.fecha_ultimo_reporte)
+                : '<span style="color:#999;">Sin reportes</span>';
+              return `
+                <tr style="border-bottom:1px solid #e0e0e0;">
+                  <td style="padding:0.5rem;font-weight:600;">${i.nombre || '—'}</td>
+                  <td style="padding:0.5rem;">${i.direccion || '—'}</td>
+                  <td style="padding:0.5rem;">${i.colonia || '—'}</td>
+                  <td style="padding:0.5rem;">${i.alcaldia || '—'}</td>
+                  <td style="padding:0.5rem;">${i.codigo_postal || '—'}</td>
+                  <td style="padding:0.5rem;text-align:center;">${i.niveles || 1}</td>
+                  <td style="padding:0.5rem;">${ultimoReporte}</td>
+                  <td style="padding:0.5rem;">
+                    <button class="btn-sm" onclick="abrirFormInmueblePadron('${i._id}')" title="Editar">✏️</button>
+                    <button class="btn-danger" onclick="eliminarInmueblePadron('${i._id}')" title="Eliminar">🗑</button>
+                  </td>
+                </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<p style="color:#d32f2f;">Error al cargar: ${err.message}</p>`;
+  }
+}
+
+async function abrirFormInmueblePadron(id) {
+  const body = document.getElementById('modal-inmueble-padron-body');
+  let inm = {};
+  let tipos = [];
+  try {
+    tipos = await fetchJSON(`${API}/tipos-inmueble?activos=true`);
+  } catch {}
+
+  if (id) {
+    try { inm = await fetchJSON(`${API}/inmuebles-padron/${id}`); } catch {}
+  }
+
+  const tiposOptions = tipos.map(t =>
+    `<option value="${t._id}" ${inm.tipo_inmueble_ref === t._id ? 'selected' : ''}>${t.nombre}</option>`
+  ).join('');
+
+  body.innerHTML = `
+    <h2>${id ? 'Editar Inmueble' : 'Nuevo Inmueble en Padrón'}</h2>
+    <form id="form-padron" onsubmit="event.preventDefault(); guardarInmueblePadron('${id || ''}');">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+        <div class="form-group" style="grid-column:1/3;">
+          <label>Nombre / Descripción del inmueble</label>
+          <input type="text" id="padron-nombre" value="${inm.nombre || ''}" required style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Tipo de inmueble</label>
+          <select id="padron-tipo" style="width:100%;">
+            <option value="">Seleccionar...</option>
+            ${tiposOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Uso del inmueble</label>
+          <select id="padron-uso" style="width:100%;">
+            <option value="">Seleccionar...</option>
+            ${['HABITACIÓN UNIFAMILIAR','HABITACIÓN MULTIFAMILIAR','CENTRO DE REUNIÓN','OFICINAS PRIVADAS','INDUSTRIAS','RECREATIVO','COMERCIOS','ESTACIONAMIENTO','EDUCACIÓN','OFICINAS PÚBLICAS','BODEGAS','MIXTO'].map(u =>
+              `<option value="${u}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Calle y Número</label>
+          <input type="text" id="padron-direccion" value="${inm.direccion || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Colonia</label>
+          <input type="text" id="padron-colonia" value="${inm.colonia || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Alcaldía</label>
+          <input type="text" id="padron-alcaldia" value="${inm.alcaldia || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Código Postal</label>
+          <input type="text" id="padron-cp" value="${inm.codigo_postal || ''}" maxlength="5" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Entre que calles / Referencia</label>
+          <input type="text" id="padron-entre-calles" value="${inm.entre_calles || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Persona contactada</label>
+          <input type="text" id="padron-contacto" value="${inm.persona_contactada || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Latitud</label>
+          <input type="number" step="any" id="padron-lat" value="${inm.ubicacion?.coordinates?.[1] || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Longitud</label>
+          <input type="number" step="any" id="padron-lng" value="${inm.ubicacion?.coordinates?.[0] || ''}" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>Niveles sobre terreno</label>
+          <select id="padron-niveles" style="width:100%;">
+            ${Array.from({length:20}, (_,i) => `<option value="${i+1}" ${inm.niveles === i+1 ? 'selected' : ''}>${i+1}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sótanos</label>
+          <select id="padron-sotanos" style="width:100%;">
+            ${Array.from({length:10}, (_,i) => `<option value="${i}" ${inm.sotanos === i ? 'selected' : ''}>${i}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Década de construcción</label>
+          <select id="padron-decada" style="width:100%;">
+            <option value="">Seleccionar...</option>
+            ${['50s o antes','60s','70s','80s','90s','2000s','2010s o más'].map(d =>
+              `<option value="${d}" ${inm.decada_construccion === d ? 'selected' : ''}>${d}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de inspección</label>
+          <select id="padron-inspeccion" style="width:100%;">
+            <option value="">Seleccionar...</option>
+            ${['INSPECCIÓN EXTERIOR ÚNICAMENTE','INSPECCIÓN INTERIOR Y EXTERIOR'].map(t =>
+              `<option value="${t}" ${inm.tipo_inspeccion === t ? 'selected' : ''}>${t}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Inmueble'}</button>
+        <button type="button" class="btn-sm" onclick="cerrarModal('modal-inmueble-padron')">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById('modal-inmueble-padron').classList.remove('hidden');
+}
+
+async function guardarInmueblePadron(editId) {
+  const data = {
+    nombre: document.getElementById('padron-nombre').value.trim(),
+    tipo_inmueble_ref: document.getElementById('padron-tipo').value || null,
+    uso_inmueble: document.getElementById('padron-uso').value,
+    direccion: document.getElementById('padron-direccion').value.trim(),
+    colonia: document.getElementById('padron-colonia').value.trim(),
+    alcaldia: document.getElementById('padron-alcaldia').value.trim(),
+    codigo_postal: document.getElementById('padron-cp').value.trim(),
+    entre_calles: document.getElementById('padron-entre-calles').value.trim(),
+    persona_contactada: document.getElementById('padron-contacto').value.trim(),
+    lat: parseFloat(document.getElementById('padron-lat').value) || null,
+    lng: parseFloat(document.getElementById('padron-lng').value) || null,
+    niveles: parseInt(document.getElementById('padron-niveles').value) || 1,
+    sotanos: parseInt(document.getElementById('padron-sotanos').value) || 0,
+    decada_construccion: document.getElementById('padron-decada').value,
+    tipo_inspeccion: document.getElementById('padron-inspeccion').value,
+  };
+
+  if (!data.nombre) { alert('El nombre es requerido'); return; }
+
+  try {
+    const url = editId ? `${API}/inmuebles-padron/${editId}` : `${API}/inmuebles-padron`;
+    const method = editId ? 'PUT' : 'POST';
+    await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    cerrarModal('modal-inmueble-padron');
+    loadInmueblesPadron();
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  }
+}
+
+async function eliminarInmueblePadron(id) {
+  if (!confirm('¿Eliminar este inmueble y todos sus reportes de seguimiento?')) return;
+  try {
+    await fetch(`${API}/inmuebles-padron/${id}`, { method: 'DELETE' });
+    loadInmueblesPadron();
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
+  }
+}
+
+function filtrarPadron() {
+  const alcaldia = document.getElementById('padron-alcaldia').value;
+  let filtered = _padronData;
+  if (alcaldia) filtered = filtered.filter(i => i.alcaldia === alcaldia);
+  const container = document.getElementById('padron-lista');
+  const countEl = document.getElementById('padron-count');
+  countEl.textContent = `${filtered.length} inmueble(s) encontrado(s)`;
+  // Re-render with filtered data
+  if (filtered.length === 0) {
+    container.innerHTML = '<p style="color:#777;">Sin resultados.</p>';
+    return;
+  }
+  // Trigger full reload with current filter
+  loadInmueblesPadron(document.getElementById('padron-search').value);
+}
+
+document.getElementById('padron-alcaldia').addEventListener('change', filtrarPadron);

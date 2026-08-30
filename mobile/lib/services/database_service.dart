@@ -5,6 +5,8 @@ import '../models/damnificado.dart';
 import '../models/tipo_inmueble.dart';
 import '../models/caracteristica_tipo.dart';
 import '../models/valor_caracteristica.dart';
+import '../models/inmueble_padron.dart';
+import '../models/reporte_seguimiento.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -24,7 +26,7 @@ class DatabaseService {
     final path = join(dbPath, 'siniestros_sismo.db');
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
     );
@@ -110,6 +112,60 @@ class DatabaseService {
         FOREIGN KEY (caracteristicaId) REFERENCES caracteristicas_tipo(id)
       )
     ''');
+    await _crearTablasPadron(db);
+  }
+
+  Future<void> _crearTablasPadron(Database db) async {
+    await db.execute('''
+      CREATE TABLE inmuebles_padron (
+        id TEXT PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        tipoInmuebleId TEXT DEFAULT '',
+        direccion TEXT DEFAULT '',
+        colonia TEXT DEFAULT '',
+        alcaldia TEXT DEFAULT '',
+        codigoPostal TEXT DEFAULT '',
+        entreCalles TEXT DEFAULT '',
+        personaContactada TEXT DEFAULT '',
+        decadaConstruccion TEXT DEFAULT '',
+        usoInmueble TEXT DEFAULT '',
+        niveles INTEGER DEFAULT 1,
+        sotanos INTEGER DEFAULT 0,
+        ocupantes INTEGER DEFAULT 0,
+        tipoInspeccion TEXT DEFAULT '',
+        lat REAL,
+        lng REAL,
+        estadoAfectacion TEXT DEFAULT 'sin_daños',
+        fechaUltimoReporte TEXT,
+        activo INTEGER DEFAULT 1
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE reportes_seguimiento (
+        id TEXT PRIMARY KEY,
+        inmueblePadronId TEXT NOT NULL,
+        capturista TEXT DEFAULT '',
+        fecha TEXT NOT NULL,
+        clasificacionGlobal TEXT DEFAULT '',
+        observaciones TEXT DEFAULT '',
+        fotos TEXT DEFAULT '',
+        sincronizado INTEGER DEFAULT 0,
+        FOREIGN KEY (inmueblePadronId) REFERENCES inmuebles_padron(id)
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE valores_caracteristica_seguimiento (
+        id TEXT PRIMARY KEY,
+        reporteSeguimientoId TEXT NOT NULL,
+        caracteristicaId TEXT NOT NULL,
+        valorTexto TEXT,
+        valorNumero REAL,
+        valorBooleano INTEGER,
+        valorSeleccion TEXT,
+        FOREIGN KEY (reporteSeguimientoId) REFERENCES reportes_seguimiento(id),
+        FOREIGN KEY (caracteristicaId) REFERENCES caracteristicas_tipo(id)
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -136,6 +192,9 @@ class DatabaseService {
         await db.execute('ALTER TABLE reportes ADD COLUMN sobreNivelBanqueta INTEGER DEFAULT 0');
         await db.execute('ALTER TABLE reportes ADD COLUMN bajoNivelBanqueta INTEGER DEFAULT 0');
       } catch (_) {}
+    }
+    if (oldVersion < 8) {
+      await _crearTablasPadron(db);
     }
   }
 
@@ -281,5 +340,108 @@ class DatabaseService {
     final maps = await db.query('valores_caracteristica',
         where: 'reporteId = ?', whereArgs: [reporteId]);
     return maps.map((m) => ValorCaracteristica.fromMap(m)).toList();
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Inmuebles Padrón
+  // ═══════════════════════════════════════════════════
+
+  Future<String> insertInmueblePadron(InmueblePadron inm) async {
+    final db = await database;
+    await db.insert('inmuebles_padron', inm.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+    return inm.id;
+  }
+
+  Future<List<InmueblePadron>> getInmueblesPadron() async {
+    final db = await database;
+    final maps = await db.query('inmuebles_padron', orderBy: 'nombre ASC');
+    return maps.map((m) => InmueblePadron.fromMap(m)).toList();
+  }
+
+  Future<InmueblePadron?> getInmueblePadron(String id) async {
+    final db = await database;
+    final maps = await db.query('inmuebles_padron',
+        where: 'id = ?', whereArgs: [id]);
+    if (maps.isEmpty) return null;
+    return InmueblePadron.fromMap(maps.first);
+  }
+
+  Future<void> deleteInmueblePadron(String id) async {
+    final db = await database;
+    await db.delete('valores_caracteristica_seguimiento',
+        where: 'reporteSeguimientoId IN (SELECT id FROM reportes_seguimiento WHERE inmueblePadronId = ?)',
+        whereArgs: [id]);
+    await db.delete('reportes_seguimiento',
+        where: 'inmueblePadronId = ?', whereArgs: [id]);
+    await db.delete('inmuebles_padron', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> insertInmueblesPadron(List<InmueblePadron> inmuebles) async {
+    final db = await database;
+    await db.delete('inmuebles_padron');
+    for (final inm in inmuebles) {
+      await db.insert('inmuebles_padron', inm.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+  }
+
+  Future<List<InmueblePadron>> getInmueblesCercanos(
+      double lat, double lng, double radioMetros) async {
+    final inmuebles = await getInmueblesPadron();
+    final radioGrados = radioMetros / 111320.0;
+    return inmuebles.where((inm) {
+      if (inm.lat == null || inm.lng == null) return false;
+      final dlat = inm.lat! - lat;
+      final dlng = inm.lng! - lng;
+      final dist = (dlat * dlat + dlng * dlng);
+      return dist <= radioGrados * radioGrados;
+    }).toList();
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Reportes de Seguimiento
+  // ═══════════════════════════════════════════════════
+
+  Future<String> insertReporteSeguimiento(ReporteSeguimiento r) async {
+    final db = await database;
+    await db.insert('reportes_seguimiento', r.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace);
+    return r.id;
+  }
+
+  Future<List<ReporteSeguimiento>> getReportesSeguimiento(
+      String inmueblePadronId) async {
+    final db = await database;
+    final maps = await db.query('reportes_seguimiento',
+        where: 'inmueblePadronId = ?',
+        whereArgs: [inmueblePadronId],
+        orderBy: 'fecha DESC');
+    return maps.map((m) => ReporteSeguimiento.fromMap(m)).toList();
+  }
+
+  Future<ReporteSeguimiento?> getReporteSeguimientoReciente(
+      String inmueblePadronId) async {
+    final db = await database;
+    final maps = await db.query('reportes_seguimiento',
+        where: 'inmueblePadronId = ?',
+        whereArgs: [inmueblePadronId],
+        orderBy: 'fecha DESC',
+        limit: 1);
+    if (maps.isEmpty) return null;
+    return ReporteSeguimiento.fromMap(maps.first);
+  }
+
+  Future<void> marcarReporteSeguimientoSincronizado(String id) async {
+    final db = await database;
+    await db.update('reportes_seguimiento', {'sincronizado': 1},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<ReporteSeguimiento>> getReportesSeguimientoNoSincronizados() async {
+    final db = await database;
+    final maps = await db.query('reportes_seguimiento',
+        where: 'sincronizado = 0');
+    return maps.map((m) => ReporteSeguimiento.fromMap(m)).toList();
   }
 }

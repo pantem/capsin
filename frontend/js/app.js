@@ -1299,15 +1299,14 @@ async function abrirFormInmueblePadron(id) {
   const sec4 = caracts.filter(c => c.orden >= 50 && c.orden <= 60);
   const sec5 = caracts.filter(c => c.orden >= 60 && c.orden <= 70);
 
-  function renderCampo(c, valoresGuardados) {
-    const val = valoresGuardados ? (valoresGuardados[c._id] || '') : '';
+  function renderCampo(c) {
     if (c.tipo_dato === 'seleccion') {
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
           <select data-caract="${c._id}" style="width:100%;">
             <option value="">Seleccione</option>
-            ${c.opciones.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+            ${c.opciones.map(o => `<option value="${o}">${o}</option>`).join('')}
           </select>
         </div>`;
     }
@@ -1315,30 +1314,18 @@ async function abrirFormInmueblePadron(id) {
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
-          <input type="text" data-caract="${c._id}" value="${val}" style="width:100%;">
+          <input type="text" data-caract="${c._id}" style="width:100%;">
         </div>`;
     }
     if (c.tipo_dato === 'numero') {
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
-          <input type="number" data-caract="${c._id}" value="${val}" style="width:100%;">
+          <input type="number" data-caract="${c._id}" style="width:100%;">
         </div>`;
     }
     return '';
   }
-
-  let htmlSec2 = sec2.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">2. Estado de la Edificación</h3>` : '';
-  sec2.forEach(c => { htmlSec2 += renderCampo(c); });
-
-  let htmlSec3 = sec3.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">3. Clasificación Global</h3>` : '';
-  sec3.forEach(c => { htmlSec3 += renderCampo(c); });
-
-  let htmlSec4 = sec4.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">4. Recomendaciones</h3>` : '';
-  sec4.forEach(c => { htmlSec4 += renderCampo(c); });
-
-  let htmlSec5 = sec5.length > 0 ? `<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">5. Observaciones</h3>` : '';
-  sec5.forEach(c => { htmlSec5 += renderCampo(c); });
 
   body.innerHTML = `
     <h2>${id ? 'Editar Inmueble' : 'Nuevo Inmueble en Padrón'}</h2>
@@ -1425,20 +1412,22 @@ async function abrirFormInmueblePadron(id) {
           </select>
         </div>
       </div>
-      ${htmlSec2}
+      ${sec2.length > 0 ? '<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">2. Estado de la Edificación</h3>' : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
         ${sec2.map(c => renderCampo(c)).join('')}
       </div>
-      ${htmlSec3}
+      ${sec3.length > 0 ? '<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">3. Clasificación Global</h3>' : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
         ${sec3.map(c => renderCampo(c)).join('')}
       </div>
-      ${htmlSec4}
+      ${sec4.length > 0 ? '<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">4. Recomendaciones</h3>' : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
         ${sec4.map(c => renderCampo(c)).join('')}
       </div>
-      ${htmlSec5}
-      ${sec5.map(c => renderCampo(c)).join('')}
+      ${sec5.length > 0 ? '<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">5. Observaciones</h3>' : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        ${sec5.map(c => renderCampo(c)).join('')}
+      </div>
       <div style="display:flex;gap:0.5rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
         <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Inmueble'}</button>
         <button type="button" class="btn-sm" onclick="cerrarModal('modal-inmueble-padron')">Cancelar</button>

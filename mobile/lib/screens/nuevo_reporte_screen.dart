@@ -252,85 +252,92 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final caractsRequeridas = _caracteristicas
-        .where((c) => c.requerido && c.orden >= 8 && c.orden <= 12);
-    for (final c in caractsRequeridas) {
-      int tabIndex = 1;
-      if (c.orden >= 8 && c.orden <= 10) {
-        tabIndex = 1;
-      } else if (c.orden == 11) {
-        tabIndex = 2;
-      } else if (c.orden == 12) {
-        tabIndex = 3;
+    try {
+      final caractsRequeridas = _caracteristicas
+          .where((c) => c.requerido && c.orden >= 8 && c.orden <= 12);
+      for (final c in caractsRequeridas) {
+        int tabIndex = 1;
+        if (c.orden >= 8 && c.orden <= 10) {
+          tabIndex = 1;
+        } else if (c.orden == 11) {
+          tabIndex = 2;
+        } else if (c.orden == 12) {
+          tabIndex = 3;
+        }
+
+        if (c.tipoDato == 'seleccion') {
+          final val = _valoresCaracteristica[c.id] as String?;
+          if (val == null || val.isEmpty) {
+            _tabController.animateTo(tabIndex);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Selecciona: ${c.nombre}')),
+            );
+            return;
+          }
+        } else if (c.tipoDato == 'multiseleccion') {
+          final val = _valoresCaracteristica[c.id] as Set<String>?;
+          if (val == null || val.isEmpty) {
+            _tabController.animateTo(tabIndex);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Selecciona: ${c.nombre}')),
+            );
+            return;
+          }
+        } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
+          final ctrl = _textControllers[c.id];
+          if (ctrl == null || ctrl.text.trim().isEmpty) {
+            _tabController.animateTo(tabIndex);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Completa: ${c.nombre}')),
+            );
+            return;
+          }
+        }
       }
 
-      if (c.tipoDato == 'seleccion') {
-        final val = _valoresCaracteristica[c.id] as String?;
-        if (val == null || val.isEmpty) {
-          _tabController.animateTo(tabIndex);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Selecciona: ${c.nombre}')),
-          );
-          return;
-        }
-      } else if (c.tipoDato == 'multiseleccion') {
-        final val = _valoresCaracteristica[c.id] as Set<String>?;
-        if (val == null || val.isEmpty) {
-          _tabController.animateTo(tabIndex);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Selecciona: ${c.nombre}')),
-          );
-          return;
-        }
-      } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
-        final ctrl = _textControllers[c.id];
-        if (ctrl == null || ctrl.text.trim().isEmpty) {
-          _tabController.animateTo(tabIndex);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Completa: ${c.nombre}')),
-          );
-          return;
-        }
-      }
+      final folio =
+          'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
+      final reporteId = _uuid.v4();
+
+      final reporte = Reporte(
+        id: reporteId,
+        folio: folio,
+        fecha: _fechaSeleccionada,
+        nombreCapturista: _nombreCapturistaCtrl.text,
+        area: _areaCtrl.text,
+        calleNumero: _calleNumeroCtrl.text,
+        colonia: _coloniaCtrl.text,
+        alcaldia: _alcaldiaCtrl.text,
+        codigoPostal: _codigoPostalCtrl.text,
+        lat: _lat,
+        lng: _lng,
+        usoInmueble: '',
+        otroUso: null,
+        fechaConstruccion: '',
+        danosObservados: '',
+        estadoAfectacion: _estadoAfectacion,
+        sobreNivelBanqueta: _sobreNivelBanqueta,
+        bajoNivelBanqueta: _bajoNivelBanqueta,
+        condicionSeguridad: '',
+        observaciones: _observacionesCtrl.text,
+        fotos: _fotos.join(','),
+      );
+
+      await _db.insertReporte(reporte);
+      await _db.insertValoresCaracteristica(
+          _buildValores(reporteId));
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Reporte $folio creado')),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al guardar: $e')),
+      );
     }
-
-    final folio =
-        'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
-    final reporteId = _uuid.v4();
-
-    final reporte = Reporte(
-      id: reporteId,
-      folio: folio,
-      fecha: _fechaSeleccionada,
-      nombreCapturista: _nombreCapturistaCtrl.text,
-      area: _areaCtrl.text,
-      calleNumero: _calleNumeroCtrl.text,
-      colonia: _coloniaCtrl.text,
-      alcaldia: _alcaldiaCtrl.text,
-      codigoPostal: _codigoPostalCtrl.text,
-      lat: _lat,
-      lng: _lng,
-      usoInmueble: '',
-      otroUso: null,
-      fechaConstruccion: '',
-      danosObservados: '',
-      estadoAfectacion: _estadoAfectacion,
-      sobreNivelBanqueta: _sobreNivelBanqueta,
-      bajoNivelBanqueta: _bajoNivelBanqueta,
-      condicionSeguridad: '',
-      observaciones: _observacionesCtrl.text,
-      fotos: _fotos.join(','),
-    );
-
-    await _db.insertReporte(reporte);
-    await _db.insertValoresCaracteristica(
-        _buildValores(reporteId));
-
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Reporte $folio creado')),
-    );
-    Navigator.pop(context);
   }
 
   List<ValorCaracteristica> _buildValores(String reporteId) {

@@ -1,0 +1,313 @@
+{
+  "fecha": "2026-08-30T03:21:50.585Z",
+  "tipos": [
+    {
+      "_id": "6a4fcfcd33eee7fcfd2b833e",
+      "nombre": "UNIFAMILIAR",
+      "descripcion": "INMUEBLES DONDE HABITA UNA SOLA FAMILIA",
+      "activo": false,
+      "creado_en": "2026-07-09T16:43:57.830Z",
+      "actualizado_en": "2026-07-09T16:43:57.831Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd00333eee7fcfd2b8342",
+      "nombre": "MULTIFAMILIAR",
+      "descripcion": "INMUEBLES DONDE HABITAN VARIAS PERSONAS",
+      "activo": false,
+      "creado_en": "2026-07-09T16:44:51.989Z",
+      "actualizado_en": "2026-07-09T16:44:51.990Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd09f33eee7fcfd2b8347",
+      "nombre": "HOSPITAL",
+      "descripcion": "INMUEBLE DE RELEVANCIA MEDICA",
+      "activo": false,
+      "creado_en": "2026-07-09T16:47:27.032Z",
+      "actualizado_en": "2026-07-09T16:47:27.032Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd15733eee7fcfd2b834d",
+      "nombre": "UNIDAD HABITACIONAL",
+      "descripcion": "CONJUNTO DE MÁS DE 3 MULTIFAMILIARES",
+      "activo": false,
+      "creado_en": "2026-07-09T16:50:31.821Z",
+      "actualizado_en": "2026-07-09T16:50:31.821Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd17033eee7fcfd2b8354",
+      "nombre": "ESCUELA",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:50:56.922Z",
+      "actualizado_en": "2026-07-09T16:50:56.922Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd17733eee7fcfd2b835c",
+      "nombre": "FABRICA",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:51:03.967Z",
+      "actualizado_en": "2026-07-09T16:51:03.967Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd18a33eee7fcfd2b8365",
+      "nombre": "MERCADO",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:51:22.781Z",
+      "actualizado_en": "2026-07-09T16:51:22.781Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd19333eee7fcfd2b836f",
+      "nombre": "COMERCIO",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:51:31.729Z",
+      "actualizado_en": "2026-07-09T16:51:31.729Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd1a333eee7fcfd2b837a",
+      "nombre": "TEMPLO",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:51:47.816Z",
+      "actualizado_en": "2026-07-09T16:51:47.816Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd1a933eee7fcfd2b8386",
+      "nombre": "TEATRO",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:51:53.919Z",
+      "actualizado_en": "2026-07-09T16:51:53.920Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fd1af33eee7fcfd2b8393",
+      "nombre": "OFICINA",
+      "descripcion": "",
+      "activo": false,
+      "creado_en": "2026-07-09T16:51:59.582Z",
+      "actualizado_en": "2026-07-09T16:51:59.582Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a4fdb86a4907d3af442b193",
+      "nombre": "Inmueble Genérico",
+      "descripcion": "Tipo de inmueble único con características configurables desde el panel de administración",
+      "activo": true,
+      "creado_en": "2026-07-09T17:33:58.360Z",
+      "actualizado_en": "2026-07-09T17:33:58.363Z",
+      "__v": 0
+    }
+  ],
+  "caracteristicas": [
+    {
+      "_id": "6a51d95c22b0673b0485b501",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Datos Generales - Fecha y hora",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": true,
+      "orden": 0,
+      "creado_en": "2026-07-11T05:49:16.314Z",
+      "actualizado_en": "2026-07-11T05:49:16.326Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95c22b0673b0485b503",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Datos Generales - Nombre del capturista",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": true,
+      "orden": 1,
+      "creado_en": "2026-07-11T05:49:16.436Z",
+      "actualizado_en": "2026-07-11T05:49:16.438Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95c22b0673b0485b505",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Datos Generales - Área a la que pertenece",
+      "tipo_dato": "seleccion",
+      "opciones": [
+        "Protección Civil",
+        "Bomberos",
+        "Cruz Roja",
+        "Seguridad Pública",
+        "Salud",
+        "Educación",
+        "Otro"
+      ],
+      "requerido": true,
+      "orden": 2,
+      "creado_en": "2026-07-11T05:49:16.536Z",
+      "actualizado_en": "2026-07-11T05:49:16.537Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95c22b0673b0485b507",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Información del inmueble - Calle y Número",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": true,
+      "orden": 3,
+      "creado_en": "2026-07-11T05:49:16.635Z",
+      "actualizado_en": "2026-07-11T05:49:16.636Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95c22b0673b0485b509",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Información del inmueble - Colonia",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": true,
+      "orden": 4,
+      "creado_en": "2026-07-11T05:49:16.732Z",
+      "actualizado_en": "2026-07-11T05:49:16.732Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95c22b0673b0485b50b",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Información del inmueble - Alcaldía",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": true,
+      "orden": 5,
+      "creado_en": "2026-07-11T05:49:16.830Z",
+      "actualizado_en": "2026-07-11T05:49:16.831Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95c22b0673b0485b50d",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Información del inmueble - Código Postal",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": true,
+      "orden": 6,
+      "creado_en": "2026-07-11T05:49:16.927Z",
+      "actualizado_en": "2026-07-11T05:49:16.928Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b50f",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Información del inmueble - Coordenadas geográficas",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": false,
+      "orden": 7,
+      "creado_en": "2026-07-11T05:49:17.023Z",
+      "actualizado_en": "2026-07-11T05:49:17.023Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b511",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Uso del Inmueble",
+      "tipo_dato": "seleccion",
+      "opciones": [
+        "Vivienda Unifamiliar",
+        "Vivienda Multifamiliar",
+        "Escuela",
+        "Hospital",
+        "Oficina",
+        "Comercio",
+        "Otro"
+      ],
+      "requerido": true,
+      "orden": 8,
+      "creado_en": "2026-07-11T05:49:17.119Z",
+      "actualizado_en": "2026-07-11T05:49:17.120Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b515",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Fecha aproximada de construcción",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": false,
+      "orden": 10,
+      "creado_en": "2026-07-11T05:49:17.313Z",
+      "actualizado_en": "2026-07-11T05:49:17.313Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b517",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Tipo de daño observado",
+      "tipo_dato": "multiseleccion",
+      "opciones": [
+        "Grietas leves",
+        "Grietas estructurales",
+        "Desprendimiento de acabados",
+        "Daño en columnas",
+        "Daño en trabes",
+        "Inclinación",
+        "Colapso parcial",
+        "Colapso total"
+      ],
+      "requerido": true,
+      "orden": 11,
+      "creado_en": "2026-07-11T05:49:17.410Z",
+      "actualizado_en": "2026-07-11T05:49:17.411Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b519",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Condición de seguridad",
+      "tipo_dato": "seleccion",
+      "opciones": [
+        "Riesgo bajo",
+        "Riesgo medio",
+        "Riesgo alto",
+        "Alto riesgo de colapso"
+      ],
+      "requerido": true,
+      "orden": 12,
+      "creado_en": "2026-07-11T05:49:17.506Z",
+      "actualizado_en": "2026-07-11T05:49:17.507Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b51b",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Observaciones adicionales",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": false,
+      "orden": 13,
+      "creado_en": "2026-07-11T05:49:17.601Z",
+      "actualizado_en": "2026-07-11T05:49:17.602Z",
+      "__v": 0
+    },
+    {
+      "_id": "6a51d95d22b0673b0485b51d",
+      "tipo_inmueble": "6a4fdb86a4907d3af442b193",
+      "nombre": "Fotografías",
+      "tipo_dato": "texto",
+      "opciones": [],
+      "requerido": false,
+      "orden": 14,
+      "creado_en": "2026-07-11T05:49:17.697Z",
+      "actualizado_en": "2026-07-11T05:49:17.698Z",
+      "__v": 0
+    }
+  ]
+}

@@ -1,131 +1,83 @@
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
 const connectDB = require('../config/db');
 const TipoInmueble = require('../models/TipoInmueble');
 const CaracteristicaTipo = require('../models/CaracteristicaTipo');
 
-const CARACTERISTICAS = [
-  {
-    nombre: 'Datos Generales - Fecha y hora',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: true,
-    orden: 0,
-  },
-  {
-    nombre: 'Datos Generales - Nombre del capturista',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: true,
-    orden: 1,
-  },
-  {
-    nombre: 'Datos Generales - Área a la que pertenece',
-    tipo_dato: 'seleccion',
-    opciones: ['Protección Civil', 'Bomberos', 'Cruz Roja', 'Seguridad Pública', 'Salud', 'Educación', 'Otro'],
-    requerido: true,
-    orden: 2,
-  },
-  {
-    nombre: 'Información del inmueble - Calle y Número',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: true,
-    orden: 3,
-  },
-  {
-    nombre: 'Información del inmueble - Colonia',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: true,
-    orden: 4,
-  },
-  {
-    nombre: 'Información del inmueble - Alcaldía',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: true,
-    orden: 5,
-  },
-  {
-    nombre: 'Información del inmueble - Código Postal',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: true,
-    orden: 6,
-  },
-  {
-    nombre: 'Información del inmueble - Coordenadas geográficas',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: false,
-    orden: 7,
-  },
-  {
-    nombre: 'Uso del Inmueble',
-    tipo_dato: 'seleccion',
-    opciones: ['Vivienda Unifamiliar', 'Vivienda Multifamiliar', 'Escuela', 'Hospital', 'Oficina', 'Comercio', 'Otro'],
-    requerido: true,
-    orden: 8,
-  },
-  {
-    nombre: 'Fecha aproximada de construcción',
-    tipo_dato: 'date',
-    opciones: [],
-    requerido: false,
-    orden: 10,
-  },
-  {
-    nombre: 'Tipo de daño observado',
-    tipo_dato: 'multiseleccion',
-    opciones: ['Grietas leves', 'Grietas estructurales', 'Desprendimiento de acabados', 'Daño en columnas', 'Daño en trabes', 'Inclinación', 'Colapso parcial', 'Colapso total'],
-    requerido: true,
-    orden: 11,
-  },
-  {
-    nombre: 'Condición de seguridad',
-    tipo_dato: 'seleccion',
-    opciones: ['Edificación segura', 'Riesgo alto', 'Riesgo medio', 'Riesgo bajo'],
-    requerido: true,
-    orden: 12,
-  },
-  {
-    nombre: 'Observaciones adicionales',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: false,
-    orden: 13,
-  },
-  {
-    nombre: 'Fotografías',
-    tipo_dato: 'texto',
-    opciones: [],
-    requerido: false,
-    orden: 14,
-  },
-];
+const BACKUP_DIR = path.join(__dirname, 'backups');
 
-async function restaurar() {
+async function restaurarCaracteristicas(backupFile) {
   await connectDB();
 
-  let tipo = await TipoInmueble.findOne({ nombre: 'Inmueble Genérico' });
-  if (!tipo) {
-    console.log('Inmueble Genérico no encontrado, créalo desde el dashboard');
+  if (!backupFile) {
+    if (!fs.existsSync(BACKUP_DIR)) {
+      console.error('No existe directorio de backups');
+      await mongoose.disconnect();
+      process.exit(1);
+    }
+
+    const archivos = fs.readdirSync(BACKUP_DIR)
+      .filter(f => f.startsWith('caracteristicas_') && f.endsWith('.json'))
+      .sort()
+      .reverse();
+
+    if (archivos.length === 0) {
+      console.error('No hay backups disponibles');
+      await mongoose.disconnect();
+      process.exit(1);
+    }
+
+    console.log('Backups disponibles:');
+    archivos.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
+    console.log(`\nUso: node seed/restaurar_caracteristicas.js <nombre_archivo>`);
+    await mongoose.disconnect();
+    return;
+  }
+
+  const backupPath = path.join(BACKUP_DIR, backupFile);
+  if (!fs.existsSync(backupPath)) {
+    console.error(`Backup no encontrado: ${backupPath}`);
+    await mongoose.disconnect();
     process.exit(1);
   }
 
-  await CaracteristicaTipo.deleteMany({ tipo_inmueble: tipo._id });
-  console.log('Características antiguas eliminadas');
+  const backup = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+  console.log(`Restaurando backup del: ${backup.fecha}`);
+  console.log(`  Tipos: ${backup.tipos.length}`);
+  console.log(`  Características: ${backup.caracteristicas.length}`);
 
-  for (const c of CARACTERISTICAS) {
-    await new CaracteristicaTipo({ ...c, tipo_inmueble: tipo._id }).save();
-    console.log(`  Creada: ${c.nombre}`);
+  for (const tipo of backup.tipos) {
+    const existente = await TipoInmueble.findOne({ nombre: tipo.nombre });
+    if (existente) {
+      await TipoInmueble.findByIdAndUpdate(existente._id, {
+        nombre: tipo.nombre,
+        descripcion: tipo.descripcion,
+        activo: tipo.activo,
+      });
+      console.log(`  Tipo actualizado: ${tipo.nombre}`);
+    } else {
+      const { _id, ...tipoData } = tipo;
+      await new TipoInmueble(tipoData).save();
+      console.log(`  Tipo creado: ${tipo.nombre}`);
+    }
   }
 
-  console.log(`\n${CARACTERISTICAS.length} características restauradas correctamente`);
-  process.exit(0);
+  await CaracteristicaTipo.deleteMany({});
+
+  for (const c of backup.caracteristicas) {
+    const { _id, ...cData } = c;
+    await new CaracteristicaTipo(cData).save();
+  }
+
+  console.log(`\nRestauración completada: ${backup.caracteristicas.length} características restauradas`);
+  await mongoose.disconnect();
 }
 
-restaurar().catch(err => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+const archivo = process.argv[2];
+restaurarCaracteristicas(archivo)
+  .then(() => process.exit(0))
+  .catch(err => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });

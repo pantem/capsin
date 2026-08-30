@@ -715,8 +715,11 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Fotografías',
+                const Text('Fotografías (incluyendo fachada)',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                const SizedBox(height: 4),
+                const Text('Máximo 10 imágenes',
+                    style: TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 12),
                 Row(
                   children: [

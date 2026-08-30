@@ -1446,6 +1446,12 @@ async function abrirFormInmueblePadron(id) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
         ${sec5.map(c => renderCampo(c)).join('')}
       </div>
+      <div style="margin-top:1rem;">
+        <label style="font-weight:600;display:block;margin-bottom:0.3rem;">5.2 Fotografías (incluyendo fachada) — máximo 10</label>
+        <input type="file" id="padron-fotos" accept="image/*" multiple style="display:none;" onchange="previewFotosPadron(this)">
+        <button type="button" class="btn-sm" onclick="document.getElementById('padron-fotos').click();">📷 Seleccionar imágenes</button>
+        <div id="padron-fotos-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:0.5rem;"></div>
+      </div>
       <div style="display:flex;gap:0.5rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;">
         <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Inmueble'}</button>
         <button type="button" class="btn-sm" onclick="cerrarModal('modal-inmueble-padron')">Cancelar</button>
@@ -1454,6 +1460,30 @@ async function abrirFormInmueblePadron(id) {
   `;
 
   document.getElementById('modal-inmueble-padron').classList.remove('hidden');
+}
+
+function previewFotosPadron(input) {
+  const container = document.getElementById('padron-fotos-preview');
+  const archivos = Array.from(input.files);
+  if (archivos.length > 10) {
+    alert('Máximo 10 imágenes');
+    input.value = '';
+    return;
+  }
+  container.innerHTML = '';
+  archivos.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'position:relative;width:100px;height:100px;';
+      div.innerHTML = `
+        <img src="${e.target.result}" style="width:100px;height:100px;object-fit:cover;border-radius:6px;">
+        <span style="position:absolute;top:-4px;right:-4px;background:#d32f2f;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;" onclick="this.parentElement.remove();">✕</span>
+      `;
+      container.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 async function guardarInmueblePadron(editId) {

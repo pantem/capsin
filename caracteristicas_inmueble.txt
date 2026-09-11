@@ -1,0 +1,85 @@
+1. Ubicación y Descripción de la Edificación
+{Calle y Número:	(capturado por el usuario)}
+{Colonia:	se obtiene de la ubicación del móvil}
+{Alcaldía:	se obtiene de la ubicación del móvil}
+{Código Postal:	se obtiene de la ubicación del móvil}
+{Entre que calles / Referencia:	(capturado por el usuario)}
+{Coordenadas geográficas [Latitud, ejemplo:19.4337383]:	se obtiene de la ubicación del móvil}
+{Coordenadas geográficas [Longitud, ejemplo:-99.1454316]:	se obtiene de la ubicación del móvil}
+{Persona contactada (opcional):	capturado por el usuario}
+{Década estimada de la Construcción:
+Seleccione -> opciones: 
+		<option value="" selected="">Seleccione -&gt;</option>
+        <option value="50S O ANTES">50s o antes</option>
+        <option value="60S">60s</option>
+        <option value="70S">70s</option>                
+        <option value="80S">80s</option>                
+        <option value="90S">90s</option>                
+        <option value="2000S">2000s</option>                
+        <option value="2010S O MÁS">2010s o más</option> }
+{Uso del Inmueble:	
+Seleccione -> opciones: 
+		<option value="" selected="">Seleccione -&gt;</option>
+        <option value="HABITACIÓN UNIFAMILIAR">HABITACIÓN UNIFAMILIAR</option>
+        <option value="HABITACIÓN MULTIFAMILIAR">HABITACIÓN MULTIFAMILIAR</option>
+        <option value="CENTRO DE REUNIÓN">CENTRO DE REUNIÓN</option>
+        <option value="OFICINAS PRIVADAS">OFICINAS PRIVADAS</option>
+        <option value="INDUSTRIAS">INDUSTRIAS</option>
+        <option value="RECREATIVO">RECREATIVO</option>
+        <option value="COMERCIOS">COMERCIOS</option>
+        <option value="ESTACIONAMIENTO">ESTACIONAMIENTO</option>
+        <option value="EDUCACIÓN">EDUCACIÓN</option>
+        <option value="OFICINAS PÚBLICAS">OFICINAS PÚBLICAS</option>
+        <option value="BODEGAS">BODEGAS</option>
+        <option value="MIXTO">MIXTO</option>
+      </select>}
+{Número de niveles sobre el terreno (incluyendo azotea y mezzanine):	
+Seleccione -> opciones del 1 al 100 en un select}
+{Número de sótanos:	
+Seleccione -> opciones del 1 al 100 en un select}
+{Número de ocupantes (opcional): capturado por el usuario}
+{Tipo de inspección:	
+Seleccione -> <option value="INSPECCIÓN EXTERIOR ÚNICAMENTE">INSPECCIÓN EXTERIOR ÚNICAMENTE</option>
+        <option value="INSPECCIÓN INTERIOR Y EXTERIOR">INSPECCIÓN INTERIOR Y EXTERIOR</option>}
+2. Estado de la Edificación... (para estos casos se usa un radiobutton para las opciones solo se puede marcar una de las tres, si, no, existen dudas)
+{a) Derrumbe total:	  Sí, No, Existen dudas
+{b) Derrumbe parcial:	  Sí, No, Existen dudas
+{c) Edificación separada de su cimentación:	  Sí, No, Existen dudas}
+{d) Asentamiento diferencial o hundimiento:	  Sí, No, Existen dudas}
+{e) Inclinación notoria de la edificación o de algún entrepiso:	  Sí, No, Existen dudas}
+{f) Daños severos en elementos estructurales (columnas, vigas, muros de carga):	  Sí, No, Existen dudas}
+{g) Daños moderados en elementos estructurales:	  Sí, No, Existen dudas}
+{h) Daños severos en elementos no estructurales (muros divisorios, acabados, cancelería):	  Sí, No, Existen dudas}
+{i) Daños moderados en elementos no estructurales:	  Sí, No, Existen dudas}
+{j) Daños en instalaciones eléctricas:	  Sí, No, Existen dudas}
+{k) Daños en instalaciones hidrosanitaria:	  Sí, No, Existen dudas}
+{l) Daños en instalaciones de gas:	  Sí, No, Existen dudas}
+{m) Grietas en el subsuelo:	  Sí, No, Existen dudas}
+{n) Deslizamiento de talud o corte:	  Sí, No, Existen dudas}
+{o) Pretiles, balcones u otros objetos en peligro de caer:	  Sí, No, Existen dudas}
+{p) Otros peligros (líneas o ductos rotos, derrames tóxicos, etc.):	  Sí, No, Existen dudas}
+3. Clasificación Global 
+Descripcion de punto 3(
+* Una vez evaluado el Estado de la Edificación, de no encontrarse alguna respuesta afirmativa, el inmueble se calificará como Edificación en Riesgo Bajo.
+* En caso de encontrarse una respuesta afirmativa en cualquiera de los incisos “a” al “h”, se clasificará como Edificación en Riesgo Alto.
+* En caso de encontrarse una respuesta afirmativa en cualquiera de los incisos “i” al “p”, se clasificará como Área Insegura o Edificación en Riesgo Medio.
+* De existir dudas, se señalará Seguridad Incierta.)
+(es un radiobutton por opción y solo puede seleccionarse 1 opción)
+{Edificación en Riesgo Bajo:	  Bajo
+Edificación en Riesgo Alto	  Alto
+Área Insegura o Edificación en Riesgo Medio	  Medio
+Seguridad Incierta	  Incierto}
+4. Recomendaciones (para estos casos se usa un radiobutton para las opciones solo se puede marcar una de las tres, si, no)
+{Requiere revisión futura:	  Sí, No}
+{Es necesaria evaluación detallada:	  Sí, No}
+{Apuntalar:	  Sí, No}
+{Maquinaria para remover escombro:	  Sí, No}
+{Inspección por SGIRPC:	  Sí, No}
+{Inspección por SACMEX:	  Sí, No}
+{Inspección por SSC:	  Sí, No}
+{Inspección por SOS:	  Sí, No}
+{Inspección por Central de fugas:	  Sí, No}
+{Observaciones (200 caracteres):	capturado por el usuario }
+
+5. Fotografía (opcional): (descripción del punto: Incluyendo fachada)
+{máximo 10 imagenes}

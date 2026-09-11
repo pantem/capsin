@@ -138,7 +138,7 @@
     </header>
 
     <main>
-      <section id="view-dashboard" class="view active">
+      <section id="view-dashboard" class="view active" style="display:none;">
         <div class="cards">
           <!-- Fallecidos -->
           <div class="card c-fallecidos">
@@ -306,15 +306,18 @@
           <h2>Ubicación de Inmuebles</h2>
         </div>
         <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
-          <select id="ubic-alcaldia" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+          <select id="ubic-alcaldia"
+            style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
             <option value="">Todas las alcaldías</option>
           </select>
-          <select id="ubic-colonia" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+          <select id="ubic-colonia"
+            style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
             <option value="">Todas las colonias</option>
           </select>
           <input type="text" id="ubic-cp" placeholder="Código postal" maxlength="5"
             style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;width:120px;" />
-          <select id="ubic-dano" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+          <select id="ubic-dano"
+            style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
             <option value="">Todos los daños</option>
             <option value="sin_daños">Sin daños</option>
             <option value="moderado">Moderado</option>
@@ -333,7 +336,8 @@
         <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
           <input type="text" id="padron-search" placeholder="Buscar por nombre, colonia, dirección..."
             style="flex:1;min-width:200px;padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;" />
-          <select id="padron-alcaldia" style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
+          <select id="padron-alcaldia"
+            style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
             <option value="">Todas las alcaldías</option>
           </select>
         </div>

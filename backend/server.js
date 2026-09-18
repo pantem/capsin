@@ -75,26 +75,14 @@ app.get('/api/resumen', async (req, res) => {
       'Xochimilco',
     ];
 
-    const aggResult = await Inmueble.aggregate([
-      {
-        $lookup: {
-          from: 'siniestros',
-          localField: 'siniestro',
-          foreignField: '_id',
-          as: 'siniestroInfo',
-        },
-      },
-      { $unwind: { path: '$siniestroInfo', preserveNullAndEmptyArrays: true } },
-      {
-        $group: {
-          _id: {
-            alcaldia: '$siniestroInfo.ubicacion.municipio',
-            estado: '$estado_afectacion',
-          },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+    const CodigoPostal = require('./models/CodigoPostal');
+
+    const inmueblesConSiniestro = await Inmueble.find().populate('siniestro').lean();
+    const allCPs = await CodigoPostal.find().lean();
+    const cpMap = {};
+    allCPs.forEach((c) => {
+      if (c.codigo) cpMap[c.codigo] = c.municipio;
+    });
 
     const normalize = (s) =>
       (s || '')
@@ -103,29 +91,69 @@ app.get('/api/resumen', async (req, res) => {
         .replace(/[\u0300-\u036f]/g, '')
         .trim();
 
-    const porAlcaldia = alcaldiasCDMX.map((alc) => {
-      const alcNorm = normalize(alc);
-      let sinDano = 0;
-      let moderado = 0;
-      let critico = 0;
-
-      aggResult.forEach((item) => {
-        const itemAlc = normalize(item._id?.alcaldia);
-        if (itemAlc && (itemAlc.includes(alcNorm) || alcNorm.includes(itemAlc))) {
-          if (item._id.estado === 'sin_daños') sinDano += item.count;
-          else if (item._id.estado === 'moderado') moderado += item.count;
-          else if (item._id.estado === 'critico') critico += item.count;
-        }
-      });
-
-      return {
-        alcaldia: alc,
-        sinDano,
-        moderado,
-        critico,
-        total: sinDano + moderado + critico,
-      };
+    const porAlcaldiaMap = {};
+    alcaldiasCDMX.forEach((a) => {
+      porAlcaldiaMap[a] = { sinDano: 0, moderado: 0, critico: 0, total: 0 };
     });
+
+    for (const inm of inmueblesConSiniestro) {
+      const s = inm.siniestro;
+      if (!s) continue;
+
+      let alcFound = null;
+      const mun = s.ubicacion?.municipio || '';
+      const cp = s.ubicacion?.codigo_postal || '';
+      const dir = s.ubicacion?.direccion || '';
+
+      // Direct match
+      for (const a of alcaldiasCDMX) {
+        const aN = normalize(a);
+        const mN = normalize(mun);
+        if (mN && mN !== 'ciudad de mexico' && mN !== 'cdmx' && (mN === aN || mN.includes(aN) || aN.includes(mN))) {
+          alcFound = a;
+          break;
+        }
+      }
+
+      // CP lookup
+      if (!alcFound && cp && cpMap[cp]) {
+        const cpMun = normalize(cpMap[cp]);
+        for (const a of alcaldiasCDMX) {
+          const aN = normalize(a);
+          if (cpMun.includes(aN) || aN.includes(cpMun)) {
+            alcFound = a;
+            break;
+          }
+        }
+      }
+
+      // Address match
+      if (!alcFound && dir) {
+        const dirN = normalize(dir);
+        for (const a of alcaldiasCDMX) {
+          if (dirN.includes(normalize(a))) {
+            alcFound = a;
+            break;
+          }
+        }
+      }
+
+      if (!alcFound) alcFound = 'Cuauhtémoc';
+
+      const st = inm.estado_afectacion || 'sin_daños';
+      if (st === 'sin_daños') porAlcaldiaMap[alcFound].sinDano++;
+      else if (st === 'moderado') porAlcaldiaMap[alcFound].moderado++;
+      else if (st === 'critico') porAlcaldiaMap[alcFound].critico++;
+      porAlcaldiaMap[alcFound].total++;
+    }
+
+    const porAlcaldia = alcaldiasCDMX.map((alc) => ({
+      alcaldia: alc,
+      sinDano: porAlcaldiaMap[alc].sinDano,
+      moderado: porAlcaldiaMap[alc].moderado,
+      critico: porAlcaldiaMap[alc].critico,
+      total: porAlcaldiaMap[alc].total,
+    }));
 
     res.json({
       totalSiniestros,

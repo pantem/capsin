@@ -610,17 +610,31 @@ document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) e.target.classList.add('hidden');
 });
 
-document.querySelectorAll('nav button').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav button').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-    document.getElementById(`view-${btn.dataset.view}`).classList.add('active');
+function switchView(viewName) {
+  if (!viewName) return;
+  document.querySelectorAll('nav button[data-view]').forEach((b) => {
+    if (b.dataset.view === viewName) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+  const targetView = document.getElementById(`view-${viewName}`);
+  if (targetView) targetView.classList.add('active');
 
-    if (btn.dataset.view === 'dashboard') loadDashboard();
-    if (btn.dataset.view === 'lista') loadReportesList();
-    if (btn.dataset.view === 'ubicacion') loadUbicacion();
-    if (btn.dataset.view === 'mapa') setTimeout(initMap, 100);
+  if (viewName === 'dashboard') loadDashboard();
+  if (viewName === 'lista') loadReportesList();
+  if (viewName === 'ubicacion') loadUbicacion();
+  if (viewName === 'mapa') setTimeout(initMap, 100);
+  if (viewName === 'tipos') setTimeout(loadTipos, 50);
+  if (viewName === 'catalogo') setTimeout(loadCatalogo, 50);
+  if (viewName === 'usuarios') setTimeout(loadUsuarios, 50);
+  if (viewName === 'areas') setTimeout(loadAreas, 50);
+  if (viewName === 'roles') setTimeout(loadRoles, 50);
+  if (viewName === 'alta-inmuebles') setTimeout(loadInmueblesPadron, 50);
+}
+
+document.querySelectorAll('nav button[data-view]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    switchView(btn.dataset.view);
   });
 });
 
@@ -705,6 +719,7 @@ async function loginDashboard() {
     sessionStorage.setItem('dashboard_user', JSON.stringify(data.usuario));
     cerrarModal('modal-login');
     actualizarHeaderAuth();
+    switchView('dashboard');
   } catch (err) {
     errorEl.textContent = 'Error de conexión al servidor';
     errorEl.style.display = '';
@@ -714,6 +729,7 @@ async function loginDashboard() {
 document.getElementById('btn-logout').addEventListener('click', () => {
   sessionStorage.removeItem('dashboard_user');
   actualizarHeaderAuth();
+  switchView('dashboard');
 });
 
 document.getElementById('modal-login').addEventListener('click', (e) => {
@@ -727,7 +743,7 @@ document.getElementById('search-input').addEventListener('input', (e) => {
 });
 
 initAlcaldiaSelect();
-loadDashboard();
+switchView('dashboard');
 loadReportesList();
 
 function cerrarModal(id) {
@@ -745,17 +761,6 @@ document.getElementById('modal-area').addEventListener('click', (e) => {
 });
 document.getElementById('modal-rol').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) cerrarModal('modal-rol');
-});
-
-document.querySelectorAll('nav button').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.view === 'tipos') setTimeout(loadTipos, 50);
-    if (btn.dataset.view === 'catalogo') setTimeout(loadCatalogo, 50);
-    if (btn.dataset.view === 'usuarios') setTimeout(loadUsuarios, 50);
-    if (btn.dataset.view === 'areas') setTimeout(loadAreas, 50);
-    if (btn.dataset.view === 'roles') setTimeout(loadRoles, 50);
-    if (btn.dataset.view === 'alta-inmuebles') setTimeout(loadInmueblesPadron, 50);
-  });
 });
 
 let _cpSearchTimer = null;

@@ -267,21 +267,21 @@ function renderAlcaldiasGrid() {
       (item) => `
     <div class="alcaldia-card">
       <div class="alcaldia-name" title="${item.alcaldia}">${item.alcaldia}</div>
-      <div class="damage-row">
+      <div class="damage-row row-sindano">
         <div class="damage-row-label">
           <span class="legend-dot dot-green"></span>
           <span>Sin daño</span>
         </div>
         <span class="damage-row-count">${item.sinDano || 0}</span>
       </div>
-      <div class="damage-row">
+      <div class="damage-row row-moderado">
         <div class="damage-row-label">
           <span class="legend-dot dot-amber"></span>
           <span>Daño moderado</span>
         </div>
         <span class="damage-row-count">${item.moderado || 0}</span>
       </div>
-      <div class="damage-row">
+      <div class="damage-row row-critico">
         <div class="damage-row-label">
           <span class="legend-dot dot-red"></span>
           <span>Daño crítico</span>

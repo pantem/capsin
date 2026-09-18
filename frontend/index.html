@@ -138,147 +138,133 @@
     </header>
 
     <main>
-      <section id="view-dashboard" class="view active" style="display:none;">
-        <div class="cards">
-          <!-- Fallecidos -->
-          <div class="card c-fallecidos">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 22H6V9c0-3.3 2.7-6 6-6s6 2.7 6 6v13z" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linejoin="round" />
-                <path d="M12 7v7M10 9h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                <path d="M4 22h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      <section id="view-dashboard" class="view active">
+        <!-- Timestamp bar -->
+        <div class="dashboard-header-bar">
+          <div class="dashboard-timestamp">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Última actualización: <strong id="dash-timestamp">15 de septiembre de 2026, 17:24</strong></span>
+          </div>
+        </div>
+
+        <!-- 4 KPI Summary Cards -->
+        <div class="kpi-grid">
+          <!-- Card 1: Total de inmuebles -->
+          <div class="kpi-card kpi-total">
+            <div class="kpi-icon-wrap icon-burgundy">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
               </svg>
             </div>
-            <h3>Fallecidos</h3>
-            <div class="card-value-container">
-              <p id="stat-fallecidos">0</p>
-              <div class="card-divider"></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Total de inmuebles</span>
+              <div class="kpi-value" id="kpi-total-inmuebles">1,250</div>
+              <span class="kpi-sub">Inmuebles registrados</span>
             </div>
           </div>
 
-          <!-- Lesionados Graves -->
-          <div class="card c-graves">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <rect x="6" y="2" width="12" height="20" rx="6" transform="rotate(45 12 12)" fill="none"
-                  stroke="currentColor" stroke-width="2" />
-                <rect x="10" y="10" width="4" height="4" fill="none" stroke="currentColor" stroke-width="1.5" />
-                <circle cx="11" cy="11" r="0.5" fill="currentColor" />
-                <circle cx="13" cy="11" r="0.5" fill="currentColor" />
-                <circle cx="11" cy="13" r="0.5" fill="currentColor" />
-                <circle cx="13" cy="13" r="0.5" fill="currentColor" />
+          <!-- Card 2: Sin daño -->
+          <div class="kpi-card kpi-sindano">
+            <div class="kpi-icon-wrap icon-green">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
               </svg>
             </div>
-            <h3>Lesionados Graves</h3>
-            <div class="card-value-container">
-              <p id="stat-lesionados-grave">0</p>
-              <div class="card-divider"></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Sin daño</span>
+              <div class="kpi-value" id="kpi-sin-dano">724</div>
+              <span class="kpi-sub"><span id="kpi-sin-dano-pct">57.9%</span> del total</span>
             </div>
           </div>
 
-          <!-- Lesionados Leves -->
-          <div class="card c-leves">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" />
-                <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2" />
+          <!-- Card 3: Daño moderado -->
+          <div class="kpi-card kpi-moderado">
+            <div class="kpi-icon-wrap icon-amber">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
               </svg>
             </div>
-            <h3>Lesionados Leves</h3>
-            <div class="card-value-container">
-              <p id="stat-lesionados-leve">0</p>
-              <div class="card-divider"></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Daño moderado</span>
+              <div class="kpi-value" id="kpi-moderado">329</div>
+              <span class="kpi-sub"><span id="kpi-moderado-pct">26.3%</span> del total</span>
             </div>
           </div>
 
-          <!-- Ilesos -->
-          <div class="card c-ilesos">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linejoin="round" />
-                <polyline points="9 11 11 13 15 9" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" />
+          <!-- Card 4: Daño crítico -->
+          <div class="kpi-card kpi-critico">
+            <div class="kpi-icon-wrap icon-red">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
               </svg>
             </div>
-            <h3>Ilesos</h3>
-            <div class="card-value-container">
-              <p id="stat-ilesos">0</p>
-              <div class="card-divider"></div>
+            <div class="kpi-info">
+              <span class="kpi-title">Daño crítico</span>
+              <div class="kpi-value" id="kpi-critico">197</div>
+              <span class="kpi-sub"><span id="kpi-critico-pct">15.8%</span> del total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-Column Main Section -->
+        <div class="dashboard-panels-grid">
+          <!-- Left Panel: Inmuebles dañados -->
+          <div class="dash-panel panel-chart">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">Inmuebles dañados</h2>
+                <p class="panel-subtitle">Distribución de inmuebles por nivel de daño</p>
+              </div>
+              <div class="panel-icon-action" title="Distribución porcentual">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="8" cy="8" r="1.5" fill="currentColor"></circle>
+                  <circle cx="16" cy="8" r="1.5" fill="currentColor"></circle>
+                  <circle cx="8" cy="16" r="1.5" fill="currentColor"></circle>
+                  <circle cx="16" cy="16" r="1.5" fill="currentColor"></circle>
+                </svg>
+              </div>
+            </div>
+
+            <div class="chart-wrapper">
+              <div id="chart-container" class="chart-container">
+                <!-- SVG interactive chart rendered via JS -->
+              </div>
+            </div>
+
+            <div class="chart-legend">
+              <div class="legend-item"><span class="legend-dot dot-green"></span> Sin daño</div>
+              <div class="legend-item"><span class="legend-dot dot-amber"></span> Daño moderado</div>
+              <div class="legend-item"><span class="legend-dot dot-red"></span> Daño crítico</div>
             </div>
           </div>
 
-          <!-- Inmuebles Críticos -->
-          <div class="card c-criticos">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 22H6V8l5-3 7 3v14z" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linejoin="round" />
-                <path d="M10 10h1v2h-1zm4 0h1v2h-1zm-4 4h1v2h-1zm4 0h1v2h-1z" fill="currentColor" />
-                <path d="M12 8l-2 3 3 2-2 4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                  stroke-linejoin="round" />
-              </svg>
+          <!-- Right Panel: Nivel de daño por alcaldía -->
+          <div class="dash-panel panel-alcaldias">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">Nivel de daño por alcaldía</h2>
+                <p class="panel-subtitle">Número de inmuebles por nivel de daño</p>
+              </div>
+              <div class="panel-filter-box">
+                <select id="select-alcaldia-filter" class="alcaldia-select">
+                  <option value="all">Todas las alcaldías</option>
+                </select>
+              </div>
             </div>
-            <h3>Inmuebles Críticos</h3>
-            <div class="card-value-container">
-              <p id="stat-inmuebles-criticos">0</p>
-              <div class="card-divider"></div>
-            </div>
-          </div>
 
-          <!-- Inmuebles Moderados -->
-          <div class="card c-moderados">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <rect x="4" y="2" width="16" height="20" rx="2" ry="2" fill="none" stroke="currentColor"
-                  stroke-width="2" />
-                <line x1="9" y1="22" x2="9" y2="16" stroke="currentColor" stroke-width="2" />
-                <line x1="15" y1="22" x2="15" y2="16" stroke="currentColor" stroke-width="2" />
-                <path d="M8 6h2v2H8zm6 0h2v2h-2zm-6 5h2v2H8zm6 0h2v2h-2z" fill="currentColor" />
-              </svg>
+            <div id="alcaldias-cards-grid" class="alcaldias-cards-grid">
+              <!-- Dynamically populated alcaldía cards (3x2 grid) -->
             </div>
-            <h3>Inmuebles Moderados</h3>
-            <div class="card-value-container">
-              <p id="stat-inmuebles-moderados">0</p>
-              <div class="card-divider"></div>
-            </div>
-          </div>
 
-          <!-- Sin Daños -->
-          <div class="card c-sindanos">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor"
-                  stroke-width="2" stroke-linejoin="round" />
-                <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linejoin="round" />
-              </svg>
-            </div>
-            <h3>Sin Daños</h3>
-            <div class="card-value-container">
-              <p id="stat-inmuebles-sin-danos">0</p>
-              <div class="card-divider"></div>
-            </div>
-          </div>
-
-          <!-- Total Siniestros -->
-          <div class="card c-total">
-            <div class="card-icon-container">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" fill="none" stroke="currentColor"
-                  stroke-width="2" />
-                <path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round" />
-              </svg>
-            </div>
-            <h3>Total Siniestros</h3>
-            <div class="card-value-container">
-              <p id="stat-total-siniestros">0</p>
-              <div class="card-divider"></div>
+            <div class="alcaldias-footer">
+              <span id="alcaldias-page-info" class="alcaldias-page-info">Mostrando 6 de 16 alcaldías</span>
+              <div class="pagination-controls">
+                <button id="btn-alc-prev" class="btn-page" title="Página anterior" disabled>&lt;</button>
+                <button id="btn-alc-next" class="btn-page" title="Página siguiente">&gt;</button>
+              </div>
             </div>
           </div>
         </div>
@@ -395,6 +381,27 @@
         <div id="roles-lista"></div>
       </section>
     </main>
+
+    <footer class="app-footer">
+      <div class="footer-cdmx">
+        <div class="footer-cdmx-logo">
+          <svg viewBox="0 0 100 100" class="cdmx-svg-logo" fill="none" stroke="currentColor">
+            <path d="M30 20C22 20 15 27 15 35C15 43 22 50 30 50H70C78 50 85 43 85 35C85 27 78 20 70 20C62 20 55 27 55 35V65C55 73 62 80 70 80C78 80 85 73 85 65C85 57 78 50 70 50H30C22 50 15 57 15 65C15 73 22 80 30 80C38 80 45 73 45 65V35C45 27 38 20 30 20Z" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="footer-cdmx-text">
+          <span class="footer-gob">GOBIERNO DE LA</span>
+          <span class="footer-cdmx-title">CIUDAD DE MÉXICO</span>
+        </div>
+      </div>
+      <div class="footer-sas">
+        <div class="footer-sas-title">SAS · Sistema de Afectaciones por Sismo</div>
+        <div class="footer-sas-sub">Dirección de Registro y Datos</div>
+      </div>
+      <div class="footer-version">
+        <span>Versión 1.0.0</span>
+      </div>
+    </footer>
   </div>
 
   <div id="modal-tipo" class="modal hidden">

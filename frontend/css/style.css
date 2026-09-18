@@ -165,12 +165,11 @@ nav button:not(.active) .icon-roles {
 }
 
 main {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 2.5rem;
-  box-shadow: var(--card-shadow);
-  border: 1px solid #eef0f3;
-  margin-top: 1.5rem;
+  background: transparent;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  margin-top: 1rem;
 }
 
 .view {
@@ -181,199 +180,548 @@ main {
   display: block;
 }
 
-/* Grid of Cards */
-.cards {
+.view:not(#view-dashboard) {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: var(--card-shadow);
+  border: 1px solid #eef0f3;
+}
+
+/* ==========================================================================
+   SAS DASHBOARD STYLES
+   ========================================================================== */
+
+/* Timestamp Header */
+.dashboard-header-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dashboard-timestamp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.dashboard-timestamp svg {
+  color: #64748b;
+}
+
+.dashboard-timestamp strong {
+  color: #475569;
+  font-weight: 600;
+}
+
+/* KPI Summary Cards Grid */
+.kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 @media (max-width: 1100px) {
-  .cards {
+  .kpi-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 600px) {
-  .cards {
+  .kpi-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.card {
+.kpi-card {
   background: #ffffff;
   border-radius: 16px;
-  padding: 2.2rem 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.015), 0 1px 3px rgba(0, 0, 0, 0.02);
-  border: 1px solid #f0f2f5;
+  padding: 1.25rem 1.4rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  position: relative;
-  overflow: hidden;
+  gap: 1.2rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+  border: 1px solid #edf0f5;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(122, 12, 56, 0.05), 0 4px 8px rgba(0, 0, 0, 0.03);
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
-.card-icon-container {
-  width: 68px;
-  height: 68px;
+.kpi-total {
+  background: linear-gradient(135deg, #ffffff 0%, #fdf8f9 100%);
+  border-color: #f7e1e6;
+}
+
+.kpi-sindano {
+  background: linear-gradient(135deg, #ffffff 0%, #f4faf5 100%);
+  border-color: #e2f4e6;
+}
+
+.kpi-moderado {
+  background: linear-gradient(135deg, #ffffff 0%, #fefbf2 100%);
+  border-color: #faeccf;
+}
+
+.kpi-critico {
+  background: linear-gradient(135deg, #ffffff 0%, #fef5f6 100%);
+  border-color: #fad9de;
+}
+
+.kpi-icon-wrap {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.25rem;
+  flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 
-.card:hover .card-icon-container {
-  transform: scale(1.05);
+.kpi-card:hover .kpi-icon-wrap {
+  transform: scale(1.06);
 }
 
-.card-icon-container svg {
-  width: 32px;
-  height: 32px;
-  fill: currentColor;
+.icon-burgundy {
+  background: #fdebee;
+  color: #7A0C38;
 }
 
-.card h3 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.1px;
+.icon-green {
+  background: #eaf6ed;
+  color: #2e7d32;
 }
 
-.card-value-container {
+.icon-amber {
+  background: #fef5dc;
+  color: #d97706;
+}
+
+.icon-red {
+  background: #fde8e8;
+  color: #dc2626;
+}
+
+.kpi-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
 }
 
-.card p {
-  font-size: 3.2rem;
+.kpi-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.15rem;
+}
+
+.kpi-value {
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.kpi-total .kpi-value {
+  color: #7A0C38;
+}
+
+.kpi-sindano .kpi-value {
+  color: #1e7e34;
+}
+
+.kpi-moderado .kpi-value {
+  color: #b45309;
+}
+
+.kpi-critico .kpi-value {
+  color: #991b1b;
+}
+
+.kpi-sub {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* Dashboard 2-Column Panels */
+.dashboard-panels-grid {
+  display: grid;
+  grid-template-columns: 3.8fr 6.2fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-panels-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-panel {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 1.6rem 1.8rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border: 1px solid #edf0f5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 480px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.panel-title {
+  font-size: 1.35rem;
   font-weight: 700;
-  line-height: 1;
+  color: #111827;
+  letter-spacing: -0.3px;
 }
 
-.card-divider {
-  width: 44px;
-  height: 3px;
-  border-radius: 2px;
+.panel-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
   margin-top: 0.2rem;
 }
 
-/* Card color schemes */
-.c-fallecidos .card-icon-container {
-  background-color: #f3f4f6;
-  color: #f75555;
+.panel-icon-action {
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
 }
 
-.c-fallecidos p {
-  color: #f75555;
+/* Chart Panel (Left) */
+.chart-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 330px;
+  position: relative;
+  padding: 0.5rem 0;
 }
 
-.c-fallecidos .card-divider {
-  background-color: #f75555;
+.chart-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-.c-graves .card-icon-container {
-  background-color: #fef2f2;
-  color: #f59e0b;
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.8rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
+  flex-wrap: wrap;
 }
 
-.c-graves p {
-  color: #f59e0b;
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
 }
 
-.c-graves .card-divider {
-  background-color: #f59e0b;
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
-.c-leves .card-icon-container {
-  background-color: #f0fdf4;
-  color: #22c55e;
+.dot-green {
+  background-color: #55b74e;
 }
 
-.c-leves p {
-  color: #22c55e;
+.dot-amber {
+  background-color: #f7b731;
 }
 
-.c-leves .card-divider {
-  background-color: #22c55e;
+.dot-red {
+  background-color: #881337;
 }
 
-.c-ilesos .card-icon-container {
-  background-color: #eff6ff;
-  color: #3b82f6;
+/* Alcaldias Panel (Right) */
+.panel-filter-box {
+  position: relative;
 }
 
-.c-ilesos p {
-  color: #3b82f6;
+.alcaldia-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 0.9rem center;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.45rem 2.2rem 0.45rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.c-ilesos .card-divider {
-  background-color: #3b82f6;
+.alcaldia-select:hover {
+  border-color: #9ca3af;
 }
 
-.c-criticos .card-icon-container {
-  background-color: #faf5ff;
-  color: #f75555;
+.alcaldia-select:focus {
+  border-color: var(--primary-burgundy);
+  box-shadow: 0 0 0 2px rgba(122, 12, 56, 0.15);
 }
 
-.c-criticos p {
-  color: #f75555;
+.alcaldias-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+  flex: 1;
 }
 
-.c-criticos .card-divider {
-  background-color: #f75555;
+@media (max-width: 850px) {
+  .alcaldias-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.c-moderados .card-icon-container {
-  background-color: #fffbeb;
-  color: #f59e0b;
+@media (max-width: 500px) {
+  .alcaldias-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.c-moderados p {
-  color: #f59e0b;
+.alcaldia-card {
+  background: #fdfaf4;
+  border: 1px solid #f1eae0;
+  border-radius: 14px;
+  padding: 0.95rem 1.1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.015);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.c-moderados .card-divider {
-  background-color: #f59e0b;
+.alcaldia-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.04);
 }
 
-.c-sindanos .card-icon-container {
-  background-color: #f0fdf4;
-  color: #22c55e;
+.alcaldia-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.65rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.c-sindanos p {
-  color: #22c55e;
+.damage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  color: #374151;
 }
 
-.c-sindanos .card-divider {
-  background-color: #22c55e;
+.damage-row:last-child {
+  margin-bottom: 0;
 }
 
-.c-total .card-icon-container {
-  background-color: #faf5ff;
-  color: #a855f7;
+.damage-row-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
 }
 
-.c-total p {
-  color: #a855f7;
+.damage-row-count {
+  font-weight: 700;
+  color: #111827;
+  font-size: 0.88rem;
 }
 
-.c-total .card-divider {
-  background-color: #a855f7;
+.alcaldias-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.85rem;
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
+}
+
+.alcaldias-page-info {
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-page {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.btn-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+/* Institutional Footer */
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0.5rem 0.75rem 0.5rem;
+  color: #6b7280;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 1.5rem;
+}
+
+.footer-cdmx {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.footer-cdmx-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cdmx-svg-logo {
+  width: 34px;
+  height: 34px;
+  color: #64748b;
+}
+
+.footer-cdmx-text {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+}
+
+.footer-gob {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.footer-cdmx-title {
+  color: #334155;
+  font-weight: 800;
+}
+
+.footer-sas {
+  text-align: center;
+}
+
+.footer-sas-title {
+  font-weight: 600;
+  color: #475569;
+}
+
+.footer-sas-sub {
+  color: #64748b;
+  font-size: 0.76rem;
+  margin-top: 0.1rem;
+}
+
+.footer-version {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Chart SVG Interactive Elements */
+.pie-slice {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.pie-slice:hover {
+  transform: scale(1.03);
+  filter: brightness(1.05);
+}
+
+.chart-callout-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  fill: #1f2937;
+}
+
+.chart-callout-label {
+  font-weight: 500;
+  fill: #374151;
+}
+
+.chart-callout-pct {
+  font-weight: 800;
+  font-size: 13.5px;
+  fill: #111827;
+}
+
+.chart-callout-count {
+  font-weight: 400;
+  font-size: 11px;
+  fill: #6b7280;
 }
 
 /* Other views details */

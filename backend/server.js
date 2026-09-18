@@ -56,6 +56,77 @@ app.get('/api/resumen', async (req, res) => {
     const inmueblesModerados = await Inmueble.countDocuments({ estado_afectacion: 'moderado' });
     const inmueblesSinDanos = await Inmueble.countDocuments({ estado_afectacion: 'sin_daños' });
 
+    const alcaldiasCDMX = [
+      'Álvaro Obregón',
+      'Azcapotzalco',
+      'Benito Juárez',
+      'Coyoacán',
+      'Cuajimalpa',
+      'Cuauhtémoc',
+      'Gustavo A. Madero',
+      'Iztacalco',
+      'Iztapalapa',
+      'Magdalena Contreras',
+      'Miguel Hidalgo',
+      'Milpa Alta',
+      'Tláhuac',
+      'Tlalpan',
+      'Venustiano Carranza',
+      'Xochimilco',
+    ];
+
+    const aggResult = await Inmueble.aggregate([
+      {
+        $lookup: {
+          from: 'siniestros',
+          localField: 'siniestro',
+          foreignField: '_id',
+          as: 'siniestroInfo',
+        },
+      },
+      { $unwind: { path: '$siniestroInfo', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: {
+            alcaldia: '$siniestroInfo.ubicacion.municipio',
+            estado: '$estado_afectacion',
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const normalize = (s) =>
+      (s || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+    const porAlcaldia = alcaldiasCDMX.map((alc) => {
+      const alcNorm = normalize(alc);
+      let sinDano = 0;
+      let moderado = 0;
+      let critico = 0;
+
+      aggResult.forEach((item) => {
+        const itemAlc = normalize(item._id?.alcaldia);
+        if (itemAlc && (itemAlc.includes(alcNorm) || alcNorm.includes(itemAlc))) {
+          if (item._id.estado === 'sin_daños') sinDano += item.count;
+          else if (item._id.estado === 'moderado') moderado += item.count;
+          else if (item._id.estado === 'critico') critico += item.count;
+        }
+      });
+
+      return {
+        alcaldia: alc,
+        sinDano,
+        moderado,
+        critico,
+        total: sinDano + moderado + critico,
+      };
+    });
+
     res.json({
       totalSiniestros,
       totalInmuebles,
@@ -67,6 +138,8 @@ app.get('/api/resumen', async (req, res) => {
       inmueblesCriticos,
       inmueblesModerados,
       inmueblesSinDanos,
+      porAlcaldia,
+      ultimaActualizacion: new Date().toISOString(),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -395,7 +395,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
           <thead>
             <tr style="background:#f3f4f6;text-align:left;">
               <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Folio</th>
-              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Tipo de Inmueble</th>
+              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Uso del Inmueble</th>
               <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Nivel de Daño</th>
               <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Dirección</th>
             </tr>
@@ -404,7 +404,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
             ${data.map(r => `
               <tr style="border-bottom:1px solid #e5e7eb;cursor:pointer;" onclick="cerrarModal('modal-alcaldia'); showDetail('${r.siniestroId}')" title="Ver detalle del reporte">
                 <td style="padding:0.5rem;font-weight:600;">${r.folio || '—'}</td>
-                <td style="padding:0.5rem;">${r.tipo || '—'}</td>
+                <td style="padding:0.5rem;">${r.usoInmueble || '—'}</td>
                 <td style="padding:0.5rem;">
                   <span class="${getBadgeClass(r.estadoAfectacion === 'critico' ? 'red' : r.estadoAfectacion === 'moderado' ? 'yellow' : 'green')}">
                     ${r.estadoAfectacion === 'critico' ? 'Crítico' : r.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daño'}

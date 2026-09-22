@@ -36,6 +36,7 @@ app.use('/api/valores-caracteristica', require('./routes/valores_caracteristica'
 app.use('/api/ubicacion', require('./routes/ubicacion'));
 app.use('/api/inmuebles-padron', require('./routes/inmuebles_padron'));
 app.use('/api/reportes-seguimiento', require('./routes/reportes_seguimiento'));
+app.use('/api/mascaras-folio', require('./routes/mascaras_folio'));
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 

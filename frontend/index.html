@@ -127,6 +127,16 @@
           </svg>
           Roles
         </button>
+        <button data-view="mascaras" id="nav-mascaras" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" class="icon-mascaras" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          Máscaras Folio
+        </button>
 
         <span id="header-user" style="color:#fff;font-size:0.85rem;margin-left:0.5rem;font-weight:600;"></span>
         <button id="btn-login"
@@ -382,6 +392,14 @@
         </div>
         <div id="roles-lista"></div>
       </section>
+
+      <section id="view-mascaras" class="view">
+        <div class="toolbar">
+          <h2>Máscaras de Folio</h2>
+          <button class="btn-primary" onclick="abrirFormMascara()">+ Nueva Máscara</button>
+        </div>
+        <div id="mascaras-lista"></div>
+      </section>
     </main>
 
     <footer class="app-footer">
@@ -446,6 +464,13 @@
     <div class="modal-content" style="max-width:700px;">
       <span class="close" onclick="cerrarModal('modal-inmueble-padron')">&times;</span>
       <div id="modal-inmueble-padron-body"></div>
+    </div>
+  </div>
+
+  <div id="modal-mascara" class="modal hidden">
+    <div class="modal-content" style="max-width:600px;">
+      <span class="close" onclick="cerrarModal('modal-mascara')">&times;</span>
+      <div id="modal-mascara-body"></div>
     </div>
   </div>
 

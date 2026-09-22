@@ -630,6 +630,7 @@ function switchView(viewName) {
   if (viewName === 'areas') setTimeout(loadAreas, 50);
   if (viewName === 'roles') setTimeout(loadRoles, 50);
   if (viewName === 'alta-inmuebles') setTimeout(loadInmueblesPadron, 50);
+  if (viewName === 'mascaras') setTimeout(loadMascaras, 50);
 }
 
 document.querySelectorAll('nav button[data-view]').forEach((btn) => {
@@ -651,6 +652,7 @@ function actualizarHeaderAuth() {
     { id: 'nav-areas', perm: 'ver_areas' },
     { id: 'nav-roles', perm: 'ver_roles' },
     { id: 'nav-alta-inmuebles', perm: 'ver_alta_inmuebles' },
+    { id: 'nav-mascaras', perm: 'ver_mascaras' },
   ];
 
   if (userStr) {
@@ -1364,6 +1366,7 @@ const PERMISOS_LABELS = {
   ver_areas: 'Áreas',
   ver_roles: 'Roles y Permisos',
   ver_alta_inmuebles: 'Alta Inmuebles',
+  ver_mascaras: 'Máscaras de Folio',
 };
 
 let _editandoRolId = null;
@@ -1889,3 +1892,199 @@ function filtrarPadron() {
 }
 
 document.getElementById('padron-alcaldia').addEventListener('change', filtrarPadron);
+
+/* ---------- Máscaras de Folio CRUD ---------- */
+
+let _editandoMascaraId = null;
+
+const TOKENS_INFO = [
+  { token: '{prefijo}', desc: 'Prefijo de la máscara' },
+  { token: '{aaaa}', desc: 'Año (4 dígitos)' },
+  { token: '{mm}', desc: 'Mes (2 dígitos)' },
+  { token: '{dd}', desc: 'Día (2 dígitos)' },
+  { token: '{alcaldia}', desc: 'Alcaldía del reporte' },
+  { token: '{seq}', desc: 'Secuencial sin padding' },
+  { token: '{seq_padded}', desc: 'Secuencial con ceros (ej: 0001)' },
+];
+
+async function loadMascaras() {
+  const container = document.getElementById('mascaras-lista');
+  try {
+    const mascaras = await fetchJSON(`${API}/mascaras-folio`);
+    if (mascaras.length === 0) {
+      container.innerHTML = '<p style="color:#777;">No hay máscaras registradas.</p>';
+      return;
+    }
+    container.innerHTML = mascaras.map(m => `
+      <div class="tipo-card ${m.activo ? '' : 'inactivo'}">
+        <div>
+          <div class="tipo-nombre">${m.nombre}</div>
+          <div class="tipo-desc">${m.descripcion || 'Sin descripción'}</div>
+          <div class="tipo-meta" style="margin-top:0.4rem;">
+            <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:0.85rem;">${m.formato}</code>
+          </div>
+          <div class="tipo-meta">
+            Aplica a: <strong>${m.aplica_a === 'ambos' ? 'Siniestros y Seguimiento' : m.aplica_a === 'siniestros' ? 'Siniestros' : 'Seguimiento'}</strong>
+            &nbsp;|&nbsp; Secuencial actual: <strong>${m.secuencia_actual}</strong>
+            &nbsp;|&nbsp; Longitud: <strong>${m.longitud_secuencia}</strong>
+          </div>
+          <div class="tipo-meta">${m.activo ? 'Activa' : 'Inactiva'}</div>
+        </div>
+        <div class="acciones">
+          <label class="switch">
+            <input type="checkbox" ${m.activo ? 'checked' : ''} onchange="toggleActivoMascara('${m._id}', this.checked)">
+            <span class="slider"></span>
+          </label>
+          <button class="btn-sm" onclick="abrirFormMascara('${m._id}')">✏️</button>
+          <button class="btn-danger" onclick="eliminarMascara('${m._id}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = `<p style="color:#d32f2f;">Error: ${err.message}</p>`;
+  }
+}
+
+async function toggleActivoMascara(id, activo) {
+  try {
+    await fetch(`${API}/mascaras-folio/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo }),
+    });
+    loadMascaras();
+  } catch (err) {
+    alert('Error al actualizar: ' + err.message);
+  }
+}
+
+async function eliminarMascara(id) {
+  if (!confirm('¿Eliminar esta máscara?')) return;
+  try {
+    const res = await fetch(`${API}/mascaras-folio/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error); return; }
+    loadMascaras();
+  } catch (err) {
+    alert('Error al eliminar: ' + err.message);
+  }
+}
+
+async function abrirFormMascara(id) {
+  _editandoMascaraId = id || null;
+  const body = document.getElementById('modal-mascara-body');
+
+  let nombre = '', descripcion = '', formato = '{prefijo}-{aaaa}-{mm}-{seq_padded}', prefijo = '', longitud_secuencia = 4, aplica_a = 'ambos';
+
+  if (id) {
+    const m = await fetchJSON(`${API}/mascaras-folio/${id}`);
+    nombre = m.nombre || '';
+    descripcion = m.descripcion || '';
+    formato = m.formato || '';
+    prefijo = m.prefijo || '';
+    longitud_secuencia = m.longitud_secuencia || 4;
+    aplica_a = m.aplica_a || 'ambos';
+  }
+
+  body.innerHTML = `
+    <h2>${id ? 'Editar Máscara' : 'Nueva Máscara'}</h2>
+    <form id="form-mascara" onsubmit="event.preventDefault(); guardarMascara();">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="mascara-nombre" value="${nombre}" required placeholder="Ej: Siniestros CDMX">
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="mascara-desc" placeholder="Descripción opcional">${descripcion}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Formato del folio</label>
+        <input type="text" id="mascara-formato" value="${formato}" required placeholder="{prefijo}-{aaaa}-{mm}-{seq_padded}">
+        <div style="margin-top:0.4rem;font-size:0.8rem;color:#666;">
+          Tokens disponibles: ${TOKENS_INFO.map(t => `<code style="background:#e8e8e8;padding:1px 4px;border-radius:3px;cursor:pointer;" onclick="insertarToken('${t.token}')">${t.token}</code> <span style="color:#999;">${t.desc}</span>`).join(' &nbsp; ')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Prefijo (valor para {prefijo})</label>
+          <input type="text" id="mascara-prefijo" value="${prefijo}" placeholder="Ej: SIS">
+        </div>
+        <div class="form-group">
+          <label>Longitud del secuencial</label>
+          <input type="number" id="mascara-longitud" value="${longitud_secuencia}" min="1" max="10">
+          <div style="font-size:0.75rem;color:#999;">Ej: 4 genera 0001, 5 genera 00001</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Aplica a</label>
+        <select id="mascara-aplica">
+          <option value="ambos" ${aplica_a === 'ambos' ? 'selected' : ''}>Siniestros y Seguimiento</option>
+          <option value="siniestros" ${aplica_a === 'siniestros' ? 'selected' : ''}>Solo Siniestros (móvil)</option>
+          <option value="seguimiento" ${aplica_a === 'seguimiento' ? 'selected' : ''}>Solo Seguimiento</option>
+        </select>
+      </div>
+      ${id ? `
+      <div class="form-group">
+        <label>Secuencial actual</label>
+        <input type="number" id="mascara-secuencia" value="${m?.secuencia_actual || 0}" min="0">
+        <div style="font-size:0.75rem;color:#999;">Último número generado. Solo editar si es necesario.</div>
+      </div>` : ''}
+      <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+        <button type="submit" class="btn-primary">${id ? 'Guardar Cambios' : 'Crear Máscara'}</button>
+        <button type="button" class="btn-sm" onclick="cerrarModal('modal-mascara')">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById('modal-mascara').classList.remove('hidden');
+}
+
+function insertarToken(token) {
+  const input = document.getElementById('mascara-formato');
+  const pos = input.selectionStart;
+  const before = input.value.substring(0, pos);
+  const after = input.value.substring(pos);
+  input.value = before + token + after;
+  input.focus();
+  input.setSelectionRange(pos + token.length, pos + token.length);
+}
+
+async function guardarMascara() {
+  const nombre = document.getElementById('mascara-nombre').value.trim();
+  const descripcion = document.getElementById('mascara-desc').value.trim();
+  const formato = document.getElementById('mascara-formato').value.trim();
+  const prefijo = document.getElementById('mascara-prefijo').value.trim();
+  const longitud_secuencia = parseInt(document.getElementById('mascara-longitud').value) || 4;
+  const aplica_a = document.getElementById('mascara-aplica').value;
+
+  if (!nombre) { alert('El nombre es requerido'); return; }
+  if (!formato) { alert('El formato es requerido'); return; }
+
+  const data = { nombre, descripcion, formato, prefijo, longitud_secuencia, aplica_a };
+
+  if (_editandoMascaraId) {
+    const secEl = document.getElementById('mascara-secuencia');
+    if (secEl) data.secuencia_actual = parseInt(secEl.value) || 0;
+  }
+
+  try {
+    if (_editandoMascaraId) {
+      await fetch(`${API}/mascaras-folio/${_editandoMascaraId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    } else {
+      await fetch(`${API}/mascaras-folio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    }
+
+    cerrarModal('modal-mascara');
+    loadMascaras();
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  }
+}

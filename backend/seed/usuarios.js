@@ -16,7 +16,7 @@ const ROLES_DEFAULT = [
   {
     nombre: 'admin',
     descripcion: 'Acceso total al sistema',
-    permisos: ['ver_dashboard', 'ver_mapa', 'ver_lista', 'ver_catalogo', 'ver_usuarios', 'ver_tipos', 'ver_areas', 'ver_roles', 'ver_alta_inmuebles'],
+    permisos: ['ver_dashboard', 'ver_mapa', 'ver_lista', 'ver_catalogo', 'ver_usuarios', 'ver_tipos', 'ver_areas', 'ver_roles', 'ver_alta_inmuebles', 'ver_mascaras'],
   },
   {
     nombre: 'capturista',

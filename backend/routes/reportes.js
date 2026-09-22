@@ -5,6 +5,7 @@ const Inmueble = require('../models/Inmueble');
 const Damnificado = require('../models/Damnificado');
 const ValorCaracteristica = require('../models/ValorCaracteristica');
 const TipoInmueble = require('../models/TipoInmueble');
+const { generarFolio } = require('../services/folioService');
 
 router.post('/sync', async (req, res) => {
   try {
@@ -21,8 +22,18 @@ router.post('/sync', async (req, res) => {
 
       const exists = await Siniestro.findOne({ folio: reporteData.folio });
       let siniestro;
+
+      let folioFinal = reporteData.folio;
+      if (!exists) {
+        const nuevoFolio = await generarFolio('siniestros');
+        if (nuevoFolio) {
+          folioFinal = nuevoFolio;
+        }
+      }
+
       const siniestroData = {
-        folio: reporteData.folio,
+        folio: folioFinal,
+        folio_original: exists ? exists.folio_original : reporteData.folio,
         fecha: reporteData.fecha ? new Date(reporteData.fecha) : new Date(),
         ubicacion: {
           lat: reporteData.lat || 0,

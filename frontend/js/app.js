@@ -267,21 +267,21 @@ function renderAlcaldiasGrid() {
       (item) => `
     <div class="alcaldia-card">
       <div class="alcaldia-name" title="${item.alcaldia}">${item.alcaldia}</div>
-      <div class="damage-row row-sindano">
+      <div class="damage-row row-sindano" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'sin_daños')">
         <div class="damage-row-label">
           <span class="legend-dot dot-green"></span>
           <span>Sin daño</span>
         </div>
         <span class="damage-row-count">${item.sinDano || 0}</span>
       </div>
-      <div class="damage-row row-moderado">
+      <div class="damage-row row-moderado" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'moderado')">
         <div class="damage-row-label">
           <span class="legend-dot dot-amber"></span>
           <span>Daño moderado</span>
         </div>
         <span class="damage-row-count">${item.moderado || 0}</span>
       </div>
-      <div class="damage-row row-critico">
+      <div class="damage-row row-critico" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'critico')">
         <div class="damage-row-label">
           <span class="legend-dot dot-red"></span>
           <span>Daño crítico</span>
@@ -360,6 +360,68 @@ async function loadDashboard() {
     console.error('Error cargando dashboard:', err);
     renderDashboardChart({ sinDano: 724, moderado: 329, critico: 197, total: 1250 });
     renderAlcaldiasGrid();
+  }
+}
+
+async function abrirDetalleAlcaldia(alcaldia, dano) {
+  const modal = document.getElementById('modal-alcaldia');
+  const body = document.getElementById('modal-alcaldia-body');
+
+  const danoLabels = {
+    sin_daños: 'Sin daño',
+    moderado: 'Daño moderado',
+    critico: 'Daño crítico',
+  };
+
+  body.innerHTML = `<h2>${alcaldia} — ${danoLabels[dano] || dano}</h2><p style="color:#777;">Cargando...</p>`;
+  modal.classList.remove('hidden');
+
+  try {
+    const data = await fetchJSON(`${API}/ubicacion?alcaldia=${encodeURIComponent(alcaldia)}&dano=${encodeURIComponent(dano)}`);
+
+    if (data.length === 0) {
+      body.innerHTML = `
+        <h2>${alcaldia} — ${danoLabels[dano] || dano}</h2>
+        <p style="color:#777;">No hay reportes con este nivel de daño en esta alcaldía.</p>
+      `;
+      return;
+    }
+
+    body.innerHTML = `
+      <h2>${alcaldia} — ${danoLabels[dano] || dano}</h2>
+      <p style="color:#666;margin-bottom:1rem;">${data.length} reporte(s) encontrado(s)</p>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+          <thead>
+            <tr style="background:#f3f4f6;text-align:left;">
+              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Folio</th>
+              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Tipo de Inmueble</th>
+              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Nivel de Daño</th>
+              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Dirección</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(r => `
+              <tr style="border-bottom:1px solid #e5e7eb;cursor:pointer;" onclick="cerrarModal('modal-alcaldia'); showDetail('${r.siniestroId}')" title="Ver detalle del reporte">
+                <td style="padding:0.5rem;font-weight:600;">${r.folio || '—'}</td>
+                <td style="padding:0.5rem;">${r.tipo || '—'}</td>
+                <td style="padding:0.5rem;">
+                  <span class="${getBadgeClass(r.estadoAfectacion === 'critico' ? 'red' : r.estadoAfectacion === 'moderado' ? 'yellow' : 'green')}">
+                    ${r.estadoAfectacion === 'critico' ? 'Crítico' : r.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daño'}
+                  </span>
+                </td>
+                <td style="padding:0.5rem;color:#555;">${r.direccion || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    body.innerHTML = `
+      <h2>${alcaldia} — ${danoLabels[dano] || dano}</h2>
+      <p style="color:#d32f2f;">Error al cargar: ${err.message}</p>
+    `;
   }
 }
 
@@ -763,6 +825,12 @@ document.getElementById('modal-area').addEventListener('click', (e) => {
 });
 document.getElementById('modal-rol').addEventListener('click', (e) => {
   if (e.target === e.currentTarget) cerrarModal('modal-rol');
+});
+document.getElementById('modal-mascara').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-mascara');
+});
+document.getElementById('modal-alcaldia').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) cerrarModal('modal-alcaldia');
 });
 
 let _cpSearchTimer = null;

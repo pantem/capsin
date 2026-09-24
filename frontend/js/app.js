@@ -198,12 +198,12 @@ function getFilteredAlcaldias() {
     (_dashboardStats && _dashboardStats.porAlcaldia && _dashboardStats.porAlcaldia.length > 0)
       ? _dashboardStats.porAlcaldia
       : ALCALDIAS_CDMX.map((a) => ({
-          alcaldia: a,
-          sinDano: 0,
-          moderado: 0,
-          critico: 0,
-          total: 0,
-        }));
+        alcaldia: a,
+        sinDano: 0,
+        moderado: 0,
+        critico: 0,
+        total: 0,
+      }));
 
   if (_alcFilter === 'all') {
     return data;
@@ -412,7 +412,7 @@ async function loadReportesList(filter = '') {
               <div class="ubicacion">${s.ubicacion?.direccion || ''} ${s.ubicacion?.municipio || ''}</div>
             </div>
             <div style="display:flex;align-items:center;gap:0.8rem;">
-              <span>${s.totalDamnificados} damnificados</span>
+              <!--span>${s.totalDamnificados} damnificados</span-->
               <span class="${getBadgeClass(s.color)}">${s.color === 'red' ? 'Crítico' : s.color === 'yellow' ? 'Moderado' : 'Sin daños'}</span>
             </div>
           </div>`
@@ -1627,10 +1627,10 @@ async function loadInmueblesPadron(filter = '') {
           </thead>
           <tbody>
             ${filtered.map(i => {
-              const ultimoReporte = i.fecha_ultimo_reporte
-                ? formatDate(i.fecha_ultimo_reporte)
-                : '<span style="color:#999;">Sin reportes</span>';
-              return `
+      const ultimoReporte = i.fecha_ultimo_reporte
+        ? formatDate(i.fecha_ultimo_reporte)
+        : '<span style="color:#999;">Sin reportes</span>';
+      return `
                 <tr style="border-bottom:1px solid #e0e0e0;">
                   <td style="padding:0.5rem;font-weight:600;">${i.nombre || '—'}</td>
                   <td style="padding:0.5rem;">${i.direccion || '—'}</td>
@@ -1644,7 +1644,7 @@ async function loadInmueblesPadron(filter = '') {
                     <button class="btn-danger" onclick="eliminarInmueblePadron('${i._id}')" title="Eliminar">🗑</button>
                   </td>
                 </tr>`;
-            }).join('')}
+    }).join('')}
           </tbody>
         </table>
       </div>
@@ -1664,10 +1664,10 @@ async function abrirFormInmueblePadron(id) {
     if (tipos.length > 0) {
       caracts = await fetchJSON(`${API}/tipos-inmueble/${tipos[0]._id}/caracteristicas`);
     }
-  } catch {}
+  } catch { }
 
   if (id) {
-    try { inm = await fetchJSON(`${API}/inmuebles-padron/${id}`); } catch {}
+    try { inm = await fetchJSON(`${API}/inmuebles-padron/${id}`); } catch { }
   }
 
   const tiposOptions = tipos.map(t =>
@@ -1775,39 +1775,39 @@ async function abrirFormInmueblePadron(id) {
           <label>Uso del Inmueble</label>
           <select id="padron-uso" style="width:100%;">
             <option value="">Seleccione</option>
-            ${['HABITACIÓN UNIFAMILIAR','HABITACIÓN MULTIFAMILIAR','CENTRO DE REUNIÓN','OFICINAS PRIVADAS','INDUSTRIAS','RECREATIVO','COMERCIOS','ESTACIONAMIENTO','EDUCACIÓN','OFICINAS PÚBLICAS','BODEGAS','MIXTO'].map(u =>
-              `<option value="${u}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
-            ).join('')}
+            ${['HABITACIÓN UNIFAMILIAR', 'HABITACIÓN MULTIFAMILIAR', 'CENTRO DE REUNIÓN', 'OFICINAS PRIVADAS', 'INDUSTRIAS', 'RECREATIVO', 'COMERCIOS', 'ESTACIONAMIENTO', 'EDUCACIÓN', 'OFICINAS PÚBLICAS', 'BODEGAS', 'MIXTO'].map(u =>
+    `<option value="${u}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
+  ).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Década de construcción</label>
           <select id="padron-decada" style="width:100%;">
             <option value="">Seleccione</option>
-            ${['50S O ANTES','60S','70S','80S','90S','2000S','2010S O MÁS'].map(d =>
-              `<option value="${d}" ${inm.decada_construccion === d ? 'selected' : ''}>${d}</option>`
-            ).join('')}
+            ${['50S O ANTES', '60S', '70S', '80S', '90S', '2000S', '2010S O MÁS'].map(d =>
+    `<option value="${d}" ${inm.decada_construccion === d ? 'selected' : ''}>${d}</option>`
+  ).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Niveles sobre terreno</label>
           <select id="padron-niveles" style="width:100%;">
-            ${Array.from({length:100}, (_,i) => `<option value="${i+1}" ${(inm.niveles || 1) === i+1 ? 'selected' : ''}>${i+1}</option>`).join('')}
+            ${Array.from({ length: 100 }, (_, i) => `<option value="${i + 1}" ${(inm.niveles || 1) === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Sótanos</label>
           <select id="padron-sotanos" style="width:100%;">
-            ${Array.from({length:100}, (_,i) => `<option value="${i}" ${(inm.sotanos || 0) === i ? 'selected' : ''}>${i}</option>`).join('')}
+            ${Array.from({ length: 100 }, (_, i) => `<option value="${i}" ${(inm.sotanos || 0) === i ? 'selected' : ''}>${i}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Tipo de inspección</label>
           <select id="padron-inspeccion" style="width:100%;">
             <option value="">Seleccione</option>
-            ${['INSPECCIÓN EXTERIOR ÚNICAMENTE','INSPECCIÓN INTERIOR Y EXTERIOR'].map(t =>
-              `<option value="${t}" ${inm.tipo_inspeccion === t ? 'selected' : ''}>${t}</option>`
-            ).join('')}
+            ${['INSPECCIÓN EXTERIOR ÚNICAMENTE', 'INSPECCIÓN INTERIOR Y EXTERIOR'].map(t =>
+    `<option value="${t}" ${inm.tipo_inspeccion === t ? 'selected' : ''}>${t}</option>`
+  ).join('')}
           </select>
         </div>
       </div>

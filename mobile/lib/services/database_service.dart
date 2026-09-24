@@ -26,7 +26,7 @@ class DatabaseService {
     final path = join(dbPath, 'siniestros_sismo.db');
     return openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
     );
@@ -96,6 +96,8 @@ class DatabaseService {
         opciones TEXT DEFAULT '',
         requerido INTEGER DEFAULT 0,
         orden INTEGER DEFAULT 0,
+        minimo REAL,
+        maximo REAL,
         FOREIGN KEY (tipoInmuebleId) REFERENCES tipos_inmueble(id)
       )
     ''');
@@ -195,6 +197,12 @@ class DatabaseService {
     }
     if (oldVersion < 8) {
       await _crearTablasPadron(db);
+    }
+    if (oldVersion < 9) {
+      try {
+        await db.execute('ALTER TABLE caracteristicas_tipo ADD COLUMN minimo REAL');
+        await db.execute('ALTER TABLE caracteristicas_tipo ADD COLUMN maximo REAL');
+      } catch (_) {}
     }
   }
 

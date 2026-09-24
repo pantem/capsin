@@ -63,6 +63,8 @@ const CARACTERISTICAS = [
     opciones: [],
     requerido: true,
     orden: 8,
+    minimo: 1700,
+    maximo: 2026,
   },
   {
     nombre: '2.9 Uso del Inmueble',
@@ -318,7 +320,7 @@ async function seedTiposInmueble() {
     for (const c of CARACTERISTICAS) {
       const existente = existentesMap.get(c.nombre);
       if (existente) {
-        if (existente.tipo_dato !== c.tipo_dato || JSON.stringify(existente.opciones) !== JSON.stringify(c.opciones) || existente.requerido !== c.requerido || existente.orden !== c.orden) {
+        if (existente.tipo_dato !== c.tipo_dato || JSON.stringify(existente.opciones) !== JSON.stringify(c.opciones) || existente.requerido !== c.requerido || existente.orden !== c.orden || existente.minimo !== c.minimo || existente.maximo !== c.maximo) {
           await CaracteristicaTipo.findByIdAndUpdate(existente._id, c);
         }
       } else {

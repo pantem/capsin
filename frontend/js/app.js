@@ -1015,7 +1015,7 @@ function renderCaractsLista() {
       <div class="caract-item">
         <div class="caract-info">
           <div class="caract-nombre">${c.nombre}</div>
-          <div class="caract-detalle">${tipoLabel[td] || td} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}</div>
+          <div class="caract-detalle">${tipoLabel[td] || td} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}              ${td === 'numero' && (c.minimo != null || c.maximo != null) ? ` · Rango: ${c.minimo ?? '?'} - ${c.maximo ?? '?'}` : ''}</div>
         </div>
         <div class="caract-acciones">
           <button type="button" class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
@@ -1026,7 +1026,7 @@ function renderCaractsLista() {
 }
 
 function abrirFormCaract(idx) {
-  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false };
+  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, minimo: null, maximo: null };
   const isNew = idx === undefined;
 
   const modalBody = document.getElementById('modal-tipo-body');
@@ -1059,6 +1059,16 @@ function abrirFormCaract(idx) {
         <label for="caract-req">Requerido</label>
       </div>
     </div>
+    <div class="form-row" id="caract-rango-group" style="${c.tipoDato === 'numero' ? '' : 'display:none;'}">
+      <div class="form-group">
+        <label>Mínimo</label>
+        <input type="number" id="caract-minimo" value="${c.minimo ?? ''}">
+      </div>
+      <div class="form-group">
+        <label>Máximo</label>
+        <input type="number" id="caract-maximo" value="${c.maximo ?? ''}">
+      </div>
+    </div>
     <div class="form-group" id="caract-opciones-group" style="${c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion' ? '' : 'display:none;'}">
       <label>Opciones (una por línea)</label>
       <textarea id="caract-opciones" rows="3">${opcionesStr}</textarea>
@@ -1078,7 +1088,9 @@ function abrirFormCaract(idx) {
 function onCaractTipoChange() {
   const tipo = document.getElementById('caract-tipo').value;
   const group = document.getElementById('caract-opciones-group');
+  const rango = document.getElementById('caract-rango-group');
   group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
+  rango.style.display = tipo === 'numero' ? '' : 'none';
 }
 
 function cancelarCaractForm() {
@@ -1094,8 +1106,12 @@ function guardarCaract(idx) {
   const opciones = tipoDato === 'seleccion' || tipoDato === 'multiseleccion'
     ? document.getElementById('caract-opciones').value.split('\n').map(s => s.trim()).filter(s => s)
     : [];
+  const minimoRaw = document.getElementById('caract-minimo').value;
+  const maximoRaw = document.getElementById('caract-maximo').value;
+  const minimo = tipoDato === 'numero' && minimoRaw !== '' ? Number(minimoRaw) : null;
+  const maximo = tipoDato === 'numero' && maximoRaw !== '' ? Number(maximoRaw) : null;
 
-  const caract = { nombre, tipoDato, requerido, opciones };
+  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo };
 
   if (idx === undefined || idx === -1) {
     _caractsTemp.push(caract);
@@ -1151,6 +1167,8 @@ async function guardarTipo() {
             opciones: c.opciones,
             requerido: c.requerido,
             orden: _caractsTemp.indexOf(c),
+            minimo: c.minimo,
+            maximo: c.maximo,
           }),
         });
       }

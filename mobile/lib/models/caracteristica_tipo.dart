@@ -6,6 +6,8 @@ class CaracteristicaTipo {
   final List<String> opciones;
   final bool requerido;
   final int orden;
+  final double? minimo;
+  final double? maximo;
 
   CaracteristicaTipo({
     required this.id,
@@ -15,6 +17,8 @@ class CaracteristicaTipo {
     this.opciones = const [],
     this.requerido = false,
     this.orden = 0,
+    this.minimo,
+    this.maximo,
   });
 
   Map<String, dynamic> toMap() => {
@@ -25,6 +29,8 @@ class CaracteristicaTipo {
         'opciones': opciones.join(','),
         'requerido': requerido ? 1 : 0,
         'orden': orden,
+        'minimo': minimo,
+        'maximo': maximo,
       };
 
   factory CaracteristicaTipo.fromMap(Map<String, dynamic> map) =>
@@ -38,6 +44,8 @@ class CaracteristicaTipo {
             : [],
         requerido: (map['requerido'] as int? ?? 0) == 1,
         orden: map['orden'] as int? ?? 0,
+        minimo: (map['minimo'] as num?)?.toDouble(),
+        maximo: (map['maximo'] as num?)?.toDouble(),
       );
 
   factory CaracteristicaTipo.fromJson(Map<String, dynamic> json) =>
@@ -52,5 +60,7 @@ class CaracteristicaTipo {
             [],
         requerido: json['requerido'] as bool? ?? false,
         orden: json['orden'] as int? ?? 0,
+        minimo: (json['minimo'] as num?)?.toDouble(),
+        maximo: (json['maximo'] as num?)?.toDouble(),
       );
 }

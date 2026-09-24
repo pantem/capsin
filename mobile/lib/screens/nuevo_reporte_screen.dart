@@ -731,13 +731,23 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           child: TextFormField(
             controller: _textControllers[c.id],
             decoration: InputDecoration(
-              labelText: c.nombre,
+              labelText: c.nombre +
+                  (c.minimo != null || c.maximo != null
+                      ? ' (${c.minimo != null ? c.minimo!.toInt() : '?'} - ${c.maximo != null ? c.maximo!.toInt() : '?'})'
+                      : ''),
               border: const OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
-            validator: c.requerido
-                ? (v) => v == null || v.isEmpty ? 'Requerido' : null
-                : null,
+            validator: (v) {
+              if (c.requerido && (v == null || v.isEmpty)) return 'Requerido';
+              if (v != null && v.isNotEmpty) {
+                final n = num.tryParse(v);
+                if (n == null) return 'Debe ser un número';
+                if (c.minimo != null && n < c.minimo!) return 'Mínimo ${c.minimo!.toInt()}';
+                if (c.maximo != null && n > c.maximo!) return 'Máximo ${c.maximo!.toInt()}';
+              }
+              return null;
+            },
           ),
         );
       case 'booleano':

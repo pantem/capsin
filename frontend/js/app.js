@@ -294,11 +294,7 @@ function renderAlcaldiasGrid() {
     .join('');
 
   if (infoEl) {
-    if (_alcFilter !== 'all') {
-      infoEl.textContent = `Mostrando 1 de 1 alcaldías`;
-    } else {
-      infoEl.textContent = `Mostrando ${pageItems.length} de ${items.length} alcaldías`;
-    }
+    infoEl.textContent = `${_alcCurrentPage}/${totalPages}`;
   }
 
   if (prevBtn) prevBtn.disabled = _alcCurrentPage <= 1;

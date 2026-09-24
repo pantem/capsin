@@ -73,6 +73,55 @@ router.delete('/:id/caracteristicas', async (req, res) => {
   }
 });
 
+router.put('/:id/caracteristicas', async (req, res) => {
+  try {
+    const tipoId = req.params.id;
+    const incoming = req.body.caracteristicas;
+    if (!Array.isArray(incoming)) return res.status(400).json({ error: 'caracteristicas requerido' });
+
+    const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipoId });
+    const existentesMap = new Map(existentes.map(c => [c.nombre, c]));
+    const incomingNames = new Set(incoming.map(c => c.nombre));
+
+    for (let i = 0; i < incoming.length; i++) {
+      const c = incoming[i];
+      const existente = existentesMap.get(c.nombre);
+      if (existente) {
+        await CaracteristicaTipo.findByIdAndUpdate(existente._id, {
+          tipo_dato: c.tipo_dato,
+          opciones: c.opciones || [],
+          requerido: c.requerido,
+          orden: i,
+          minimo: c.minimo ?? null,
+          maximo: c.maximo ?? null,
+        });
+      } else {
+        await new CaracteristicaTipo({
+          tipo_inmueble: tipoId,
+          nombre: c.nombre,
+          tipo_dato: c.tipo_dato,
+          opciones: c.opciones || [],
+          requerido: c.requerido,
+          orden: i,
+          minimo: c.minimo ?? null,
+          maximo: c.maximo ?? null,
+        }).save();
+      }
+    }
+
+    for (const e of existentes) {
+      if (!incomingNames.has(e.nombre)) {
+        await CaracteristicaTipo.findByIdAndDelete(e._id);
+      }
+    }
+
+    const result = await CaracteristicaTipo.find({ tipo_inmueble: tipoId }).sort({ orden: 1 });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/:id/caracteristicas', async (req, res) => {
   try {
     const caracteristica = new CaracteristicaTipo({ ...req.body, tipo_inmueble: req.params.id });

@@ -1130,24 +1130,20 @@ async function guardarTipo() {
 
     if (_caractsTemp.length > 0) {
       await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
-        method: 'DELETE'
-      }).catch(() => { });
-
-      for (const c of _caractsTemp) {
-        await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caracteristicas: _caractsTemp.map((c, i) => ({
             nombre: c.nombre,
             tipo_dato: c.tipoDato,
             opciones: c.opciones,
             requerido: c.requerido,
-            orden: _caractsTemp.indexOf(c),
+            orden: i,
             minimo: c.minimo,
             maximo: c.maximo,
-          }),
-        });
-      }
+          })),
+        }),
+      });
     }
 
     cerrarModal('modal-tipo');

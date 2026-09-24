@@ -908,14 +908,12 @@ async function loadTipos() {
       container.innerHTML = '<p style="color:#777;">No hay tipos de inmueble registrados.</p>';
       return;
     }
-    container.innerHTML = await Promise.all(tipos.map(async (t) => {
-      const caracts = await fetchJSON(`${API}/tipos-inmueble/${t._id}/caracteristicas`);
-      return `
+    container.innerHTML = tipos.map(t => `
         <div class="tipo-card ${t.activo ? '' : 'inactivo'}">
           <div>
             <div class="tipo-nombre">${t.nombre}</div>
             <div class="tipo-desc">${t.descripcion || 'Sin descripción'}</div>
-            <div class="tipo-meta">${caracts.length} característica(s) · ${t.activo ? 'Activo' : 'Inactivo'}</div>
+            <div class="tipo-meta">${t.activo ? 'Activo' : 'Inactivo'}</div>
           </div>
           <div class="acciones">
             <label class="switch">
@@ -925,8 +923,8 @@ async function loadTipos() {
             <button class="btn-sm" onclick="abrirFormTipo('${t._id}')">✏️</button>
             <button class="btn-danger" onclick="eliminarTipo('${t._id}')">🗑</button>
           </div>
-        </div>`;
-    })).then(r => r.join(''));
+        </div>`
+    ).join('');
   } catch (err) {
     container.innerHTML = `<p style="color:#d32f2f;">Error: ${err.message}</p>`;
   }

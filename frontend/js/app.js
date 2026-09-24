@@ -984,7 +984,7 @@ function renderCaractsLista() {
     return;
   }
   container.innerHTML = _caractsTemp.map((c, i) => {
-    const tipoLabel = { texto: 'Texto', numero: 'Número', booleano: 'Sí/No', seleccion: 'Selección', multiseleccion: 'Multiselección' };
+    const tipoLabel = { texto: 'Texto', textarea: 'Texto largo', numero: 'Número', booleano: 'Sí/No', seleccion: 'Selección', multiseleccion: 'Multiselección' };
     const td = c.tipoDato || c.tipo_dato || '';
     return `
       <div class="caract-item">
@@ -1023,6 +1023,7 @@ function abrirFormCaract(idx) {
         <label>Tipo de dato</label>
         <select id="caract-tipo" onchange="onCaractTipoChange()">
           <option value="texto" ${c.tipoDato === 'texto' ? 'selected' : ''}>Texto</option>
+          <option value="textarea" ${c.tipoDato === 'textarea' ? 'selected' : ''}>Texto largo</option>
           <option value="numero" ${c.tipoDato === 'numero' ? 'selected' : ''}>Número</option>
           <option value="booleano" ${c.tipoDato === 'booleano' ? 'selected' : ''}>Sí/No</option>
             <option value="seleccion" ${c.tipoDato === 'seleccion' ? 'selected' : ''}>Selección</option>

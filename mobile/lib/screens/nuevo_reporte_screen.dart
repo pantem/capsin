@@ -88,7 +88,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           } else if (c.tipoDato == 'date') {
             _valoresCaracteristica[c.id] =
                 DateFormat('yyyy-MM-dd').format(DateTime.now());
-          } else if (c.tipoDato == 'texto' || c.tipoDato == 'numero') {
+          } else if (c.tipoDato == 'texto' || c.tipoDato == 'textarea' || c.tipoDato == 'numero') {
             _textControllers[c.id] = TextEditingController();
           }
         }
@@ -276,6 +276,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
       switch (c.tipoDato) {
         case 'texto':
+        case 'textarea':
           valorTexto = _textControllers[c.id]?.text;
           break;
         case 'numero':
@@ -734,6 +735,23 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               labelText: c.nombre,
               border: const OutlineInputBorder(),
             ),
+            validator: c.requerido
+                ? (v) => v == null || v.isEmpty ? 'Requerido' : null
+                : null,
+          ),
+        );
+      case 'textarea':
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextFormField(
+            controller: _textControllers[c.id],
+            decoration: InputDecoration(
+              labelText: c.nombre,
+              border: const OutlineInputBorder(),
+              alignLabelWithHint: true,
+            ),
+            maxLines: 4,
+            keyboardType: TextInputType.multiline,
             validator: c.requerido
                 ? (v) => v == null || v.isEmpty ? 'Requerido' : null
                 : null,

@@ -1,0 +1,38 @@
+workflows:
+  mobile-ios:
+    name: Capsin Mobile iOS
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: '*'
+          include: true
+    scripts:
+      - name: Setup Flutter
+        script: |
+          cd mobile
+          flutter pub get
+      - name: Generate iOS project
+        script: |
+          cd mobile
+          flutter create --platforms ios .
+      - name: Install pods
+        script: |
+          cd mobile/ios
+          pod install
+      - name: Build iOS
+        script: |
+          cd mobile
+          flutter build ios --release --no-codesign
+    artifacts:
+      - mobile/build/ios/ipa/*.ipa
+    publishing:
+      testflight:
+        api_key: $APP_STORE_CONNECT_API_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_API_ISSUER_ID
+        api_key: $APP_STORE_CONNECT_API_PRIVATE_KEY

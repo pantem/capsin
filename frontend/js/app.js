@@ -496,7 +496,7 @@ async function showDetail(siniestroId) {
               </div>
             ` : ''}
             ${damnificados.length > 0 ? `
-              <p style="font-weight:600;margin-top:0.5rem;font-size:0.9rem;">Damnificados (${damnificados.length}):</p>
+              <!--p style="font-weight:600;margin-top:0.5rem;font-size:0.9rem;">Damnificados (${damnificados.length}):</p>
               <table>
                 <tr><th>Nombre</th><th>Edad</th><th>Sexo</th><th>Estado</th><th>Traslado</th></tr>
                 ${damnificados.map(d => `
@@ -508,8 +508,8 @@ async function showDetail(siniestroId) {
                     <td>${d.requiere_traslado ? 'Sí' : 'No'}</td>
                   </tr>
                 `).join('')}
-              </table>
-            ` : '<p style="font-size:0.9rem;color:#999;">Sin damnificados registrados</p>'}
+              </table-->
+            ` : '<!--p style="font-size:0.9rem;color:#999;">Sin damnificados registrados</p-->'}
 
             ${hijos.length > 0 ? `
               <p style="font-weight:600;margin-top:0.5rem;">Departamentos/Unidades (${hijos.length}):</p>
@@ -585,7 +585,7 @@ function renderUbicacion(data, countEl, container) {
             <th style="padding:0.6rem;">Niveles</th>
             <th style="padding:0.6rem;">Estado</th>
             <th style="padding:0.6rem;">Tipo daño</th>
-            <th style="padding:0.6rem;">Damnificados</th>
+            <!--th style="padding:0.6rem;">Damnificados</th-->
             <th style="padding:0.6rem;">Fallecidos</th>
           </tr>
         </thead>
@@ -608,7 +608,7 @@ function renderUbicacion(data, countEl, container) {
                   </span>
                 </td>
                 <td style="padding:0.5rem;">${d.tipoDanio || '—'}</td>
-                <td style="padding:0.5rem;text-align:center;">${d.totalDamnificados}</td>
+                <!--td style="padding:0.5rem;text-align:center;">${d.totalDamnificados}</td-->
                 <td style="padding:0.5rem;text-align:center;${d.fallecidos > 0 ? 'color:#d32f2f;font-weight:700;' : ''}">${d.fallecidos}</td>
               </tr>
             `;

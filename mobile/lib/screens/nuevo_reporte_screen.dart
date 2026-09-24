@@ -55,6 +55,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
+    _tabController.addListener(() { setState(() {}); });
     _cargarCaracteristicas();
     _cargarDatosUsuario();
   }
@@ -351,7 +352,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       )
                     else
                       FilledButton.icon(
-                        onPressed: _guardar,
+                        onPressed: _fotos.isNotEmpty ? _guardar : null,
                         icon: const Icon(Icons.save),
                         label: const Text('Guardar Reporte'),
                       ),

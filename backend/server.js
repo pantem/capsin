@@ -17,6 +17,25 @@ const { seedUsuarios } = require('./seed/usuarios');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+const alcaldiasCDMX = [
+  'Álvaro Obregón',
+  'Azcapotzalco',
+  'Benito Juárez',
+  'Coyoacán',
+  'Cuajimalpa',
+  'Cuauhtémoc',
+  'Gustavo A. Madero',
+  'Iztacalco',
+  'Iztapalapa',
+  'Magdalena Contreras',
+  'Miguel Hidalgo',
+  'Milpa Alta',
+  'Tláhuac',
+  'Tlalpan',
+  'Venustiano Carranza',
+  'Xochimilco',
+];
+
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '50mb' }));
@@ -56,25 +75,6 @@ app.get('/api/resumen', async (req, res) => {
     const inmueblesCriticos = await Inmueble.countDocuments({ estado_afectacion: 'critico' });
     const inmueblesModerados = await Inmueble.countDocuments({ estado_afectacion: 'moderado' });
     const inmueblesSinDanos = await Inmueble.countDocuments({ estado_afectacion: 'sin_daños' });
-
-    const alcaldiasCDMX = [
-      'Álvaro Obregón',
-      'Azcapotzalco',
-      'Benito Juárez',
-      'Coyoacán',
-      'Cuajimalpa',
-      'Cuauhtémoc',
-      'Gustavo A. Madero',
-      'Iztacalco',
-      'Iztapalapa',
-      'Magdalena Contreras',
-      'Miguel Hidalgo',
-      'Milpa Alta',
-      'Tláhuac',
-      'Tlalpan',
-      'Venustiano Carranza',
-      'Xochimilco',
-    ];
 
     const CodigoPostal = require('./models/CodigoPostal');
 
@@ -170,6 +170,76 @@ app.get('/api/resumen', async (req, res) => {
       porAlcaldia,
       ultimaActualizacion: new Date().toISOString(),
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/resumen/alcaldia-detalle', async (req, res) => {
+  try {
+    const Siniestro = require('./models/Siniestro');
+    const Inmueble = require('./models/Inmueble');
+    const CodigoPostal = require('./models/CodigoPostal');
+
+    const { alcaldia, dano } = req.query;
+    if (!alcaldia) return res.status(400).json({ error: 'alcaldia requerida' });
+
+    const normalize = (s) =>
+      (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+    const allCPs = await CodigoPostal.find().lean();
+    const cpMap = {};
+    allCPs.forEach((c) => { if (c.codigo) cpMap[c.codigo] = c.municipio; });
+
+    const inmueblesConSiniestro = await Inmueble.find().populate('siniestro').lean();
+    const results = [];
+
+    for (const inm of inmueblesConSiniestro) {
+      const s = inm.siniestro;
+      if (!s) continue;
+
+      let alcFound = null;
+      const mun = s.ubicacion?.municipio || '';
+      const cp = s.ubicacion?.codigo_postal || '';
+      const dir = s.ubicacion?.direccion || '';
+
+      for (const a of alcaldiasCDMX) {
+        const aN = normalize(a);
+        const mN = normalize(mun);
+        if (mN && mN !== 'ciudad de mexico' && mN !== 'cdmx' && (mN === aN || mN.includes(aN) || aN.includes(mN))) {
+          alcFound = a;
+          break;
+        }
+      }
+      if (!alcFound && cp && cpMap[cp]) {
+        const cpMun = normalize(cpMap[cp]);
+        for (const a of alcaldiasCDMX) {
+          const aN = normalize(a);
+          if (cpMun.includes(aN) || aN.includes(cpMun)) { alcFound = a; break; }
+        }
+      }
+      if (!alcFound && dir) {
+        const dirN = normalize(dir);
+        for (const a of alcaldiasCDMX) {
+          if (dirN.includes(normalize(a))) { alcFound = a; break; }
+        }
+      }
+      if (!alcFound) alcFound = 'Cuauhtémoc';
+
+      if (alcFound !== alcaldia) continue;
+      if (dano && inm.estado_afectacion !== dano) continue;
+
+      results.push({
+        siniestroId: s._id.toString(),
+        folio: s.folio || '',
+        fecha: s.fecha,
+        direccion: s.ubicacion?.direccion || '',
+        tipo: inm.tipo || '',
+        estadoAfectacion: inm.estado_afectacion || 'sin_daños',
+      });
+    }
+
+    res.json(results);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

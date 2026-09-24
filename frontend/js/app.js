@@ -1060,7 +1060,7 @@ function abrirFormCaract(idx) {
       </div>
       <div class="form-group checkbox" style="align-self:flex-end;">
         <input type="checkbox" id="caract-req" ${c.requerido ? 'checked' : ''}>
-        <label>Requerido</label>
+        <label for="caract-req">Requerido</label>
       </div>
     </div>
     <div class="form-group" id="caract-opciones-group" style="${c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion' ? '' : 'display:none;'}">

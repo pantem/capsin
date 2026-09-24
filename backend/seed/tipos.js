@@ -317,12 +317,29 @@ async function seedTiposInmueble() {
     console.log('Inmueble Genérico ya existe, verificando características...');
     const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipo._id });
 
-    const existentesSet = new Map(existentes.map(c => [c.nombre, c]));
+    const seedByName = new Map(CARACTERISTICAS.map(c => [c.nombre, c]));
+    const dbByName = new Map(existentes.map(c => [c.nombre, c]));
+
+    const duplicates = [];
+    const keepers = new Set();
+    for (const e of existentes) {
+      if (seedByName.has(e.nombre)) {
+        keepers.add(e.nombre);
+      } else {
+        duplicates.push(e);
+      }
+    }
+
+    for (const dup of duplicates) {
+      await CaracteristicaTipo.findByIdAndDelete(dup._id);
+      console.log(`  Eliminado duplicado: ${dup.nombre} (orden ${dup.orden})`);
+    }
+
     let agregadas = 0;
     let ordenesActualizados = 0;
 
     for (const c of CARACTERISTICAS) {
-      const existente = existentesSet.get(c.nombre);
+      const existente = dbByName.get(c.nombre);
       if (existente) {
         if (existente.orden !== c.orden) {
           await CaracteristicaTipo.findByIdAndUpdate(existente._id, { orden: c.orden });
@@ -335,11 +352,8 @@ async function seedTiposInmueble() {
       }
     }
 
-    if (agregadas > 0 || ordenesActualizados > 0) {
-      console.log(`  ${agregadas} agregada(s), ${ordenesActualizados} orden(es) actualizado(s)`);
-    } else {
-      console.log('  Todas las características ya existen');
-    }
+    const total = await CaracteristicaTipo.countDocuments({ tipo_inmueble: tipo._id });
+    console.log(`  Total características: ${total} (${agregadas} agregadas, ${ordenesActualizados} ordenes actualizados, ${duplicates.length} duplicados eliminados)`);
 
     return;
   }

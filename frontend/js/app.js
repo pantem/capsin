@@ -115,36 +115,41 @@ function renderDashboardChart(data) {
   const d3 = describeArc(cx, cy, r, a3_start, a3_end);
 
   const svgHTML = `
-    <svg viewBox="0 0 380 220" width="100%" height="100%" style="overflow: visible; max-height: 220px;">
-      <g>
-        <path d="${d1}" fill="#55b74e" class="pie-slice">
-          <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
-        </path>
-        <path d="${d2}" fill="#f7b731" class="pie-slice">
-          <title>Daño moderado: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
-        </path>
-        <path d="${d3}" fill="#881337" class="pie-slice">
-          <title>Daño crítico: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
-        </path>
-      </g>
-      <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
-      <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
-    </svg>
-    <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:0.8rem;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:0.4rem;">
-        <span style="width:12px;height:12px;border-radius:50%;background:#55b74e;display:inline-block;"></span>
-        <span style="font-size:0.85rem;font-weight:600;">${sinDanoVal.toLocaleString()}</span>
-        <span style="font-size:0.8rem;color:#888;">${sinDanoPct}%</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:0.4rem;">
-        <span style="width:12px;height:12px;border-radius:50%;background:#f7b731;display:inline-block;"></span>
-        <span style="font-size:0.85rem;font-weight:600;">${moderadoVal.toLocaleString()}</span>
-        <span style="font-size:0.8rem;color:#888;">${moderadoPct}%</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:0.4rem;">
-        <span style="width:12px;height:12px;border-radius:50%;background:#881337;display:inline-block;"></span>
-        <span style="font-size:0.85rem;font-weight:600;">${criticoVal.toLocaleString()}</span>
-        <span style="font-size:0.8rem;color:#888;">${criticoPct}%</span>
+    <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;justify-content:center;">
+      <svg viewBox="0 0 220 220" width="200" height="200" style="flex-shrink:0;">
+        <g>
+          <path d="${d1}" fill="#55b74e" class="pie-slice">
+            <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
+          </path>
+          <path d="${d2}" fill="#f7b731" class="pie-slice">
+            <title>Daño moderado: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
+          </path>
+          <path d="${d3}" fill="#881337" class="pie-slice">
+            <title>Daño crítico: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
+          </path>
+        </g>
+        <text x="110" y="104" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
+        <text x="110" y="124" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:0.7rem;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="width:14px;height:14px;border-radius:50%;background:#55b74e;display:inline-block;flex-shrink:0;"></span>
+          <span style="font-size:0.85rem;color:#555;">Sin daño</span>
+          <span style="font-size:0.85rem;font-weight:700;margin-left:auto;">${sinDanoVal.toLocaleString()}</span>
+          <span style="font-size:0.8rem;color:#888;width:48px;text-align:right;">${sinDanoPct}%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="width:14px;height:14px;border-radius:50%;background:#f7b731;display:inline-block;flex-shrink:0;"></span>
+          <span style="font-size:0.85rem;color:#555;">Moderado</span>
+          <span style="font-size:0.85rem;font-weight:700;margin-left:auto;">${moderadoVal.toLocaleString()}</span>
+          <span style="font-size:0.8rem;color:#888;width:48px;text-align:right;">${moderadoPct}%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="width:14px;height:14px;border-radius:50%;background:#881337;display:inline-block;flex-shrink:0;"></span>
+          <span style="font-size:0.85rem;color:#555;">Crítico</span>
+          <span style="font-size:0.85rem;font-weight:700;margin-left:auto;">${criticoVal.toLocaleString()}</span>
+          <span style="font-size:0.8rem;color:#888;width:48px;text-align:right;">${criticoPct}%</span>
+        </div>
       </div>
     </div>
   `;

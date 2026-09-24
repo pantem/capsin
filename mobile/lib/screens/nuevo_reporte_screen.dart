@@ -212,6 +212,20 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         return '';
       }
 
+      String estadoAfectacion = 'sin_daños';
+      for (final c in _caracteristicas) {
+        if (c.nombre.contains('Clasificación de Nivel de Daño')) {
+          final raw = _valoresCaracteristica[c.id];
+          final valor = raw as String? ?? '';
+          if (valor.contains('Riesgo Alto')) {
+            estadoAfectacion = 'critico';
+          } else if (valor.contains('Riesgo Medio')) {
+            estadoAfectacion = 'moderado';
+          }
+          break;
+        }
+      }
+
       final reporte = Reporte(
         id: reporteId,
         folio: folio,
@@ -228,7 +242,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         otroUso: null,
         fechaConstruccion: '',
         danosObservados: '',
-        estadoAfectacion: '',
+        estadoAfectacion: estadoAfectacion,
         sobreNivelBanqueta: 0,
         bajoNivelBanqueta: 0,
         condicionSeguridad: '',

@@ -6,6 +6,8 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      groups: []
+    working_directory: mobile
     triggering:
       events:
         - push
@@ -13,26 +15,20 @@ workflows:
         - pattern: '*'
           include: true
     scripts:
-      - name: Setup Flutter
-        script: |
-          cd mobile
-          flutter pub get
+      - name: Install Flutter dependencies
+        script: flutter pub get
       - name: Generate iOS project
-        script: |
-          cd mobile
-          flutter create --platforms ios .
+        script: flutter create --platforms ios .
       - name: Install pods
         script: |
-          cd mobile/ios
+          cd ios
           pod install
       - name: Build iOS
-        script: |
-          cd mobile
-          flutter build ios --release --no-codesign
+        script: flutter build ios --release --no-codesign
     artifacts:
       - mobile/build/ios/ipa/*.ipa
     publishing:
-      testflight:
+      app_store_connect:
         api_key: $APP_STORE_CONNECT_API_KEY_IDENTIFIER
         issuer_id: $APP_STORE_CONNECT_API_ISSUER_ID
         api_key: $APP_STORE_CONNECT_API_PRIVATE_KEY

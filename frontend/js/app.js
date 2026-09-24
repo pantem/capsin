@@ -944,6 +944,8 @@ async function abrirFormTipo(id) {
       tipoDato: c.tipo_dato,
       opciones: c.opciones || [],
       requerido: c.requerido || false,
+      minimo: c.minimo ?? null,
+      maximo: c.maximo ?? null,
     }));
   }
 
@@ -1129,7 +1131,7 @@ async function guardarTipo() {
     }
 
     if (_caractsTemp.length > 0) {
-      await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
+      const resCaracts = await fetch(`${API}/tipos-inmueble/${tipoId}/caracteristicas`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1144,6 +1146,11 @@ async function guardarTipo() {
           })),
         }),
       });
+      if (!resCaracts.ok) {
+        const err = await resCaracts.json().catch(() => ({ error: 'Error desconocido' }));
+        alert('Error al guardar características: ' + (err.error || resCaracts.statusText));
+        return;
+      }
     }
 
     cerrarModal('modal-tipo');

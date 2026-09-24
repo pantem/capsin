@@ -69,8 +69,8 @@ function renderDashboardChart(data) {
   const moderadoPct = ((moderadoVal / effectiveTotal) * 100).toFixed(1);
   const criticoPct = ((criticoVal / effectiveTotal) * 100).toFixed(1);
 
-  const cx = 185;
-  const cy = 155;
+  const cx = 110;
+  const cy = 110;
   const r = 90;
 
   const sinDanoAngle = (sinDanoVal / effectiveTotal) * 360;

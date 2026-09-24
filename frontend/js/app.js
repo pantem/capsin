@@ -986,6 +986,7 @@ function renderCaractsLista() {
     container.innerHTML = '<p style="color:#999;font-size:0.9rem;">Sin características</p>';
     return;
   }
+  _caractsTemp.sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0));
   container.innerHTML = _caractsTemp.map((c, i) => {
     const tipoLabel = { texto: 'Texto', textarea: 'Texto largo', numero: 'Número', booleano: 'Sí/No', seleccion: 'Selección', multiseleccion: 'Multiselección' };
     const td = c.tipoDato || c.tipo_dato || '';

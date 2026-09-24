@@ -93,7 +93,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           tipo_dato: c.tipo_dato,
           opciones: c.opciones || [],
           requerido: c.requerido,
-          orden: i,
+          orden: c.orden ?? existente.orden,
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         });
@@ -104,7 +104,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           tipo_dato: c.tipo_dato,
           opciones: c.opciones || [],
           requerido: c.requerido,
-          orden: i,
+          orden: c.orden ?? i,
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         }).save();

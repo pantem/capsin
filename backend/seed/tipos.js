@@ -317,21 +317,26 @@ async function seedTiposInmueble() {
     console.log('Inmueble Genérico ya existe, verificando características...');
     const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipo._id });
 
-    const existentesSet = new Set(existentes.map(c => c.nombre));
+    const existentesSet = new Map(existentes.map(c => [c.nombre, c]));
     let agregadas = 0;
+    let ordenesActualizados = 0;
 
     for (const c of CARACTERISTICAS) {
-      if (!existentesSet.has(c.nombre)) {
-        const maxOrden = existentes.length > 0 ? Math.max(...existentes.map(e => e.orden)) : 0;
-        await new CaracteristicaTipo({ ...c, tipo_inmueble: tipo._id, orden: maxOrden + 1 }).save();
-        existentes.push(c);
+      const existente = existentesSet.get(c.nombre);
+      if (existente) {
+        if (existente.orden !== c.orden) {
+          await CaracteristicaTipo.findByIdAndUpdate(existente._id, { orden: c.orden });
+          ordenesActualizados++;
+        }
+      } else {
+        await new CaracteristicaTipo({ ...c, tipo_inmueble: tipo._id }).save();
         agregadas++;
         console.log(`  Agregada: ${c.nombre}`);
       }
     }
 
-    if (agregadas > 0) {
-      console.log(`  ${agregadas} característica(s) nueva(s) agregada(s)`);
+    if (agregadas > 0 || ordenesActualizados > 0) {
+      console.log(`  ${agregadas} agregada(s), ${ordenesActualizados} orden(es) actualizado(s)`);
     } else {
       console.log('  Todas las características ya existen');
     }

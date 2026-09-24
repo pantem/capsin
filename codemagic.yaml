@@ -29,6 +29,6 @@ workflows:
       - mobile/build/ios/ipa/*.ipa
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_API_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_API_ISSUER_ID
         api_key: $APP_STORE_CONNECT_API_PRIVATE_KEY
+        key: $APP_STORE_CONNECT_API_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_API_ISSUER_ID

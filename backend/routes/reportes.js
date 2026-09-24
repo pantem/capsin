@@ -106,10 +106,10 @@ router.post('/sync', async (req, res) => {
         }
       }
 
-      results.push(siniestro);
+      results.push({ _id: siniestro._id, folio: siniestro.folio });
     }
 
-    res.json({ message: `${results.length} reporte(s) sincronizado(s)` });
+    res.json({ message: `${results.length} reporte(s) sincronizado(s)`, siniestros: results });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -156,7 +156,7 @@ router.get('/pull', async (req, res) => {
         danos_observados: '',
         condicion_seguridad: '',
         observaciones: s.descripcion || '',
-        fotos: '',
+        fotos: (s.fotos || []).map(f => f.url).join(', '),
         valores_caracteristica: valores.map(v => ({
           caracteristica_id: v.caracteristica ? v.caracteristica.toString() : '',
           valor_texto: v.valor_texto || null,

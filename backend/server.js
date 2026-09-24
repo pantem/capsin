@@ -47,6 +47,7 @@ app.use('/api/tipos-inmueble', tiposInmuebleRouter);
 app.use('/api/caracteristicas', caracteristicasRouter);
 app.use('/api', catalogosRouter);
 app.use('/api/reportes', require('./routes/reportes'));
+app.use('/api/fotos', require('./routes/fotos'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/areas', require('./routes/areas'));

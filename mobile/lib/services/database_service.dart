@@ -239,6 +239,12 @@ class DatabaseService {
         where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> actualizarFotosReporte(String id, String fotos) async {
+    final db = await database;
+    await db.update('reportes', {'fotos': fotos},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<String> insertDamnificado(Damnificado d) async {
     final db = await database;
     await db.insert('damnificados', d.toMap(),

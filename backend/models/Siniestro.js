@@ -13,6 +13,11 @@ const siniestroSchema = new mongoose.Schema({
     codigo_postal: { type: String, default: '' },
   },
   descripcion: { type: String, default: '' },
+  fotos: [{
+    url: { type: String, required: true },
+    public_id: { type: String, default: '' },
+    filename: { type: String, default: '' },
+  }],
   dispositivo_id: { type: String, default: null, index: true },
   sincronizado: { type: Boolean, default: true },
   creado_en: { type: Date, default: Date.now },

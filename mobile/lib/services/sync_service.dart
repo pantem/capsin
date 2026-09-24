@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,6 +76,17 @@ class SyncService {
           );
 
           if (response.statusCode == 200) {
+            final resData = jsonDecode(response.body) as Map<String, dynamic>;
+            final siniestros = resData['siniestros'] as List? ?? [];
+            final siniestroFolio = siniestros.isNotEmpty ? siniestros[0]['folio'] as String : null;
+
+            if (siniestroFolio != null && reporte.fotos.isNotEmpty) {
+              final urls = await _subirFotos(siniestroFolio, reporte.fotos);
+              if (urls.isNotEmpty) {
+                await _db.actualizarFotosReporte(reporte.id, urls.join(','));
+              }
+            }
+
             await _db.marcarReporteSincronizado(reporte.id);
             for (final d in damnificados) {
               await _db.marcarDamnificadoSincronizado(d.id);
@@ -135,6 +147,38 @@ class SyncService {
     } catch (e) {
       // Silently fail - tipos will be used from cache if available
     }
+  }
+
+  Future<List<String>> _subirFotos(String folio, String fotosPath) async {
+    final urls = <String>[];
+    try {
+      final paths = fotosPath.split(',').where((p) => p.trim().isNotEmpty).toList();
+      if (paths.isEmpty) return urls;
+
+      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/fotos/$folio'));
+      for (final path in paths) {
+        final file = File(path.trim());
+        if (await file.exists()) {
+          request.files.add(await http.MultipartFile.fromPath('fotos', path.trim()));
+        }
+      }
+
+      if (request.files.isEmpty) return urls;
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final fotos = data['fotos'] as List? ?? [];
+        for (final f in fotos) {
+          urls.add(f['url'] as String);
+        }
+      }
+    } catch (e) {
+      // Photos upload failed silently - they remain as local paths
+    }
+    return urls;
   }
 
   Future<int> _descargar(String did) async {

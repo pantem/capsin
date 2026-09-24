@@ -480,6 +480,18 @@ async function showDetail(siniestroId) {
       <p><strong>Coordenadas:</strong> ${siniestro.ubicacion?.lat}, ${siniestro.ubicacion?.lng}</p>
       <p><strong>Descripción:</strong> ${siniestro.descripcion || 'Sin descripción'}</p>
       ${siniestro.dispositivo_id ? `<p><strong>Dispositivo:</strong> ${siniestro.dispositivo_id}</p>` : ''}
+      ${siniestro.fotos && siniestro.fotos.length > 0 ? `
+        <div style="margin:1rem 0;">
+          <p><strong>Fotos (${siniestro.fotos.length}):</strong></p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+            ${siniestro.fotos.map(f => `
+              <a href="${f.url}" target="_blank" rel="noopener">
+                <img src="${f.url}" alt="${f.filename || 'Foto'}" style="width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #ddd;cursor:pointer;" onerror="this.style.display='none'">
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
       <h3>Inmuebles (${inmueblesPadre.length})</h3>
     `;
 

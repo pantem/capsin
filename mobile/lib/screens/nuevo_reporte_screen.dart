@@ -152,18 +152,21 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               '';
           final cp = (address['postcode'] as String? ?? '').trim();
 
-          String calleNum = [road, houseNum].where((s) => s.isNotEmpty).join(' ');
+          String calleNum =
+              [road, houseNum].where((s) => s.isNotEmpty).join(' ');
 
           void _setCaractByNombre(String nombre, String valor) {
             for (final c in _caracteristicas) {
-              if (c.nombre.contains(nombre) && _textControllers.containsKey(c.id)) {
+              if (c.nombre.contains(nombre) &&
+                  _textControllers.containsKey(c.id)) {
                 _textControllers[c.id]!.text = valor;
                 break;
               }
             }
           }
 
-          if (calleNum.isNotEmpty) _setCaractByNombre('Calle y Número', calleNum);
+          if (calleNum.isNotEmpty)
+            _setCaractByNombre('Calle y Número', calleNum);
           if (colonia.isNotEmpty) _setCaractByNombre('Colonia', colonia);
           if (alcaldia.isNotEmpty) _setCaractByNombre('Alcaldía', alcaldia);
           if (cp.isNotEmpty) _setCaractByNombre('Código Postal', cp);
@@ -373,7 +376,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('1. Datos Generales',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _nombreCapturistaCtrl,
@@ -418,9 +422,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab2() {
-    final caractsTab2 = _caracteristicas
-        .where((c) => c.orden >= 1 && c.orden <= 14)
-        .toList();
+    final caractsTab2 =
+        _caracteristicas.where((c) => c.orden >= 1 && c.orden <= 14).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -432,13 +435,15 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('2. Información del inmueble',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _obteniendoUbicacion ? null : _obtenerUbicacion,
                   icon: _obteniendoUbicacion
                       ? const SizedBox(
-                          width: 18, height: 18,
+                          width: 18,
+                          height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.gps_fixed),
                   label: Text(_lat != null
@@ -458,7 +463,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('2.1 Características del Inmueble',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 12),
                   ...caractsTab2.map((c) => _buildCampoDinamico(c)),
                 ],
@@ -476,9 +482,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab3() {
-    final caractsTab3 = _caracteristicas
-        .where((c) => c.orden >= 20 && c.orden <= 40)
-        .toList();
+    final caractsTab3 =
+        _caracteristicas.where((c) => c.orden >= 20 && c.orden <= 40).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -490,7 +495,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('3. Estado de la Edificación',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 8),
                 if (caractsTab3.isEmpty && !_cargandoCaracts)
                   const Text('Sin características configuradas',
@@ -506,9 +512,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab4() {
-    final caractsTab4 = _caracteristicas
-        .where((c) => c.orden >= 40 && c.orden <= 50)
-        .toList();
+    final caractsTab4 =
+        _caracteristicas.where((c) => c.orden >= 40 && c.orden <= 50).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -520,7 +525,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('4. Clasificación Global',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
                 if (caractsTab4.isEmpty && !_cargandoCaracts)
                   const Text('Sin características configuradas',
@@ -535,9 +541,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab5() {
-    final caractsTab5 = _caracteristicas
-        .where((c) => c.orden >= 50 && c.orden <= 60)
-        .toList();
+    final caractsTab5 =
+        _caracteristicas.where((c) => c.orden >= 50 && c.orden <= 60).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -549,7 +554,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('5. Recomendaciones',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                 const SizedBox(height: 16),
                 if (caractsTab5.isEmpty && !_cargandoCaracts)
                   const Text('Sin características configuradas',
@@ -564,9 +570,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildTab6() {
-    final caractsTab6 = _caracteristicas
-        .where((c) => c.orden >= 60 && c.orden <= 70 && !c.nombre.contains('Fotograf'))
-        .toList();
+    /* final caractsTab6 = _caracteristicas
+        .where((c) =>
+            c.orden >= 60 && c.orden <= 70 && !c.nombre.contains('Fotograf'))
+        .toList(); */
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -578,9 +585,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('6. Observaciones y Fotografías',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                const SizedBox(height: 12),
-                ...caractsTab6.map((c) => _buildCampoDinamico(c)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                // const SizedBox(height: 12),
+                // ...caractsTab6.map((c) => _buildCampoDinamico(c)),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _observacionesCtrl,
@@ -602,7 +610,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Fotografías (incluyendo fachada)',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 4),
                 const Text('Máximo 10 imágenes',
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
@@ -630,7 +639,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _fotos.asMap().entries
+                    children: _fotos
+                        .asMap()
+                        .entries
                         .map((e) => _buildFotoThumb(e.key, e.value))
                         .toList(),
                   ),
@@ -734,8 +745,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           child: SwitchListTile(
             title: Text(c.nombre),
             value: _valoresCaracteristica[c.id] as bool? ?? false,
-            onChanged: (v) =>
-                setState(() => _valoresCaracteristica[c.id] = v),
+            onChanged: (v) => setState(() => _valoresCaracteristica[c.id] = v),
             contentPadding: EdgeInsets.zero,
             dense: true,
           ),
@@ -791,14 +801,16 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               items: [
                 const DropdownMenuItem<String>(
                   value: '',
-                  child: Text('Seleccione', style: TextStyle(color: Colors.grey)),
+                  child:
+                      Text('Seleccione', style: TextStyle(color: Colors.grey)),
                 ),
                 ...c.opciones.map((o) => DropdownMenuItem<String>(
-                  value: o,
-                  child: Text(o),
-                )),
+                      value: o,
+                      child: Text(o),
+                    )),
               ],
-              onChanged: (v) => setState(() => _valoresCaracteristica[c.id] = v),
+              onChanged: (v) =>
+                  setState(() => _valoresCaracteristica[c.id] = v),
               validator: c.requerido
                   ? (v) => v == null || v.isEmpty ? 'Requerido' : null
                   : null,

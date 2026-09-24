@@ -1078,7 +1078,7 @@ function abrirFormCaract(idx) {
 
   const existente = document.getElementById('caract-form-section');
   if (existente) existente.remove();
-  form.insertBefore(section, form.querySelector('div:last-child'));
+  form.insertBefore(section, form.lastElementChild);
 }
 
 function onCaractTipoChange() {

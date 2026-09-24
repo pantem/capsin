@@ -1022,8 +1022,8 @@ function renderCaractsLista() {
           <div class="caract-detalle">${tipoLabel[td] || td} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}</div>
         </div>
         <div class="caract-acciones">
-          <button class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
-          <button class="btn-danger" onclick="eliminarCaract(${i})">🗑</button>
+          <button type="button" class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
+          <button type="button" class="btn-danger" onclick="eliminarCaract(${i})">🗑</button>
         </div>
       </div>`;
   }).join('');

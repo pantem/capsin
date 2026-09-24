@@ -314,26 +314,26 @@ const CARACTERISTICAS = [
 async function seedTiposInmueble() {
   let tipo = await TipoInmueble.findOne({ nombre: 'Inmueble Genérico' });
   if (tipo) {
-    console.log('Inmueble Genérico ya existe, sincronizando características...');
+    console.log('Inmueble Genérico ya existe, verificando características...');
     const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipo._id });
-    const existentesMap = new Map(existentes.map(c => [c.nombre, c]));
+
+    const existentesSet = new Set(existentes.map(c => c.nombre));
+    let agregadas = 0;
+
     for (const c of CARACTERISTICAS) {
-      const existente = existentesMap.get(c.nombre);
-      if (existente) {
-        if (existente.tipo_dato !== c.tipo_dato || JSON.stringify(existente.opciones) !== JSON.stringify(c.opciones) || existente.requerido !== c.requerido || existente.orden !== c.orden || existente.minimo !== c.minimo || existente.maximo !== c.maximo) {
-          await CaracteristicaTipo.findByIdAndUpdate(existente._id, c);
-        }
-      } else {
-        await new CaracteristicaTipo({ ...c, tipo_inmueble: tipo._id }).save();
+      if (!existentesSet.has(c.nombre)) {
+        const maxOrden = existentes.length > 0 ? Math.max(...existentes.map(e => e.orden)) : 0;
+        await new CaracteristicaTipo({ ...c, tipo_inmueble: tipo._id, orden: maxOrden + 1 }).save();
+        existentes.push(c);
+        agregadas++;
+        console.log(`  Agregada: ${c.nombre}`);
       }
     }
 
-    const nombresNuevos = new Set(CARACTERISTICAS.map(c => c.nombre));
-    for (const e of existentes) {
-      if (!nombresNuevos.has(e.nombre)) {
-        await CaracteristicaTipo.findByIdAndDelete(e._id);
-        console.log(`  Eliminada característica obsoleta: ${e.nombre}`);
-      }
+    if (agregadas > 0) {
+      console.log(`  ${agregadas} característica(s) nueva(s) agregada(s)`);
+    } else {
+      console.log('  Todas las características ya existen');
     }
 
     return;

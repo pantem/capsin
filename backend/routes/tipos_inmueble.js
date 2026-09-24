@@ -77,14 +77,11 @@ router.put('/:id/caracteristicas', async (req, res) => {
   try {
     const tipoId = req.params.id;
     const incoming = req.body.caracteristicas;
-    if (!Array.isArray(incoming)) return res.status(400).json({ error: 'caracteristicas requerido' });
-
-    const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipoId });
-
-    if (existentes.length > 0 && incoming.length < existentes.length * 0.5) {
-      return res.status(400).json({ error: `Se esperaban al menos ${Math.ceil(existentes.length * 0.5)} características, se recibieron ${incoming.length}` });
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res.status(400).json({ error: 'caracteristicas requerido' });
     }
 
+    const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipoId });
     const existentesMap = new Map(existentes.map(c => [c.nombre, c]));
     const incomingNames = new Set(incoming.map(c => c.nombre));
 

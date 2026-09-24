@@ -946,6 +946,7 @@ async function abrirFormTipo(id) {
       requerido: c.requerido || false,
       minimo: c.minimo ?? null,
       maximo: c.maximo ?? null,
+      orden: c.orden ?? 0,
     }));
   }
 
@@ -992,7 +993,7 @@ function renderCaractsLista() {
       <div class="caract-item">
         <div class="caract-info">
           <div class="caract-nombre">${c.nombre}</div>
-          <div class="caract-detalle">${tipoLabel[td] || td} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}              ${td === 'numero' && (c.minimo != null || c.maximo != null) ? ` · Rango: ${c.minimo ?? '?'} - ${c.maximo ?? '?'}` : ''}</div>
+          <div class="caract-detalle">${tipoLabel[td] || td} · #${c.orden ?? i} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}              ${td === 'numero' && (c.minimo != null || c.maximo != null) ? ` · Rango: ${c.minimo ?? '?'} - ${c.maximo ?? '?'}` : ''}</div>
         </div>
         <div class="caract-acciones">
           <button type="button" class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
@@ -1031,6 +1032,10 @@ function abrirFormCaract(idx) {
             <option value="seleccion" ${c.tipoDato === 'seleccion' ? 'selected' : ''}>Selección</option>
             <option value="multiseleccion" ${c.tipoDato === 'multiseleccion' ? 'selected' : ''}>Multiselección</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label>Orden</label>
+        <input type="number" id="caract-orden" value="${c.orden ?? idx >= 0 ? idx : 0}" min="0">
       </div>
       <div class="form-group checkbox" style="align-self:flex-end;">
         <input type="checkbox" id="caract-req" ${c.requerido ? 'checked' : ''}>
@@ -1081,6 +1086,7 @@ function guardarCaract(idx) {
   if (!nombre) { alert('El nombre es requerido'); return; }
   const tipoDato = document.getElementById('caract-tipo').value;
   const requerido = document.getElementById('caract-req').checked;
+  const orden = parseInt(document.getElementById('caract-orden').value) || 0;
   const opciones = tipoDato === 'seleccion' || tipoDato === 'multiseleccion'
     ? document.getElementById('caract-opciones').value.split('\n').map(s => s.trim()).filter(s => s)
     : [];
@@ -1089,7 +1095,7 @@ function guardarCaract(idx) {
   const minimo = tipoDato === 'numero' && minimoRaw !== '' ? Number(minimoRaw) : null;
   const maximo = tipoDato === 'numero' && maximoRaw !== '' ? Number(maximoRaw) : null;
 
-  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo };
+  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden };
 
   if (idx === undefined || idx === -1) {
     _caractsTemp.push(caract);
@@ -1135,12 +1141,12 @@ async function guardarTipo() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          caracteristicas: _caractsTemp.map((c, i) => ({
+          caracteristicas: _caractsTemp.map((c) => ({
             nombre: c.nombre,
             tipo_dato: c.tipoDato,
             opciones: c.opciones,
             requerido: c.requerido,
-            orden: i,
+            orden: c.orden ?? 0,
             minimo: c.minimo,
             maximo: c.maximo,
           })),

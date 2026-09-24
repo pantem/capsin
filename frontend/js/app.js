@@ -114,81 +114,39 @@ function renderDashboardChart(data) {
   const d2 = describeArc(cx, cy, r, a2_start, a2_end);
   const d3 = describeArc(cx, cy, r, a3_start, a3_end);
 
-  const mid1 = (a1_start + a1_end) / 2;
-  const mid2 = (a2_start + a2_end) / 2;
-  const mid3 = (a3_start + a3_end) / 2;
-
-  const p1 = polarToCartesian(cx, cy, r, mid1);
-  const p2 = polarToCartesian(cx, cy, r, mid2);
-  const p3 = polarToCartesian(cx, cy, r, mid3);
-
-  // Callout positions
-  const line1_x2 = p1.x + 22;
-  const line1_y2 = p1.y;
-  const text1_x = line1_x2 + 8;
-  const text1_y = line1_y2 - 6;
-
-  const line2_x2 = p2.x - 24;
-  const line2_y2 = p2.y + 4;
-  const text2_x = line2_x2 - 8;
-  const text2_y = line2_y2 - 6;
-
-  const line3_x2 = p3.x - 22;
-  const line3_y2 = p3.y - 4;
-  const text3_x = line3_x2 - 8;
-  const text3_y = line3_y2 - 6;
-
   const svgHTML = `
-    <svg viewBox="0 0 380 310" width="100%" height="100%" style="overflow: visible; max-height: 310px;">
-      <!-- Slices -->
+    <svg viewBox="0 0 380 220" width="100%" height="100%" style="overflow: visible; max-height: 220px;">
       <g>
-        <!-- Sin daño (Green) -->
         <path d="${d1}" fill="#55b74e" class="pie-slice">
           <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
         </path>
-        <!-- Daño moderado (Yellow/Amber) -->
         <path d="${d2}" fill="#f7b731" class="pie-slice">
           <title>Daño moderado: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
         </path>
-        <!-- Daño crítico (Dark Burgundy) -->
         <path d="${d3}" fill="#881337" class="pie-slice">
           <title>Daño crítico: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
         </path>
       </g>
-
-      <!-- Callout 1: Sin daño (Right) -->
-      <g>
-        <circle cx="${p1.x}" cy="${p1.y}" r="3" fill="#55b74e" />
-        <polyline points="${p1.x},${p1.y} ${line1_x2},${line1_y2}" fill="none" stroke="#55b74e" stroke-width="1.5" />
-        <text x="${text1_x}" y="${text1_y}" text-anchor="start" class="chart-callout-text">
-          <tspan x="${text1_x}" dy="0" class="chart-callout-label" font-size="11">Sin daño</tspan>
-          <tspan x="${text1_x}" dy="14" class="chart-callout-pct" font-size="13">${sinDanoPct}%</tspan>
-          <tspan x="${text1_x}" dy="14" class="chart-callout-count" font-size="10.5">(${sinDanoVal.toLocaleString()})</tspan>
-        </text>
-      </g>
-
-      <!-- Callout 2: Daño moderado (Bottom Left) -->
-      <g>
-        <circle cx="${p2.x}" cy="${p2.y}" r="3" fill="#f7b731" />
-        <polyline points="${p2.x},${p2.y} ${line2_x2},${line2_y2}" fill="none" stroke="#f7b731" stroke-width="1.5" />
-        <text x="${text2_x}" y="${text2_y}" text-anchor="end" class="chart-callout-text">
-          <tspan x="${text2_x}" dy="0" class="chart-callout-label" font-size="11">Daño moderado</tspan>
-          <tspan x="${text2_x}" dy="14" class="chart-callout-pct" font-size="13">${moderadoPct}%</tspan>
-          <tspan x="${text2_x}" dy="14" class="chart-callout-count" font-size="10.5">(${moderadoVal.toLocaleString()})</tspan>
-        </text>
-      </g>
-
-      <!-- Callout 3: Daño crítico (Top Left) -->
-      <g>
-        <circle cx="${p3.x}" cy="${p3.y}" r="3" fill="#881337" />
-        <polyline points="${p3.x},${p3.y} ${line3_x2},${line3_y2}" fill="none" stroke="#881337" stroke-width="1.5" />
-        <text x="${text3_x}" y="${text3_y}" text-anchor="end" class="chart-callout-text">
-          <tspan x="${text3_x}" dy="0" class="chart-callout-label" font-size="11">Daño crítico</tspan>
-          <tspan x="${text3_x}" dy="14" class="chart-callout-pct" font-size="13">${criticoPct}%</tspan>
-          <tspan x="${text3_x}" dy="14" class="chart-callout-count" font-size="10.5">(${criticoVal.toLocaleString()})</tspan>
-        </text>
-      </g>
+      <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
+      <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
     </svg>
+    <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:0.8rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#55b74e;display:inline-block;"></span>
+        <span style="font-size:0.85rem;font-weight:600;">${sinDanoVal.toLocaleString()}</span>
+        <span style="font-size:0.8rem;color:#888;">${sinDanoPct}%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#f7b731;display:inline-block;"></span>
+        <span style="font-size:0.85rem;font-weight:600;">${moderadoVal.toLocaleString()}</span>
+        <span style="font-size:0.8rem;color:#888;">${moderadoPct}%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <span style="width:12px;height:12px;border-radius:50%;background:#881337;display:inline-block;"></span>
+        <span style="font-size:0.85rem;font-weight:600;">${criticoVal.toLocaleString()}</span>
+        <span style="font-size:0.8rem;color:#888;">${criticoPct}%</span>
+      </div>
+    </div>
   `;
 
   container.innerHTML = svgHTML;

@@ -138,13 +138,13 @@ function renderDashboardChart(data) {
     <svg viewBox="0 0 400 340" width="100%" height="100%" style="overflow:visible;max-height:340px;">
       <g>
         <path d="${d1}" fill="#55b74e" class="pie-slice">
-          <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
+          <title>Riesgo bajo: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
         </path>
         <path d="${d2}" fill="#f7b731" class="pie-slice">
-          <title>Daño moderado: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
+          <title>Riesgo medio: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
         </path>
         <path d="${d3}" fill="#881337" class="pie-slice">
-          <title>Daño crítico: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
+          <title>Riesgo alto: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
         </path>
       </g>
       <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
@@ -153,21 +153,21 @@ function renderDashboardChart(data) {
       <g>
         <circle cx="${edge1.x}" cy="${edge1.y}" r="3" fill="#55b74e"/>
         <line x1="${edge1.x}" y1="${edge1.y}" x2="${txt1.x}" y2="${txt1.y}" stroke="#55b74e" stroke-width="1.5"/>
-        <text x="${txt1.x + off1}" y="${txt1.y - 8}" text-anchor="${anchor1}" font-size="12" font-weight="600" fill="#333">Sin daño</text>
+        <text x="${txt1.x + off1}" y="${txt1.y - 8}" text-anchor="${anchor1}" font-size="12" font-weight="600" fill="#333">Riesgo bajo</text>
         <text x="${txt1.x + off1}" y="${txt1.y + 8}" text-anchor="${anchor1}" font-size="11" fill="#555">${sinDanoVal.toLocaleString()} · ${sinDanoPct}%</text>
       </g>
 
       <g>
         <circle cx="${edge2.x}" cy="${edge2.y}" r="3" fill="#f7b731"/>
         <line x1="${edge2.x}" y1="${edge2.y}" x2="${txt2.x}" y2="${txt2.y}" stroke="#f7b731" stroke-width="1.5"/>
-        <text x="${txt2.x + off2}" y="${txt2.y - 8}" text-anchor="${anchor2}" font-size="12" font-weight="600" fill="#333">Moderado</text>
+        <text x="${txt2.x + off2}" y="${txt2.y - 8}" text-anchor="${anchor2}" font-size="12" font-weight="600" fill="#333">Riesgo medio</text>
         <text x="${txt2.x + off2}" y="${txt2.y + 8}" text-anchor="${anchor2}" font-size="11" fill="#555">${moderadoVal.toLocaleString()} · ${moderadoPct}%</text>
       </g>
 
       <g>
         <circle cx="${edge3.x}" cy="${edge3.y}" r="3" fill="#881337"/>
         <line x1="${edge3.x}" y1="${edge3.y}" x2="${txt3.x}" y2="${txt3.y}" stroke="#881337" stroke-width="1.5"/>
-        <text x="${txt3.x + off3}" y="${txt3.y - 8}" text-anchor="${anchor3}" font-size="12" font-weight="600" fill="#333">Crítico</text>
+        <text x="${txt3.x + off3}" y="${txt3.y - 8}" text-anchor="${anchor3}" font-size="12" font-weight="600" fill="#333">Riesgo alto</text>
         <text x="${txt3.x + off3}" y="${txt3.y + 8}" text-anchor="${anchor3}" font-size="11" fill="#555">${criticoVal.toLocaleString()} · ${criticoPct}%</text>
       </g>
     </svg>
@@ -252,21 +252,21 @@ function renderAlcaldiasGrid() {
       <div class="damage-row row-sindano" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'sin_daños')">
         <div class="damage-row-label">
           <span class="legend-dot dot-green"></span>
-          <span>Sin daño</span>
+          <span>Riesgo bajo</span>
         </div>
         <span class="damage-row-count">${item.sinDano || 0}</span>
       </div>
       <div class="damage-row row-moderado" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'moderado')">
         <div class="damage-row-label">
           <span class="legend-dot dot-amber"></span>
-          <span>Daño moderado</span>
+          <span>Riesgo medio</span>
         </div>
         <span class="damage-row-count">${item.moderado || 0}</span>
       </div>
       <div class="damage-row row-critico" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'critico')">
         <div class="damage-row-label">
           <span class="legend-dot dot-red"></span>
-          <span>Daño crítico</span>
+          <span>Riesgo alto</span>
         </div>
         <span class="damage-row-count">${item.critico || 0}</span>
       </div>
@@ -346,9 +346,9 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
   const body = document.getElementById('modal-alcaldia-body');
 
   const danoLabels = {
-    sin_daños: 'Sin daño',
-    moderado: 'Daño moderado',
-    critico: 'Daño crítico',
+    sin_daños: 'Riesgo bajo',
+    moderado: 'Riesgo medio',
+    critico: 'Riesgo alto',
   };
 
   body.innerHTML = `<h2>${alcaldia} — ${danoLabels[dano] || dano}</h2><p style="color:#777;">Cargando...</p>`;
@@ -385,7 +385,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
                 <td style="padding:0.5rem;">${r.tipo || '—'}</td>
                 <td style="padding:0.5rem;">
                   <span class="${getBadgeClass(r.estadoAfectacion === 'critico' ? 'red' : r.estadoAfectacion === 'moderado' ? 'yellow' : 'green')}">
-                    ${r.estadoAfectacion === 'critico' ? 'Crítico' : r.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daño'}
+                    ${r.estadoAfectacion === 'critico' ? 'Riesgo alto' : r.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}
                   </span>
                 </td>
                 <td style="padding:0.5rem;color:#555;">${r.direccion || '—'}</td>
@@ -432,7 +432,7 @@ async function loadReportesList(filter = '') {
             </div>
             <div style="display:flex;align-items:center;gap:0.8rem;">
               <!--span>${s.totalDamnificados} damnificados</span-->
-              <span class="${getBadgeClass(s.color)}">${s.color === 'red' ? 'Crítico' : s.color === 'yellow' ? 'Moderado' : 'Sin daños'}</span>
+              <span class="${getBadgeClass(s.color)}">${s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : 'Riesgo bajo'}</span>
             </div>
           </div>`
       )
@@ -492,7 +492,7 @@ async function showDetail(siniestroId) {
             <p><strong>${inm.tipo === 'edificio' ? 'Edificio' : 'Casa'}</strong>
               ${inm.identificador ? `- ${inm.identificador}` : ''}
               <span class="${getBadgeClass(inm.estado_afectacion === 'critico' ? 'red' : inm.estado_afectacion === 'moderado' ? 'yellow' : 'green')}" style="margin-left:0.5rem;">
-                ${inm.estado_afectacion === 'critico' ? 'Crítico' : inm.estado_afectacion === 'moderado' ? 'Moderado' : 'Sin daños'}
+                ${inm.estado_afectacion === 'critico' ? 'Riesgo alto' : inm.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}
               </span>
             </p>
             <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Niveles totales: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
@@ -534,7 +534,7 @@ async function showDetail(siniestroId) {
               <p style="font-weight:600;margin-top:0.5rem;">Departamentos/Unidades (${hijos.length}):</p>
               ${hijos.map(h => `
                 <div style="background:#fff;padding:0.5rem;border-radius:6px;margin:0.3rem 0;border-left:3px solid ${h.estado_afectacion === 'critico' ? '#d32f2f' : h.estado_afectacion === 'moderado' ? '#f57c00' : '#388e3c'};">
-                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Crítico' : h.estado_afectacion === 'moderado' ? 'Moderado' : 'Sin daños'}</p>
+                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Riesgo alto' : h.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}</p>
                 </div>
               `).join('')}
             ` : ''}
@@ -611,7 +611,7 @@ function renderUbicacion(data, countEl, container) {
         <tbody>
           ${data.map(d => {
     const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
-    const estadoLabel = d.estadoAfectacion === 'critico' ? 'Crítico' : d.estadoAfectacion === 'moderado' ? 'Moderado' : 'Sin daños';
+    const estadoLabel = d.estadoAfectacion === 'critico' ? 'Riesgo alto' : d.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
     return `
               <tr style="border-bottom:1px solid #e0e0e0;cursor:pointer;" onclick="showDetail('${d.siniestroId}')">
                 <td style="padding:0.5rem;font-weight:600;">${d.folio || '—'}</td>

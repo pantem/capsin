@@ -130,7 +130,8 @@ const CARACTERISTICAS = [
     opciones: [
       'No presenta colapso',
       'Colapso parcial',
-      'Colapso total'],
+      'Colapso total',
+    ],
     requerido: true,
     orden: 22,
   },

@@ -69,8 +69,8 @@ function renderDashboardChart(data) {
   const moderadoPct = ((moderadoVal / effectiveTotal) * 100).toFixed(1);
   const criticoPct = ((criticoVal / effectiveTotal) * 100).toFixed(1);
 
-  const cx = 110;
-  const cy = 110;
+  const cx = 175;
+  const cy = 150;
   const r = 90;
 
   const sinDanoAngle = (sinDanoVal / effectiveTotal) * 360;
@@ -135,7 +135,7 @@ function renderDashboardChart(data) {
   const off3 = anchor3 === 'end' ? -6 : 6;
 
   const svgHTML = `
-    <svg viewBox="0 0 380 310" width="100%" height="100%" style="overflow:visible;max-height:310px;">
+    <svg viewBox="0 0 400 340" width="100%" height="100%" style="overflow:visible;max-height:340px;">
       <g>
         <path d="${d1}" fill="#55b74e" class="pie-slice">
           <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>

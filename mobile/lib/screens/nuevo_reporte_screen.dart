@@ -439,7 +439,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Widget _buildTab2() {
     final caractsTab2 =
-        _caracteristicas.where((c) => c.orden >= 1 && c.orden <= 14).toList();
+        _caracteristicas.where((c) => c.orden >= 0 && c.orden <= 14).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),

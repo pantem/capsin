@@ -1055,7 +1055,7 @@ function abrirFormCaract(idx) {
       </div>
       <div class="form-group">
         <label>Orden</label>
-        <input type="number" id="caract-orden" value="${c.orden ?? idx >= 0 ? idx : 0}" min="0">
+        <input type="number" id="caract-orden" value="${c.orden ?? (idx >= 0 ? idx : 0)}" min="0">
       </div>
       <div class="form-group checkbox" style="align-self:flex-end;">
         <input type="checkbox" id="caract-req" ${c.requerido ? 'checked' : ''}>

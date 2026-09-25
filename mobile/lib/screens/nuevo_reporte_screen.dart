@@ -42,6 +42,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   double? _lng;
   bool _obteniendoUbicacion = false;
   bool _cargandoCaracts = true;
+  bool _sincronizando = false;
 
   DateTime _fechaSeleccionada = DateTime.now();
 
@@ -536,18 +537,37 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () async {
-                        final result = await SyncService().sincronizar();
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result.mensaje)),
-                        );
-                        _cargarCaracteristicas();
-                      },
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Sincronizar ahora'),
-                    ),
+                    if (_sincronizando)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            Text('Sincronizando...'),
+                          ],
+                        ),
+                      )
+                    else
+                      FilledButton.icon(
+                        onPressed: () async {
+                          setState(() => _sincronizando = true);
+                          final result = await SyncService().sincronizar();
+                          setState(() => _sincronizando = false);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(result.mensaje)),
+                          );
+                          _cargarCaracteristicas();
+                        },
+                        icon: const Icon(Icons.sync),
+                        label: const Text('Sincronizar ahora'),
+                      ),
                   ],
                 ),
               ),

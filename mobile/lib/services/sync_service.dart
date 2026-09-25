@@ -38,7 +38,7 @@ class SyncService {
     try {
       final did = await dispositivoId;
 
-      await _sincronizarTipos();
+      final tiposOk = await _sincronizarTipos();
 
       final descargadosCount = await _descargar(did);
       descargados = descargadosCount;
@@ -46,9 +46,12 @@ class SyncService {
       final pendientes = await _db.getReportesNoSincronizados();
 
       if (pendientes.isEmpty) {
+        if (!tiposOk && descargados == 0) {
+          return SyncResult(subidos: 0, errores: 1, mensaje: 'Error de conexión con el servidor');
+        }
         final msg = descargados > 0
             ? '$descargados reporte(s) descargado(s)'
-            : 'Sin datos pendientes';
+            : 'Sincronizado correctamente';
         return SyncResult(subidos: 0, errores: 0, mensaje: msg);
       }
 
@@ -114,20 +117,20 @@ class SyncService {
     return SyncResult(subidos: subidos, errores: errores, mensaje: msg);
   }
 
-  Future<void> _sincronizarTipos() async {
+  Future<bool> _sincronizarTipos() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/tipos-inmueble?activos=true'),
         headers: {'Content-Type': 'application/json'},
       );
-      if (response.statusCode != 200) return;
+      if (response.statusCode != 200) return false;
 
       final tiposJson = jsonDecode(response.body) as List;
       final tipos = tiposJson
           .map((j) => TipoInmueble.fromJson(j as Map<String, dynamic>))
           .toList();
 
-      if (tipos.isEmpty) return;
+      if (tipos.isEmpty) return false;
       await _db.insertTiposInmueble(tipos);
 
       for (final tipo in tipos) {
@@ -144,8 +147,9 @@ class SyncService {
 
         await _db.insertCaracteristicas(tipo.id, caracts);
       }
+      return true;
     } catch (e) {
-      // Silently fail - tipos will be used from cache if available
+      return false;
     }
   }
 

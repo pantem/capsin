@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const String _appVersion = '1.0021';
+  static const String _appVersion = '1.0022';
   final DatabaseService _db = DatabaseService();
   final AuthService _auth = AuthService();
   List<Reporte> _reportes = [];
@@ -103,8 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const BuscarInmuebleScreen()),
+                MaterialPageRoute(builder: (_) => const BuscarInmuebleScreen()),
               );
             },
             tooltip: 'Buscar Inmueble',
@@ -131,10 +130,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.map_outlined, size: 80, color: Colors.grey),
+                            Icon(Icons.map_outlined,
+                                size: 80, color: Colors.grey),
                             SizedBox(height: 16),
                             Text('No hay reportes capturados',
-                                style: TextStyle(color: Colors.grey, fontSize: 16)),
+                                style: TextStyle(
+                                    color: Colors.grey, fontSize: 16)),
                           ],
                         ),
                       )
@@ -149,7 +150,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               margin: const EdgeInsets.only(bottom: 8),
                               child: ListTile(
                                 title: Text(r.folio,
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -162,26 +164,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Row(
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: r.estadoAfectacion == 'critico'
-                                                ? Colors.red.shade100
-                                                : r.estadoAfectacion == 'moderado'
-                                                    ? Colors.orange.shade100
-                                                    : Colors.green.shade100,
-                                            borderRadius: BorderRadius.circular(12),
+                                            color:
+                                                r.estadoAfectacion == 'critico'
+                                                    ? Colors.red.shade100
+                                                    : r.estadoAfectacion ==
+                                                            'moderado'
+                                                        ? Colors.orange.shade100
+                                                        : Colors.green.shade100,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Text(
                                             r.estadoAfectacion == 'critico'
                                                 ? 'Crítico'
-                                                : r.estadoAfectacion == 'moderado'
+                                                : r.estadoAfectacion ==
+                                                        'moderado'
                                                     ? 'Moderado'
                                                     : 'Sin daños',
                                             style: TextStyle(
                                               fontSize: 11,
-                                              color: r.estadoAfectacion == 'critico'
+                                              color: r.estadoAfectacion ==
+                                                      'critico'
                                                   ? Colors.red.shade800
-                                                  : r.estadoAfectacion == 'moderado'
+                                                  : r.estadoAfectacion ==
+                                                          'moderado'
                                                       ? Colors.orange.shade800
                                                       : Colors.green.shade800,
                                               fontWeight: FontWeight.w600,
@@ -190,8 +199,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          DateFormat('dd-MM-yyyy').format(r.fecha),
-                                          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                          DateFormat('dd-MM-yyyy')
+                                              .format(r.fecha),
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey[600]),
                                         ),
                                       ],
                                     ),
@@ -201,9 +213,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (!r.sincronizado)
-                                      const Icon(Icons.cloud_off, size: 18, color: Colors.grey),
+                                      const Icon(Icons.cloud_off,
+                                          size: 18, color: Colors.grey),
                                     IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      icon: const Icon(Icons.delete_outline,
+                                          color: Colors.red),
                                       onPressed: () async {
                                         await _db.deleteReporte(r.id);
                                         _cargar();
@@ -215,7 +229,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => DetalleSiniestroScreen(reporteId: r.id),
+                                      builder: (_) => DetalleSiniestroScreen(
+                                          reporteId: r.id),
                                     ),
                                   );
                                   _cargar();
@@ -246,8 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const BuscarInmuebleScreen()),
+                MaterialPageRoute(builder: (_) => const BuscarInmuebleScreen()),
               );
             },
             tooltip: 'Buscar Inmueble',

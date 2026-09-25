@@ -134,6 +134,7 @@ const CARACTERISTICAS = [
     ],
     requerido: true,
     orden: 22,
+    render_type: 'dropdown',
   },
   {
     nombre: '3.3 Colapso parcial',

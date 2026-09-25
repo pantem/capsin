@@ -9,7 +9,7 @@ const CARACTERISTICAS = [
   // SECCIÓN 2: Ubicación y Descripción de la Edificación
   // ═══════════════════════════════════════════════════════════════
   {
-    nombre: '2.1 Calle y Número',
+    nombre: '2.1 Calle y Número (Manzana y Lote, en su caso)',
     tipo_dato: 'texto',
     opciones: [],
     requerido: true,

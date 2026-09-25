@@ -241,7 +241,7 @@ const CARACTERISTICAS = [
     ],
     requerido: true,
     orden: 41,
-    render_type: 'radiobutton',
+    render_type: 'radio',
   },
 
   // ═══════════════════════════════════════════════════════════════

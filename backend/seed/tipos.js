@@ -255,11 +255,15 @@ const CARACTERISTICAS = [
     orden: 51,
   },
   {
-    nombre: '5.2 Es necesaria evaluación detallada',
+    nombre: '5.2 ¿Requiere D.R.O. y/o C-SE?',
     tipo_dato: 'seleccion',
-    opciones: OPCIONES_SI_NO,
+    opciones: [
+      'D.R.O.',
+      'C-SE',
+    ],
     requerido: true,
     orden: 52,
+    render_type: 'dropdown',
   },
   {
     nombre: '5.3 Apuntalar',

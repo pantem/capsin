@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import '../config.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 import '../services/auth_service.dart';
 import '../models/reporte.dart';
 import '../models/caracteristica_tipo.dart';
@@ -512,6 +513,45 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
+          ),
+        if (!_cargandoCaracts && _caracteristicas.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Card(
+              color: const Color(0xFFFFF3E0),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const Icon(Icons.sync_problem, size: 48, color: Color(0xFFE65100)),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'No se encontraron características',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Debe sincronizar la aplicación para descargar las características del servidor.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: () async {
+                        final result = await SyncService().sincronizar();
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result.mensaje)),
+                        );
+                        _cargarCaracteristicas();
+                      },
+                      icon: const Icon(Icons.sync),
+                      label: const Text('Sincronizar ahora'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
       ],
     );

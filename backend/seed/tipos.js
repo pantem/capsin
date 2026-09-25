@@ -232,7 +232,7 @@ const CARACTERISTICAS = [
   // SECCIÓN 4: Clasificación Global
   // ═══════════════════════════════════════════════════════════════
   {
-    nombre: '4.1 Clasificación de Nivel de Daño',
+    nombre: '4.1 Nivel de riesgo',
     tipo_dato: 'seleccion',
     opciones: [
       'Edificación en Riesgo Bajo',
@@ -241,6 +241,7 @@ const CARACTERISTICAS = [
     ],
     requerido: true,
     orden: 41,
+    render_type: 'radiobutton',
   },
 
   // ═══════════════════════════════════════════════════════════════

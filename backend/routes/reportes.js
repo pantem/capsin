@@ -87,6 +87,16 @@ router.post('/sync', async (req, res) => {
             valor_seleccion: v.valor_seleccion || null,
           }).save();
         }
+
+        const clasificacion = valores_caracteristica.find(v =>
+          v.valor_seleccion && v.valor_seleccion.includes('Riesgo')
+        );
+        if (clasificacion) {
+          let derived = 'sin_daños';
+          if (clasificacion.valor_seleccion.includes('Riesgo Alto')) derived = 'critico';
+          else if (clasificacion.valor_seleccion.includes('Riesgo Medio')) derived = 'moderado';
+          await Inmueble.findByIdAndUpdate(inmueble._id, { estado_afectacion: derived });
+        }
       }
 
       if (damnificados && Array.isArray(damnificados)) {
@@ -178,6 +188,28 @@ router.get('/pull', async (req, res) => {
     }
 
     res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/fix-estados', async (req, res) => {
+  try {
+    const inmuebles = await Inmueble.find({}).lean();
+    let corregidos = 0;
+    for (const inm of inmuebles) {
+      const valores = await ValorCaracteristica.find({ inmueble: inm._id }).lean();
+      const clasificacion = valores.find(v => v.valor_seleccion && v.valor_seleccion.includes('Riesgo'));
+      if (!clasificacion) continue;
+      let derived = 'sin_daños';
+      if (clasificacion.valor_seleccion.includes('Riesgo Alto')) derived = 'critico';
+      else if (clasificacion.valor_seleccion.includes('Riesgo Medio')) derived = 'moderado';
+      if (inm.estado_afectacion !== derived) {
+        await Inmueble.findByIdAndUpdate(inm._id, { estado_afectacion: derived });
+        corregidos++;
+      }
+    }
+    res.json({ message: `${corregidos} inmueble(s) corregido(s)` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

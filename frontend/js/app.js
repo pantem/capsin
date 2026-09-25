@@ -114,44 +114,63 @@ function renderDashboardChart(data) {
   const d2 = describeArc(cx, cy, r, a2_start, a2_end);
   const d3 = describeArc(cx, cy, r, a3_start, a3_end);
 
+  const mid1 = (a1_start + a1_end) / 2;
+  const mid2 = (a2_start + a2_end) / 2;
+  const mid3 = (a3_start + a3_end) / 2;
+
+  const edge1 = polarToCartesian(cx, cy, r + 4, mid1);
+  const edge2 = polarToCartesian(cx, cy, r + 4, mid2);
+  const edge3 = polarToCartesian(cx, cy, r + 4, mid3);
+
+  const txt1 = polarToCartesian(cx, cy, r + 45, mid1);
+  const txt2 = polarToCartesian(cx, cy, r + 45, mid2);
+  const txt3 = polarToCartesian(cx, cy, r + 45, mid3);
+
+  const anchor1 = mid1 > 180 ? 'end' : 'start';
+  const anchor2 = mid2 > 180 ? 'end' : 'start';
+  const anchor3 = mid3 > 180 ? 'end' : 'start';
+
+  const off1 = anchor1 === 'end' ? -6 : 6;
+  const off2 = anchor2 === 'end' ? -6 : 6;
+  const off3 = anchor3 === 'end' ? -6 : 6;
+
   const svgHTML = `
-    <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;justify-content:center;">
-      <svg viewBox="0 0 220 220" width="200" height="200" style="flex-shrink:0;">
-        <g>
-          <path d="${d1}" fill="#55b74e" class="pie-slice">
-            <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
-          </path>
-          <path d="${d2}" fill="#f7b731" class="pie-slice">
-            <title>Daño moderado: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
-          </path>
-          <path d="${d3}" fill="#881337" class="pie-slice">
-            <title>Daño crítico: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
-          </path>
-        </g>
-        <text x="110" y="104" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
-        <text x="110" y="124" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
-      </svg>
-      <div style="display:flex;flex-direction:column;gap:0.7rem;">
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <span style="width:14px;height:14px;border-radius:50%;background:#55b74e;display:inline-block;flex-shrink:0;"></span>
-          <span style="font-size:0.85rem;color:#555;">Sin daño</span>
-          <span style="font-size:0.85rem;font-weight:700;margin-left:auto;">${sinDanoVal.toLocaleString()}</span>
-          <span style="font-size:0.8rem;color:#888;width:48px;text-align:right;">${sinDanoPct}%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <span style="width:14px;height:14px;border-radius:50%;background:#f7b731;display:inline-block;flex-shrink:0;"></span>
-          <span style="font-size:0.85rem;color:#555;">Moderado</span>
-          <span style="font-size:0.85rem;font-weight:700;margin-left:auto;">${moderadoVal.toLocaleString()}</span>
-          <span style="font-size:0.8rem;color:#888;width:48px;text-align:right;">${moderadoPct}%</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:0.5rem;">
-          <span style="width:14px;height:14px;border-radius:50%;background:#881337;display:inline-block;flex-shrink:0;"></span>
-          <span style="font-size:0.85rem;color:#555;">Crítico</span>
-          <span style="font-size:0.85rem;font-weight:700;margin-left:auto;">${criticoVal.toLocaleString()}</span>
-          <span style="font-size:0.8rem;color:#888;width:48px;text-align:right;">${criticoPct}%</span>
-        </div>
-      </div>
-    </div>
+    <svg viewBox="0 0 380 310" width="100%" height="100%" style="overflow:visible;max-height:310px;">
+      <g>
+        <path d="${d1}" fill="#55b74e" class="pie-slice">
+          <title>Sin daño: ${sinDanoPct}% (${sinDanoVal.toLocaleString()})</title>
+        </path>
+        <path d="${d2}" fill="#f7b731" class="pie-slice">
+          <title>Daño moderado: ${moderadoPct}% (${moderadoVal.toLocaleString()})</title>
+        </path>
+        <path d="${d3}" fill="#881337" class="pie-slice">
+          <title>Daño crítico: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
+        </path>
+      </g>
+      <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
+      <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
+
+      <g>
+        <circle cx="${edge1.x}" cy="${edge1.y}" r="3" fill="#55b74e"/>
+        <line x1="${edge1.x}" y1="${edge1.y}" x2="${txt1.x}" y2="${txt1.y}" stroke="#55b74e" stroke-width="1.5"/>
+        <text x="${txt1.x + off1}" y="${txt1.y - 8}" text-anchor="${anchor1}" font-size="12" font-weight="600" fill="#333">Sin daño</text>
+        <text x="${txt1.x + off1}" y="${txt1.y + 8}" text-anchor="${anchor1}" font-size="11" fill="#555">${sinDanoVal.toLocaleString()} · ${sinDanoPct}%</text>
+      </g>
+
+      <g>
+        <circle cx="${edge2.x}" cy="${edge2.y}" r="3" fill="#f7b731"/>
+        <line x1="${edge2.x}" y1="${edge2.y}" x2="${txt2.x}" y2="${txt2.y}" stroke="#f7b731" stroke-width="1.5"/>
+        <text x="${txt2.x + off2}" y="${txt2.y - 8}" text-anchor="${anchor2}" font-size="12" font-weight="600" fill="#333">Moderado</text>
+        <text x="${txt2.x + off2}" y="${txt2.y + 8}" text-anchor="${anchor2}" font-size="11" fill="#555">${moderadoVal.toLocaleString()} · ${moderadoPct}%</text>
+      </g>
+
+      <g>
+        <circle cx="${edge3.x}" cy="${edge3.y}" r="3" fill="#881337"/>
+        <line x1="${edge3.x}" y1="${edge3.y}" x2="${txt3.x}" y2="${txt3.y}" stroke="#881337" stroke-width="1.5"/>
+        <text x="${txt3.x + off3}" y="${txt3.y - 8}" text-anchor="${anchor3}" font-size="12" font-weight="600" fill="#333">Crítico</text>
+        <text x="${txt3.x + off3}" y="${txt3.y + 8}" text-anchor="${anchor3}" font-size="11" fill="#555">${criticoVal.toLocaleString()} · ${criticoPct}%</text>
+      </g>
+    </svg>
   `;
 
   container.innerHTML = svgHTML;

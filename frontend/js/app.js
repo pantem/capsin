@@ -963,6 +963,7 @@ async function abrirFormTipo(id) {
       tipoDato: c.tipo_dato,
       opciones: c.opciones || [],
       requerido: c.requerido || false,
+      renderType: c.render_type || 'auto',
       minimo: c.minimo ?? null,
       maximo: c.maximo ?? null,
       orden: c.orden ?? 0,
@@ -1024,7 +1025,7 @@ function renderCaractsLista() {
 }
 
 function abrirFormCaract(idx) {
-  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, minimo: null, maximo: null };
+  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, renderType: 'auto', minimo: null, maximo: null };
   const isNew = idx === undefined;
 
   const modalBody = document.getElementById('modal-tipo-body');
@@ -1061,6 +1062,14 @@ function abrirFormCaract(idx) {
         <input type="checkbox" id="caract-req" ${c.requerido ? 'checked' : ''}>
         <label for="caract-req">Requerido</label>
       </div>
+      <div class="form-group" id="caract-render-group" style="${c.tipoDato === 'seleccion' || c.tipoDato === 'multiseleccion' ? '' : 'display:none;'}">
+        <label>Visualización</label>
+        <select id="caract-render-type">
+          <option value="auto" ${(c.renderType || 'auto') === 'auto' ? 'selected' : ''}>Automático</option>
+          <option value="dropdown" ${c.renderType === 'dropdown' ? 'selected' : ''}>Desplegable</option>
+          <option value="radio" ${c.renderType === 'radio' ? 'selected' : ''}>Radio</option>
+        </select>
+      </div>
     </div>
     <div class="form-row" id="caract-rango-group" style="${c.tipoDato === 'numero' ? '' : 'display:none;'}">
       <div class="form-group">
@@ -1092,8 +1101,10 @@ function onCaractTipoChange() {
   const tipo = document.getElementById('caract-tipo').value;
   const group = document.getElementById('caract-opciones-group');
   const rango = document.getElementById('caract-rango-group');
+  const renderGroup = document.getElementById('caract-render-group');
   group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
   rango.style.display = tipo === 'numero' ? '' : 'none';
+  renderGroup.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
 }
 
 function cancelarCaractForm() {
@@ -1114,8 +1125,11 @@ function guardarCaract(idx) {
   const maximoRaw = document.getElementById('caract-maximo').value;
   const minimo = tipoDato === 'numero' && minimoRaw !== '' ? Number(minimoRaw) : null;
   const maximo = tipoDato === 'numero' && maximoRaw !== '' ? Number(maximoRaw) : null;
+  const renderType = (tipoDato === 'seleccion' || tipoDato === 'multiseleccion')
+    ? document.getElementById('caract-render-type').value
+    : 'auto';
 
-  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden };
+  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden, renderType };
 
   if (idx === undefined || idx === -1) {
     _caractsTemp.push(caract);
@@ -1167,6 +1181,7 @@ async function guardarTipo() {
             opciones: c.opciones,
             requerido: c.requerido,
             orden: c.orden ?? 0,
+            render_type: c.renderType || 'auto',
             minimo: c.minimo,
             maximo: c.maximo,
           })),

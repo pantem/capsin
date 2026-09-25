@@ -94,6 +94,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           opciones: c.opciones || [],
           requerido: c.requerido,
           orden: c.orden ?? existente.orden,
+          render_type: c.render_type || 'auto',
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         });
@@ -105,6 +106,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           opciones: c.opciones || [],
           requerido: c.requerido,
           orden: c.orden ?? i,
+          render_type: c.render_type || 'auto',
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         }).save();
@@ -126,7 +128,9 @@ router.put('/:id/caracteristicas', async (req, res) => {
 
 router.post('/:id/caracteristicas', async (req, res) => {
   try {
-    const caracteristica = new CaracteristicaTipo({ ...req.body, tipo_inmueble: req.params.id });
+    const data = { ...req.body, tipo_inmueble: req.params.id };
+    if (!data.render_type) data.render_type = 'auto';
+    const caracteristica = new CaracteristicaTipo(data);
     const saved = await caracteristica.save();
     res.status(201).json(saved);
   } catch (err) {

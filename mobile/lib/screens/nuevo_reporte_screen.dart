@@ -831,7 +831,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       case 'seleccion':
         final seleccion = _valoresCaracteristica[c.id] as String?;
         final tieneOtro = c.opciones.contains('Otro');
-        final usarDropdown = c.opciones.length > 5;
+        bool usarDropdown;
+        if (c.renderType == 'dropdown') {
+          usarDropdown = true;
+        } else if (c.renderType == 'radio') {
+          usarDropdown = false;
+        } else {
+          usarDropdown = c.opciones.length > 2;
+        }
         if (usarDropdown) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),

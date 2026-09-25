@@ -6,6 +6,7 @@ class CaracteristicaTipo {
   final List<String> opciones;
   final bool requerido;
   final int orden;
+  final String renderType;
   final double? minimo;
   final double? maximo;
 
@@ -17,6 +18,7 @@ class CaracteristicaTipo {
     this.opciones = const [],
     this.requerido = false,
     this.orden = 0,
+    this.renderType = 'auto',
     this.minimo,
     this.maximo,
   });
@@ -29,6 +31,7 @@ class CaracteristicaTipo {
         'opciones': opciones.join(','),
         'requerido': requerido ? 1 : 0,
         'orden': orden,
+        'render_type': renderType,
         'minimo': minimo,
         'maximo': maximo,
       };
@@ -44,6 +47,7 @@ class CaracteristicaTipo {
             : [],
         requerido: (map['requerido'] as int? ?? 0) == 1,
         orden: map['orden'] as int? ?? 0,
+        renderType: map['render_type'] as String? ?? 'auto',
         minimo: (map['minimo'] as num?)?.toDouble(),
         maximo: (map['maximo'] as num?)?.toDouble(),
       );
@@ -60,6 +64,7 @@ class CaracteristicaTipo {
             [],
         requerido: json['requerido'] as bool? ?? false,
         orden: json['orden'] as int? ?? 0,
+        renderType: json['render_type'] as String? ?? 'auto',
         minimo: (json['minimo'] as num?)?.toDouble(),
         maximo: (json['maximo'] as num?)?.toDouble(),
       );

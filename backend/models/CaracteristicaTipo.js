@@ -7,6 +7,7 @@ const caracteristicaTipoSchema = new mongoose.Schema({
   opciones: { type: [String], default: [] },
   requerido: { type: Boolean, default: false },
   orden: { type: Number, default: 0 },
+  render_type: { type: String, enum: ['auto', 'dropdown', 'radio'], default: 'auto' },
   minimo: { type: Number, default: null },
   maximo: { type: Number, default: null },
   creado_en: { type: Date, default: Date.now },

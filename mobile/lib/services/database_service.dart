@@ -26,7 +26,7 @@ class DatabaseService {
     final path = join(dbPath, 'siniestros_sismo.db');
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
     );
@@ -202,6 +202,11 @@ class DatabaseService {
       try {
         await db.execute('ALTER TABLE caracteristicas_tipo ADD COLUMN minimo REAL');
         await db.execute('ALTER TABLE caracteristicas_tipo ADD COLUMN maximo REAL');
+      } catch (_) {}
+    }
+    if (oldVersion < 10) {
+      try {
+        await db.execute("ALTER TABLE caracteristicas_tipo ADD COLUMN render_type TEXT DEFAULT 'auto'");
       } catch (_) {}
     }
   }

@@ -125,9 +125,9 @@ const CARACTERISTICAS = [
     requerido: true,
     orden: 21,
   }, {
-    nombre: '3.2 Colapso total',
+    nombre: '3.2 ¿Presenta colapso estructural?',
     tipo_dato: 'seleccion',
-    opciones: OPCIONES_NO_DUDAS,
+    opciones: ['No presenta colapso', 'Colapso parcial', 'Colapso total'],
     requerido: true,
     orden: 22,
   },

@@ -257,7 +257,27 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Reporte $folio creado')),
       );
-      Navigator.pop(context);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.refresh, size: 48, color: Color(0xFF7A0C38)),
+          title: const Text('Reporte guardado'),
+          content: const Text(
+            'Debe sincronizar la aplicación para guardar los reportes en el servidor.',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.pop(context);
+              },
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

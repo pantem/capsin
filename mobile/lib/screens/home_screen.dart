@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _cargar();
     _cargarUsuario();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _mostrarAvisoRefresh());
   }
 
   Future<void> _cargarUsuario() async {
@@ -42,6 +43,27 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+
+  void _mostrarAvisoRefresh() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.refresh, size: 48, color: Color(0xFF7A0C38)),
+        title: const Text('Actualización disponible'),
+        content: const Text(
+          'Debe refrescar la página antes de comenzar a utilizarla, con la finalidad de garantizar su correcto funcionamiento y evitar posibles errores durante la captura de información.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
     );
   }
 

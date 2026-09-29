@@ -312,7 +312,7 @@ const CARACTERISTICAS = [
     nombre: '5.9 ¿Requiere apoyo de alguna dependencia?',
     tipo_dato: 'seleccion',
     opciones: [
-      'Si',
+      'Sí',
       'No',
     ],
     requerido: true,

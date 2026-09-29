@@ -830,7 +830,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               child: TextFormField(
                 controller: _textControllers['${c.id}_cond'],
                 decoration: InputDecoration(
-                  labelText: '${c.nombre} (observaciones)',
+                  labelText: 'Observaciones',
                   border: const OutlineInputBorder(),
                 ),
                 maxLines: 2,
@@ -953,7 +953,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         final seleccion = _valoresCaracteristica[c.id] as String?;
         final tieneOtro = c.opciones.contains('Otro');
         bool usarDropdown;
-        if (c.renderType == 'dropdown') {
+        if (c.condicionalTexto == 'si') {
+          usarDropdown = true;
+        } else if (c.renderType == 'dropdown') {
           usarDropdown = true;
         } else if (c.renderType == 'radio') {
           usarDropdown = false;

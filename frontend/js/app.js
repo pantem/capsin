@@ -647,7 +647,7 @@ function renderUbicacion(data, countEl, container) {
             <th style="padding:0.6rem;">Estado</th>
             <th style="padding:0.6rem;">Tipo daño</th>
             <!--th style="padding:0.6rem;">Damnificados</th-->
-            <th style="padding:0.6rem;">Fallecidos</th>
+            <!--th style="padding:0.6rem;">Fallecidos</th-->
           </tr>
         </thead>
         <tbody>
@@ -670,7 +670,7 @@ function renderUbicacion(data, countEl, container) {
                 </td>
                 <td style="padding:0.5rem;">${d.tipoDanio || '—'}</td>
                 <!--td style="padding:0.5rem;text-align:center;">${d.totalDamnificados}</td-->
-                <td style="padding:0.5rem;text-align:center;${d.fallecidos > 0 ? 'color:#d32f2f;font-weight:700;' : ''}">${d.fallecidos}</td>
+                <!--td style="padding:0.5rem;text-align:center;${d.fallecidos > 0 ? 'color:#d32f2f;font-weight:700;' : ''}">${d.fallecidos}</td-->
               </tr>
             `;
   }).join('')}

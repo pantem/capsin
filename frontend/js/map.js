@@ -2,10 +2,13 @@ let map = null;
 let markersLayer = null;
 let cdmxBoundaryLayer = null;
 let cdmxMaskLayer = null;
+let allMapData = [];
+let currentFilter = null;
 
 function getMarkerColor(color) {
   if (color === 'red') return '#d32f2f';
   if (color === 'yellow') return '#fbc02d';
+  if (color === 'black') return '#222222';
   return '#388e3c';
 }
 
@@ -118,43 +121,81 @@ async function initMap() {
 
   try {
     const data = await fetchJSON('/api/mapa');
-    const bounds = [];
-
-    data.forEach((item) => {
-      if (!item.ubicacion?.lat || !item.ubicacion?.lng) return;
-
-      const lat = parseFloat(item.ubicacion.lat);
-      const lng = parseFloat(item.ubicacion.lng);
-      if (isNaN(lat) || isNaN(lng)) return;
-
-      const color = getMarkerColor(item.color);
-      const icon = createColoredIcon(color);
-
-      const popupContent = `
-        <div style="min-width:200px;">
-          <h3 style="margin:0 0 0.3rem;color:#1a237e;">${item.folio || 'Sin folio'}</h3>
-          <p style="margin:0.2rem 0;font-size:0.9rem;">${item.ubicacion.direccion || ''}</p>
-          <p style="margin:0.2rem 0;font-size:0.9rem;"><strong>Damnificados:</strong> ${item.totalDamnificados}</p>
-          <p style="margin:0.2rem 0;font-size:0.9rem;">
-            <span style="color:#d32f2f;">● ${item.fallecidos} fallecidos</span>
-            <span style="color:#f57c00;margin-left:0.5rem;">● ${item.lesionadosGrave} graves</span>
-          </p>
-          <p style="margin:0.2rem 0;font-size:0.9rem;"><strong>Inmuebles:</strong> ${item.totalInmuebles}</p>
-          <button onclick="showDetail('${item._id}')" style="margin-top:0.5rem;padding:0.3rem 0.8rem;background:#1a237e;color:#fff;border:none;border-radius:4px;cursor:pointer;">
-            Ver detalle
-          </button>
-        </div>
-      `;
-
-      const marker = L.marker([lat, lng], { icon }).bindPopup(popupContent);
-      markersLayer.addLayer(marker);
-      bounds.push([lat, lng]);
-    });
-
-    if (bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
+    allMapData = data;
+    renderMapMarkers();
   } catch (err) {
     console.error('Error cargando mapa:', err);
+  }
+}
+
+function renderMapMarkers() {
+  if (!markersLayer) return;
+  markersLayer.clearLayers();
+  const bounds = [];
+
+  const filtered = currentFilter
+    ? allMapData.filter(item => item.color === currentFilter)
+    : allMapData;
+
+  filtered.forEach((item) => {
+    if (!item.ubicacion?.lat || !item.ubicacion?.lng) return;
+
+    const lat = parseFloat(item.ubicacion.lat);
+    const lng = parseFloat(item.ubicacion.lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+
+    const color = getMarkerColor(item.color);
+    const icon = createColoredIcon(color);
+
+    const popupContent = `
+      <div style="min-width:200px;">
+        <h3 style="margin:0 0 0.3rem;color:#1a237e;">${item.folio || 'Sin folio'}</h3>
+        <p style="margin:0.2rem 0;font-size:0.9rem;">${item.ubicacion.direccion || ''}</p>
+        <p style="margin:0.2rem 0;font-size:0.9rem;"><strong>Damnificados:</strong> ${item.totalDamnificados}</p>
+        <p style="margin:0.2rem 0;font-size:0.9rem;">
+          <span style="color:#d32f2f;">● ${item.fallecidos} fallecidos</span>
+          <span style="color:#f57c00;margin-left:0.5rem;">● ${item.lesionadosGrave} graves</span>
+        </p>
+        <p style="margin:0.2rem 0;font-size:0.9rem;"><strong>Inmuebles:</strong> ${item.totalInmuebles}</p>
+        <button onclick="showDetail('${item._id}')" style="margin-top:0.5rem;padding:0.3rem 0.8rem;background:#1a237e;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+          Ver detalle
+        </button>
+      </div>
+    `;
+
+    const marker = L.marker([lat, lng], { icon }).bindPopup(popupContent);
+    markersLayer.addLayer(marker);
+    bounds.push([lat, lng]);
+  });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }
+
+  updateMapFilterInfo(filtered.length);
+}
+
+function filterMap(color) {
+  currentFilter = color;
+  document.querySelectorAll('.map-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color === color);
+  });
+  renderMapMarkers();
+}
+
+function clearMapFilter() {
+  currentFilter = null;
+  document.querySelectorAll('.map-filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  renderMapMarkers();
+}
+
+function updateMapFilterInfo(count) {
+  const el = document.getElementById('map-filter-info');
+  if (el) {
+    el.textContent = currentFilter
+      ? `Mostrando ${count} registro(s)`
+      : `${count} registro(s) en total`;
   }
 }

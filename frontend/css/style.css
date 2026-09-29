@@ -539,6 +539,15 @@ main {
   background-color: #333333;
 }
 
+.map-filter-btn.active {
+  font-weight: bold;
+  transform: scale(1.05);
+}
+
+.map-filter-btn:hover {
+  opacity: 0.8;
+}
+
 /* Alcaldias Panel (Right) */
 .panel-filter-box {
   position: relative;

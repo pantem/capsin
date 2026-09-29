@@ -294,9 +294,20 @@
         <div id="map"></div>
         <div id="map-legend">
           <h4>Leyenda</h4>
-          <p><span class="dot red-dot"></span> Crítico (fallecidos/graves)</p>
-          <p><span class="dot yellow-dot"></span> Moderado (lesiones leves)</p>
-           <p><span class="dot green-dot"></span> Riesgo bajo</p>
+          <p><span class="dot red-dot"></span> Crítico</p>
+          <p><span class="dot yellow-dot"></span> Moderado</p>
+          <p><span class="dot" style="background:#222;"></span> Colapso</p>
+          <p><span class="dot green-dot"></span> Riesgo bajo</p>
+          <hr style="margin:0.5rem 0;border-color:#ddd;">
+          <h4>Filtrar por riesgo</h4>
+          <div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+            <button class="map-filter-btn" data-color="red" onclick="filterMap('red')" style="padding:0.25rem 0.6rem;border:2px solid #d32f2f;background:#fff;color:#d32f2f;border-radius:4px;cursor:pointer;font-size:0.8rem;">Crítico</button>
+            <button class="map-filter-btn" data-color="yellow" onclick="filterMap('yellow')" style="padding:0.25rem 0.6rem;border:2px solid #fbc02d;background:#fff;color:#f57c00;border-radius:4px;cursor:pointer;font-size:0.8rem;">Moderado</button>
+            <button class="map-filter-btn" data-color="black" onclick="filterMap('black')" style="padding:0.25rem 0.6rem;border:2px solid #222;background:#fff;color:#222;border-radius:4px;cursor:pointer;font-size:0.8rem;">Colapso</button>
+            <button class="map-filter-btn" data-color="green" onclick="filterMap('green')" style="padding:0.25rem 0.6rem;border:2px solid #388e3c;background:#fff;color:#388e3c;border-radius:4px;cursor:pointer;font-size:0.8rem;">Riesgo bajo</button>
+            <button onclick="clearMapFilter()" style="padding:0.25rem 0.6rem;border:2px solid #888;background:#888;color:#fff;border-radius:4px;cursor:pointer;font-size:0.8rem;">Limpiar</button>
+          </div>
+          <p id="map-filter-info" style="margin-top:0.5rem;font-size:0.8rem;color:#888;"></p>
         </div>
       </section>
 

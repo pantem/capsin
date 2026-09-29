@@ -3,7 +3,7 @@ let markersLayer = null;
 let cdmxBoundaryLayer = null;
 let cdmxMaskLayer = null;
 let allMapData = [];
-let currentFilter = null;
+let activeFilters = new Set(['red', 'yellow', 'black', 'green']);
 
 function getMarkerColor(color) {
   if (color === 'red') return '#d32f2f';
@@ -133,9 +133,9 @@ function renderMapMarkers() {
   markersLayer.clearLayers();
   const bounds = [];
 
-  const filtered = currentFilter
-    ? allMapData.filter(item => item.color === currentFilter)
-    : allMapData;
+  const filtered = activeFilters.size === 4
+    ? allMapData
+    : allMapData.filter(item => activeFilters.has(item.color));
 
   filtered.forEach((item) => {
     if (!item.ubicacion?.lat || !item.ubicacion?.lng) return;
@@ -175,27 +175,32 @@ function renderMapMarkers() {
   updateMapFilterInfo(filtered.length);
 }
 
-function filterMap(color) {
-  currentFilter = color;
-  document.querySelectorAll('.map-filter-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.color === color);
-  });
+function toggleMapFilter(color) {
+  if (activeFilters.has(color)) {
+    activeFilters.delete(color);
+  } else {
+    activeFilters.add(color);
+  }
+  renderMapMarkers();
+}
+
+function selectAllMapFilters() {
+  activeFilters = new Set(['red', 'yellow', 'black', 'green']);
+  document.querySelectorAll('.map-filter-cb').forEach(cb => cb.checked = true);
   renderMapMarkers();
 }
 
 function clearMapFilter() {
-  currentFilter = null;
-  document.querySelectorAll('.map-filter-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
+  activeFilters.clear();
+  document.querySelectorAll('.map-filter-cb').forEach(cb => cb.checked = false);
   renderMapMarkers();
 }
 
 function updateMapFilterInfo(count) {
   const el = document.getElementById('map-filter-info');
   if (el) {
-    el.textContent = currentFilter
-      ? `Mostrando ${count} registro(s)`
-      : `${count} registro(s) en total`;
+    el.textContent = activeFilters.size === 4
+      ? `${count} registro(s) en total`
+      : `Mostrando ${count} registro(s)`;
   }
 }

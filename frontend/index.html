@@ -300,12 +300,23 @@
           <p><span class="dot green-dot"></span> Riesgo bajo</p>
           <hr style="margin:0.5rem 0;border-color:#ddd;">
           <h4>Filtrar por riesgo</h4>
-          <div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
-            <button class="map-filter-btn" data-color="red" onclick="filterMap('red')" style="padding:0.25rem 0.6rem;border:2px solid #d32f2f;background:#fff;color:#d32f2f;border-radius:4px;cursor:pointer;font-size:0.8rem;">Crítico</button>
-            <button class="map-filter-btn" data-color="yellow" onclick="filterMap('yellow')" style="padding:0.25rem 0.6rem;border:2px solid #fbc02d;background:#fff;color:#f57c00;border-radius:4px;cursor:pointer;font-size:0.8rem;">Moderado</button>
-            <button class="map-filter-btn" data-color="black" onclick="filterMap('black')" style="padding:0.25rem 0.6rem;border:2px solid #222;background:#fff;color:#222;border-radius:4px;cursor:pointer;font-size:0.8rem;">Colapso</button>
-            <button class="map-filter-btn" data-color="green" onclick="filterMap('green')" style="padding:0.25rem 0.6rem;border:2px solid #388e3c;background:#fff;color:#388e3c;border-radius:4px;cursor:pointer;font-size:0.8rem;">Riesgo bajo</button>
-            <button onclick="clearMapFilter()" style="padding:0.25rem 0.6rem;border:2px solid #888;background:#888;color:#fff;border-radius:4px;cursor:pointer;font-size:0.8rem;">Limpiar</button>
+          <div style="display:flex;flex-direction:column;gap:0.25rem;">
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
+              <input type="checkbox" class="map-filter-cb" data-color="red" onchange="toggleMapFilter('red')" checked> <span style="color:#d32f2f;font-weight:600;">Crítico</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
+              <input type="checkbox" class="map-filter-cb" data-color="yellow" onchange="toggleMapFilter('yellow')" checked> <span style="color:#f57c00;font-weight:600;">Moderado</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
+              <input type="checkbox" class="map-filter-cb" data-color="black" onchange="toggleMapFilter('black')" checked> <span style="color:#222;font-weight:600;">Colapso</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
+              <input type="checkbox" class="map-filter-cb" data-color="green" onchange="toggleMapFilter('green')" checked> <span style="color:#388e3c;font-weight:600;">Riesgo bajo</span>
+            </label>
+          </div>
+          <div style="display:flex;gap:0.3rem;margin-top:0.4rem;">
+            <button onclick="selectAllMapFilters()" style="padding:0.2rem 0.5rem;border:1px solid #888;background:#fff;color:#555;border-radius:4px;cursor:pointer;font-size:0.75rem;">Todos</button>
+            <button onclick="clearMapFilter()" style="padding:0.2rem 0.5rem;border:1px solid #888;background:#fff;color:#555;border-radius:4px;cursor:pointer;font-size:0.75rem;">Ninguno</button>
           </div>
           <p id="map-filter-info" style="margin-top:0.5rem;font-size:0.8rem;color:#888;"></p>
         </div>

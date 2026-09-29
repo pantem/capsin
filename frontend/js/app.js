@@ -164,7 +164,7 @@ function renderDashboardChart(data) {
           <title>Colapso: ${colapsoPct}% (${colapsoVal.toLocaleString()})</title>
         </path>
       </g>
-      <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
+      <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#FFF">${effectiveTotal.toLocaleString()}</text>
       <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
 
       <g>

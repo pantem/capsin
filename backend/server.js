@@ -76,6 +76,7 @@ app.get('/api/resumen', async (req, res) => {
     const inmueblesCriticos = await Inmueble.countDocuments({ estado_afectacion: 'critico' });
     const inmueblesModerados = await Inmueble.countDocuments({ estado_afectacion: 'moderado' });
     const inmueblesSinDanos = await Inmueble.countDocuments({ estado_afectacion: 'sin_daños' });
+    const inmueblesColapso = await Inmueble.countDocuments({ estado_afectacion: 'colapso' });
 
     const CodigoPostal = require('./models/CodigoPostal');
 
@@ -95,7 +96,7 @@ app.get('/api/resumen', async (req, res) => {
 
     const porAlcaldiaMap = {};
     alcaldiasCDMX.forEach((a) => {
-      porAlcaldiaMap[a] = { sinDano: 0, moderado: 0, critico: 0, total: 0 };
+      porAlcaldiaMap[a] = { sinDano: 0, moderado: 0, critico: 0, colapso: 0, total: 0 };
     });
 
     for (const inm of inmueblesConSiniestro) {
@@ -146,6 +147,7 @@ app.get('/api/resumen', async (req, res) => {
       if (st === 'sin_daños') porAlcaldiaMap[alcFound].sinDano++;
       else if (st === 'moderado') porAlcaldiaMap[alcFound].moderado++;
       else if (st === 'critico') porAlcaldiaMap[alcFound].critico++;
+      else if (st === 'colapso') porAlcaldiaMap[alcFound].colapso++;
       porAlcaldiaMap[alcFound].total++;
     }
 
@@ -154,6 +156,7 @@ app.get('/api/resumen', async (req, res) => {
       sinDano: porAlcaldiaMap[alc].sinDano,
       moderado: porAlcaldiaMap[alc].moderado,
       critico: porAlcaldiaMap[alc].critico,
+      colapso: porAlcaldiaMap[alc].colapso,
       total: porAlcaldiaMap[alc].total,
     }));
 
@@ -168,6 +171,7 @@ app.get('/api/resumen', async (req, res) => {
       inmueblesCriticos,
       inmueblesModerados,
       inmueblesSinDanos,
+      inmueblesColapso,
       porAlcaldia,
       ultimaActualizacion: new Date().toISOString(),
     });
@@ -267,7 +271,8 @@ app.get('/api/mapa', async (req, res) => {
       for (const inm of inmuebles) {
         const ea = inm.estado_afectacion || 'sin_daños';
         if (ea === 'critico') peorEstado = 'critico';
-        else if (ea === 'moderado' && peorEstado !== 'critico') peorEstado = 'moderado';
+        else if (ea === 'colapso' && peorEstado !== 'critico') peorEstado = 'colapso';
+        else if (ea === 'moderado' && peorEstado !== 'critico' && peorEstado !== 'colapso') peorEstado = 'moderado';
 
         const damns = await Damnificado.find({ inmueble: inm._id }).lean();
         totalDamnificados += damns.length;
@@ -279,7 +284,7 @@ app.get('/api/mapa', async (req, res) => {
         }
       }
 
-      const color = peorEstado === 'critico' ? 'red' : peorEstado === 'moderado' ? 'yellow' : 'green';
+      const color = peorEstado === 'critico' ? 'red' : peorEstado === 'colapso' ? 'black' : peorEstado === 'moderado' ? 'yellow' : 'green';
 
       results.push({
         _id: s._id,

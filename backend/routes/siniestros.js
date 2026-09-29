@@ -76,6 +76,7 @@ router.get('/pull', async (req, res) => {
         id: s._id.toString(),
         folio: s.folio,
         fecha: s.fecha ? new Date(s.fecha).toISOString() : new Date().toISOString(),
+        fecha_sincronizacion: s.fecha_sincronizacion ? new Date(s.fecha_sincronizacion).toISOString() : null,
         lat: s.ubicacion?.lat || 0,
         lng: s.ubicacion?.lng || 0,
         direccion: s.ubicacion?.direccion || '',

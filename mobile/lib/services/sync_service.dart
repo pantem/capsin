@@ -38,7 +38,8 @@ class SyncService {
     try {
       final did = await dispositivoId;
 
-      final tiposOk = await _sincronizarTipos();
+      final tiposResult = await _sincronizarTipos();
+      final tiposOk = tiposResult['ok'] as bool;
 
       final descargadosCount = await _descargar(did);
       descargados = descargadosCount;
@@ -47,7 +48,7 @@ class SyncService {
 
       if (pendientes.isEmpty) {
         if (!tiposOk && descargados == 0) {
-          return SyncResult(subidos: 0, errores: 1, mensaje: 'Error de conexión con el servidor');
+          return SyncResult(subidos: 0, errores: 1, mensaje: 'Error: ${tiposResult['error'] ?? 'Sin conexión'}');
         }
         final msg = descargados > 0
             ? '$descargados reporte(s) descargado(s)'
@@ -117,27 +118,29 @@ class SyncService {
     return SyncResult(subidos: subidos, errores: errores, mensaje: msg);
   }
 
-  Future<bool> _sincronizarTipos() async {
+  Future<Map<String, dynamic>> _sincronizarTipos() async {
     try {
       final response = await http.get(
         Uri.parse('$_baseUrl/tipos-inmueble?activos=true'),
         headers: {'Content-Type': 'application/json'},
-      );
-      if (response.statusCode != 200) return false;
+      ).timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) {
+        return {'ok': false, 'error': 'Error HTTP ${response.statusCode}'};
+      }
 
       final tiposJson = jsonDecode(response.body) as List;
       final tipos = tiposJson
           .map((j) => TipoInmueble.fromJson(j as Map<String, dynamic>))
           .toList();
 
-      if (tipos.isEmpty) return false;
+      if (tipos.isEmpty) return {'ok': false, 'error': 'Sin tipos en el servidor'};
       await _db.insertTiposInmueble(tipos);
 
       for (final tipo in tipos) {
         final caractsResponse = await http.get(
           Uri.parse('$_baseUrl/tipos-inmueble/${tipo.id}/caracteristicas'),
           headers: {'Content-Type': 'application/json'},
-        );
+        ).timeout(const Duration(seconds: 30));
         if (caractsResponse.statusCode != 200) continue;
 
         final caractsJson = jsonDecode(caractsResponse.body) as List;
@@ -147,9 +150,9 @@ class SyncService {
 
         await _db.insertCaracteristicas(tipo.id, caracts);
       }
-      return true;
+      return {'ok': true};
     } catch (e) {
-      return false;
+      return {'ok': false, 'error': e.toString()};
     }
   }
 

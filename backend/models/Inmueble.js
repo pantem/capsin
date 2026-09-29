@@ -11,7 +11,7 @@ const inmuebleSchema = new mongoose.Schema({
   es_padre: { type: Boolean, default: false },
   padre: { type: mongoose.Schema.Types.ObjectId, ref: 'Inmueble', default: null },
   identificador: { type: String, default: '' },
-  estado_afectacion: { type: String, enum: ['critico', 'moderado', 'sin_daños'], default: 'sin_daños' },
+  estado_afectacion: { type: String, enum: ['critico', 'moderado', 'sin_daños', 'colapso'], default: 'sin_daños' },
   observaciones: { type: String, default: '' },
   sincronizado: { type: Boolean, default: true },
   creado_en: { type: Date, default: Date.now },

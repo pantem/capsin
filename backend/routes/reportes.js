@@ -35,6 +35,7 @@ router.post('/sync', async (req, res) => {
         folio: folioFinal,
         folio_original: exists ? exists.folio_original : reporteData.folio,
         fecha: reporteData.fecha ? new Date(reporteData.fecha) : new Date(),
+        fecha_sincronizacion: reporteData.fecha_sincronizacion ? new Date(reporteData.fecha_sincronizacion) : new Date(),
         ubicacion: {
           lat: reporteData.lat || 0,
           lng: reporteData.lng || 0,
@@ -85,16 +86,18 @@ router.post('/sync', async (req, res) => {
             valor_numero: v.valor_numero || null,
             valor_booleano: v.valor_booleano != null ? Boolean(v.valor_booleano) : null,
             valor_seleccion: v.valor_seleccion || null,
+            valor_texto_condicional: v.valor_texto_condicional || null,
           }).save();
         }
 
         const clasificacion = valores_caracteristica.find(v =>
-          v.valor_seleccion && v.valor_seleccion.includes('Riesgo')
+          v.valor_seleccion && (v.valor_seleccion.includes('Riesgo') || v.valor_seleccion.includes('Colapso'))
         );
         if (clasificacion) {
           let derived = 'sin_daños';
           if (clasificacion.valor_seleccion.includes('Riesgo Alto')) derived = 'critico';
           else if (clasificacion.valor_seleccion.includes('Riesgo Medio')) derived = 'moderado';
+          else if (clasificacion.valor_seleccion.includes('Colapso')) derived = 'colapso';
           await Inmueble.findByIdAndUpdate(inmueble._id, { estado_afectacion: derived });
         }
       }
@@ -148,6 +151,7 @@ router.get('/pull', async (req, res) => {
       results.push({
         folio: s.folio,
         fecha: s.fecha ? new Date(s.fecha).toISOString() : new Date().toISOString(),
+        fecha_sincronizacion: s.fecha_sincronizacion ? new Date(s.fecha_sincronizacion).toISOString() : null,
         nombre_capturista: '',
         area: '',
         calle_numero: s.ubicacion?.direccion || '',
@@ -199,11 +203,12 @@ router.post('/fix-estados', async (req, res) => {
     let corregidos = 0;
     for (const inm of inmuebles) {
       const valores = await ValorCaracteristica.find({ inmueble: inm._id }).lean();
-      const clasificacion = valores.find(v => v.valor_seleccion && v.valor_seleccion.includes('Riesgo'));
+      const clasificacion = valores.find(v => v.valor_seleccion && (v.valor_seleccion.includes('Riesgo') || v.valor_seleccion.includes('Colapso')));
       if (!clasificacion) continue;
       let derived = 'sin_daños';
       if (clasificacion.valor_seleccion.includes('Riesgo Alto')) derived = 'critico';
       else if (clasificacion.valor_seleccion.includes('Riesgo Medio')) derived = 'moderado';
+      else if (clasificacion.valor_seleccion.includes('Colapso')) derived = 'colapso';
       if (inm.estado_afectacion !== derived) {
         await Inmueble.findByIdAndUpdate(inm._id, { estado_afectacion: derived });
         corregidos++;

@@ -26,7 +26,7 @@ class DatabaseService {
     final path = join(dbPath, 'siniestros_sismo.db');
     return openDatabase(
       path,
-      version: 10,
+      version: 12,
       onCreate: _createTables,
       onUpgrade: _onUpgrade,
     );
@@ -56,7 +56,8 @@ class DatabaseService {
         observaciones TEXT DEFAULT '',
         fotos TEXT DEFAULT '',
         estadoAfectacion TEXT DEFAULT 'sin_daños',
-        sincronizado INTEGER DEFAULT 0
+        sincronizado INTEGER DEFAULT 0,
+        fechaSincronizacion TEXT DEFAULT ''
       )
     ''');
     await db.execute('''
@@ -96,6 +97,8 @@ class DatabaseService {
         opciones TEXT DEFAULT '',
         requerido INTEGER DEFAULT 0,
         orden INTEGER DEFAULT 0,
+        render_type TEXT DEFAULT 'auto',
+        condicional_texto TEXT DEFAULT 'no',
         minimo REAL,
         maximo REAL,
         FOREIGN KEY (tipoInmuebleId) REFERENCES tipos_inmueble(id)
@@ -110,6 +113,7 @@ class DatabaseService {
         valorNumero REAL,
         valorBooleano INTEGER,
         valorSeleccion TEXT,
+        valorTextoCondicional TEXT,
         FOREIGN KEY (reporteId) REFERENCES reportes(id),
         FOREIGN KEY (caracteristicaId) REFERENCES caracteristicas_tipo(id)
       )
@@ -209,6 +213,17 @@ class DatabaseService {
         await db.execute("ALTER TABLE caracteristicas_tipo ADD COLUMN render_type TEXT DEFAULT 'auto'");
       } catch (_) {}
     }
+    if (oldVersion < 11) {
+      try {
+        await db.execute("ALTER TABLE reportes ADD COLUMN fechaSincronizacion TEXT DEFAULT ''");
+      } catch (_) {}
+    }
+    if (oldVersion < 12) {
+      try {
+        await db.execute("ALTER TABLE caracteristicas_tipo ADD COLUMN condicional_texto TEXT DEFAULT 'no'");
+        await db.execute("ALTER TABLE valores_caracteristica ADD COLUMN valorTextoCondicional TEXT");
+      } catch (_) {}
+    }
   }
 
   Future<String> insertReporte(Reporte r) async {
@@ -240,8 +255,10 @@ class DatabaseService {
 
   Future<void> marcarReporteSincronizado(String id) async {
     final db = await database;
-    await db.update('reportes', {'sincronizado': 1},
-        where: 'id = ?', whereArgs: [id]);
+    await db.update('reportes', {
+      'sincronizado': 1,
+      'fechaSincronizacion': DateTime.now().toIso8601String(),
+    }, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> actualizarFotosReporte(String id, String fotos) async {

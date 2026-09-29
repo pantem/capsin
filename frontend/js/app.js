@@ -17,6 +17,7 @@ function formatDate(d) {
 function getBadgeClass(color) {
   if (color === 'red') return 'badge red';
   if (color === 'yellow') return 'badge yellow';
+  if (color === 'black') return 'badge black';
   return 'badge green';
 }
 
@@ -58,16 +59,18 @@ function renderDashboardChart(data) {
   const container = document.getElementById('chart-container');
   if (!container) return;
 
-  const total = (data.sinDano || 0) + (data.moderado || 0) + (data.critico || 0);
+  const total = (data.sinDano || 0) + (data.moderado || 0) + (data.critico || 0) + (data.colapso || 0);
 
   const sinDanoVal = total > 0 ? data.sinDano : 724;
   const moderadoVal = total > 0 ? data.moderado : 329;
   const criticoVal = total > 0 ? data.critico : 197;
+  const colapsoVal = total > 0 ? data.colapso : 0;
   const effectiveTotal = total > 0 ? total : 1250;
 
   const sinDanoPct = ((sinDanoVal / effectiveTotal) * 100).toFixed(1);
   const moderadoPct = ((moderadoVal / effectiveTotal) * 100).toFixed(1);
   const criticoPct = ((criticoVal / effectiveTotal) * 100).toFixed(1);
+  const colapsoPct = ((colapsoVal / effectiveTotal) * 100).toFixed(1);
 
   const cx = 175;
   const cy = 150;
@@ -76,6 +79,7 @@ function renderDashboardChart(data) {
   const sinDanoAngle = (sinDanoVal / effectiveTotal) * 360;
   const moderadoAngle = (moderadoVal / effectiveTotal) * 360;
   const criticoAngle = (criticoVal / effectiveTotal) * 360;
+  const colapsoAngle = (colapsoVal / effectiveTotal) * 360;
 
   function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
@@ -108,31 +112,41 @@ function renderDashboardChart(data) {
   currentAngle = a2_end;
 
   const a3_start = currentAngle;
-  const a3_end = 360;
+  const a3_end = currentAngle + criticoAngle;
+  currentAngle = a3_end;
+
+  const a4_start = currentAngle;
+  const a4_end = 360;
 
   const d1 = describeArc(cx, cy, r, a1_start, a1_end);
   const d2 = describeArc(cx, cy, r, a2_start, a2_end);
   const d3 = describeArc(cx, cy, r, a3_start, a3_end);
+  const d4 = describeArc(cx, cy, r, a4_start, a4_end);
 
   const mid1 = (a1_start + a1_end) / 2;
   const mid2 = (a2_start + a2_end) / 2;
   const mid3 = (a3_start + a3_end) / 2;
+  const mid4 = (a4_start + a4_end) / 2;
 
   const edge1 = polarToCartesian(cx, cy, r + 4, mid1);
   const edge2 = polarToCartesian(cx, cy, r + 4, mid2);
   const edge3 = polarToCartesian(cx, cy, r + 4, mid3);
+  const edge4 = polarToCartesian(cx, cy, r + 4, mid4);
 
   const txt1 = polarToCartesian(cx, cy, r + 45, mid1);
   const txt2 = polarToCartesian(cx, cy, r + 45, mid2);
   const txt3 = polarToCartesian(cx, cy, r + 45, mid3);
+  const txt4 = polarToCartesian(cx, cy, r + 45, mid4);
 
   const anchor1 = mid1 > 180 ? 'end' : 'start';
   const anchor2 = mid2 > 180 ? 'end' : 'start';
   const anchor3 = mid3 > 180 ? 'end' : 'start';
+  const anchor4 = mid4 > 180 ? 'end' : 'start';
 
   const off1 = anchor1 === 'end' ? -6 : 6;
   const off2 = anchor2 === 'end' ? -6 : 6;
   const off3 = anchor3 === 'end' ? -6 : 6;
+  const off4 = anchor4 === 'end' ? -6 : 6;
 
   const svgHTML = `
     <svg viewBox="0 0 400 340" width="100%" height="100%" style="overflow:visible;max-height:340px;">
@@ -145,6 +159,9 @@ function renderDashboardChart(data) {
         </path>
         <path d="${d3}" fill="#881337" class="pie-slice">
           <title>Riesgo alto: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
+        </path>
+        <path d="${d4}" fill="#333333" class="pie-slice">
+          <title>Colapso: ${colapsoPct}% (${colapsoVal.toLocaleString()})</title>
         </path>
       </g>
       <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#333">${effectiveTotal.toLocaleString()}</text>
@@ -169,6 +186,13 @@ function renderDashboardChart(data) {
         <line x1="${edge3.x}" y1="${edge3.y}" x2="${txt3.x}" y2="${txt3.y}" stroke="#881337" stroke-width="1.5"/>
         <text x="${txt3.x + off3}" y="${txt3.y - 8}" text-anchor="${anchor3}" font-size="12" font-weight="600" fill="#333">Riesgo alto</text>
         <text x="${txt3.x + off3}" y="${txt3.y + 8}" text-anchor="${anchor3}" font-size="11" fill="#555">${criticoVal.toLocaleString()} · ${criticoPct}%</text>
+      </g>
+
+      <g>
+        <circle cx="${edge4.x}" cy="${edge4.y}" r="3" fill="#333333"/>
+        <line x1="${edge4.x}" y1="${edge4.y}" x2="${txt4.x}" y2="${txt4.y}" stroke="#333333" stroke-width="1.5"/>
+        <text x="${txt4.x + off4}" y="${txt4.y - 8}" text-anchor="${anchor4}" font-size="12" font-weight="600" fill="#333">Colapso</text>
+        <text x="${txt4.x + off4}" y="${txt4.y + 8}" text-anchor="${anchor4}" font-size="11" fill="#555">${colapsoVal.toLocaleString()} · ${colapsoPct}%</text>
       </g>
     </svg>
   `;
@@ -221,6 +245,7 @@ function getFilteredAlcaldias() {
         sinDano: 0,
         moderado: 0,
         critico: 0,
+        colapso: 0,
         total: 0,
       }));
 
@@ -270,6 +295,13 @@ function renderAlcaldiasGrid() {
         </div>
         <span class="damage-row-count">${item.critico || 0}</span>
       </div>
+      <div class="damage-row row-colapso" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'colapso')" style="background:#333;color:#fff;">
+        <div class="damage-row-label">
+          <span class="legend-dot dot-black"></span>
+          <span>Colapso</span>
+        </div>
+        <span class="damage-row-count">${item.colapso || 0}</span>
+      </div>
     </div>
   `
     )
@@ -293,12 +325,15 @@ async function loadDashboard() {
     const sinDano = hasData ? stats.inmueblesSinDanos || 0 : 724;
     const moderado = hasData ? stats.inmueblesModerados || 0 : 329;
     const critico = hasData ? stats.inmueblesCriticos || 0 : 197;
+    const colapso = hasData ? stats.inmueblesColapso || 0 : 0;
 
     const sinDanoPct = totalInmuebles > 0 ? ((sinDano / totalInmuebles) * 100).toFixed(1) : '0.0';
     const moderadoPct =
       totalInmuebles > 0 ? ((moderado / totalInmuebles) * 100).toFixed(1) : '0.0';
     const criticoPct =
       totalInmuebles > 0 ? ((critico / totalInmuebles) * 100).toFixed(1) : '0.0';
+    const colapsoPct =
+      totalInmuebles > 0 ? ((colapso / totalInmuebles) * 100).toFixed(1) : '0.0';
 
     const kpiTotalEl = document.getElementById('kpi-total-inmuebles');
     const kpiSinDanoEl = document.getElementById('kpi-sin-dano');
@@ -307,6 +342,8 @@ async function loadDashboard() {
     const kpiModeradoPctEl = document.getElementById('kpi-moderado-pct');
     const kpiCriticoEl = document.getElementById('kpi-critico');
     const kpiCriticoPctEl = document.getElementById('kpi-critico-pct');
+    const kpiColapsoEl = document.getElementById('kpi-colapso');
+    const kpiColapsoPctEl = document.getElementById('kpi-colapso-pct');
 
     if (kpiTotalEl) kpiTotalEl.textContent = totalInmuebles.toLocaleString();
     if (kpiSinDanoEl) kpiSinDanoEl.textContent = sinDano.toLocaleString();
@@ -315,6 +352,8 @@ async function loadDashboard() {
     if (kpiModeradoPctEl) kpiModeradoPctEl.textContent = `${moderadoPct}%`;
     if (kpiCriticoEl) kpiCriticoEl.textContent = critico.toLocaleString();
     if (kpiCriticoPctEl) kpiCriticoPctEl.textContent = `${criticoPct}%`;
+    if (kpiColapsoEl) kpiColapsoEl.textContent = colapso.toLocaleString();
+    if (kpiColapsoPctEl) kpiColapsoPctEl.textContent = `${colapsoPct}%`;
 
     const tsEl = document.getElementById('dash-timestamp');
     if (tsEl) {
@@ -332,11 +371,11 @@ async function loadDashboard() {
       }
     }
 
-    renderDashboardChart({ sinDano, moderado, critico, total: totalInmuebles });
+    renderDashboardChart({ sinDano, moderado, critico, colapso, total: totalInmuebles });
     renderAlcaldiasGrid();
   } catch (err) {
     console.error('Error cargando dashboard:', err);
-    renderDashboardChart({ sinDano: 724, moderado: 329, critico: 197, total: 1250 });
+    renderDashboardChart({ sinDano: 724, moderado: 329, critico: 197, colapso: 0, total: 1250 });
     renderAlcaldiasGrid();
   }
 }
@@ -349,6 +388,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
     sin_daños: 'Riesgo bajo',
     moderado: 'Riesgo medio',
     critico: 'Riesgo alto',
+    colapso: 'Colapso',
   };
 
   body.innerHTML = `<h2>${alcaldia} — ${danoLabels[dano] || dano}</h2><p style="color:#777;">Cargando...</p>`;
@@ -384,8 +424,8 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
                 <td style="padding:0.5rem;font-weight:600;">${r.folio || '—'}</td>
                 <td style="padding:0.5rem;">${r.tipo || '—'}</td>
                 <td style="padding:0.5rem;">
-                  <span class="${getBadgeClass(r.estadoAfectacion === 'critico' ? 'red' : r.estadoAfectacion === 'moderado' ? 'yellow' : 'green')}">
-                    ${r.estadoAfectacion === 'critico' ? 'Riesgo alto' : r.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}
+                  <span class="${getBadgeClass(r.estadoAfectacion === 'critico' ? 'red' : r.estadoAfectacion === 'moderado' ? 'yellow' : r.estadoAfectacion === 'colapso' ? 'black' : 'green')}">
+                    ${r.estadoAfectacion === 'critico' ? 'Riesgo alto' : r.estadoAfectacion === 'moderado' ? 'Riesgo medio' : r.estadoAfectacion === 'colapso' ? 'Colapso' : 'Riesgo bajo'}
                   </span>
                 </td>
                 <td style="padding:0.5rem;color:#555;">${r.direccion || '—'}</td>
@@ -427,12 +467,13 @@ async function loadReportesList(filter = '') {
           <div class="reporte-card" data-id="${s._id}">
             <div>
               <div class="folio">${s.folio || 'Sin folio'}</div>
-              <div class="fecha">${formatDate(s.fecha)}</div>
+              <div class="fecha">Creado: ${formatDate(s.fecha)}</div>
+              ${s.fecha_sincronizacion ? `<div class="fecha" style="color:#888;">Sincronizado: ${formatDate(s.fecha_sincronizacion)}</div>` : ''}
               <div class="ubicacion">${s.ubicacion?.direccion || ''} ${s.ubicacion?.municipio || ''}</div>
             </div>
             <div style="display:flex;align-items:center;gap:0.8rem;">
               <!--span>${s.totalDamnificados} damnificados</span-->
-              <span class="${getBadgeClass(s.color)}">${s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : 'Riesgo bajo'}</span>
+              <span class="${getBadgeClass(s.color)}">${s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo'}</span>
             </div>
           </div>`
       )
@@ -457,7 +498,8 @@ async function showDetail(siniestroId) {
 
     let html = `
       <h2>${siniestro.folio || 'Sin folio'}</h2>
-      <p><strong>Fecha:</strong> ${formatDate(siniestro.fecha)}</p>
+      <p><strong>Fecha de creación:</strong> ${formatDate(siniestro.fecha)}</p>
+      ${siniestro.fecha_sincronizacion ? `<p><strong>Fecha de sincronización:</strong> ${formatDate(siniestro.fecha_sincronizacion)}</p>` : ''}
       <p><strong>Dirección:</strong> ${siniestro.ubicacion?.direccion || ''}, ${siniestro.ubicacion?.municipio || ''}, ${siniestro.ubicacion?.estado || ''}</p>
       <p><strong>Coordenadas:</strong> ${siniestro.ubicacion?.lat}, ${siniestro.ubicacion?.lng}</p>
       <p><strong>Descripción:</strong> ${siniestro.descripcion || 'Sin descripción'}</p>
@@ -491,8 +533,8 @@ async function showDetail(siniestroId) {
           <div style="background:#f8f9fa;padding:0.8rem;border-radius:8px;margin:0.5rem 0;">
             <p><strong>${inm.tipo === 'edificio' ? 'Edificio' : 'Casa'}</strong>
               ${inm.identificador ? `- ${inm.identificador}` : ''}
-              <span class="${getBadgeClass(inm.estado_afectacion === 'critico' ? 'red' : inm.estado_afectacion === 'moderado' ? 'yellow' : 'green')}" style="margin-left:0.5rem;">
-                ${inm.estado_afectacion === 'critico' ? 'Riesgo alto' : inm.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}
+              <span class="${getBadgeClass(inm.estado_afectacion === 'critico' ? 'red' : inm.estado_afectacion === 'moderado' ? 'yellow' : inm.estado_afectacion === 'colapso' ? 'black' : 'green')}" style="margin-left:0.5rem;">
+                ${inm.estado_afectacion === 'critico' ? 'Riesgo alto' : inm.estado_afectacion === 'moderado' ? 'Riesgo medio' : inm.estado_afectacion === 'colapso' ? 'Colapso' : 'Riesgo bajo'}
               </span>
             </p>
             <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Niveles totales: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
@@ -533,8 +575,8 @@ async function showDetail(siniestroId) {
             ${hijos.length > 0 ? `
               <p style="font-weight:600;margin-top:0.5rem;">Departamentos/Unidades (${hijos.length}):</p>
               ${hijos.map(h => `
-                <div style="background:#fff;padding:0.5rem;border-radius:6px;margin:0.3rem 0;border-left:3px solid ${h.estado_afectacion === 'critico' ? '#d32f2f' : h.estado_afectacion === 'moderado' ? '#f57c00' : '#388e3c'};">
-                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Riesgo alto' : h.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}</p>
+                <div style="background:#fff;padding:0.5rem;border-radius:6px;margin:0.3rem 0;border-left:3px solid ${h.estado_afectacion === 'critico' ? '#d32f2f' : h.estado_afectacion === 'colapso' ? '#000000' : h.estado_afectacion === 'moderado' ? '#f57c00' : '#388e3c'};">
+                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Riesgo alto' : h.estado_afectacion === 'colapso' ? 'Colapso' : h.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}</p>
                 </div>
               `).join('')}
             ` : ''}
@@ -610,8 +652,8 @@ function renderUbicacion(data, countEl, container) {
         </thead>
         <tbody>
           ${data.map(d => {
-    const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
-    const estadoLabel = d.estadoAfectacion === 'critico' ? 'Riesgo alto' : d.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
+    const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'colapso' ? '#000000' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
+    const estadoLabel = d.estadoAfectacion === 'critico' ? 'Riesgo alto' : d.estadoAfectacion === 'colapso' ? 'Colapso' : d.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
     return `
               <tr style="border-bottom:1px solid #e0e0e0;cursor:pointer;" onclick="showDetail('${d.siniestroId}')">
                 <td style="padding:0.5rem;font-weight:600;">${d.folio || '—'}</td>
@@ -964,6 +1006,7 @@ async function abrirFormTipo(id) {
       opciones: c.opciones || [],
       requerido: c.requerido || false,
       renderType: c.render_type || 'auto',
+      condicionalTexto: c.condicional_texto || 'no',
       minimo: c.minimo ?? null,
       maximo: c.maximo ?? null,
       orden: c.orden ?? 0,
@@ -1025,7 +1068,7 @@ function renderCaractsLista() {
 }
 
 function abrirFormCaract(idx) {
-  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, renderType: 'auto', minimo: null, maximo: null };
+  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, renderType: 'auto', condicionalTexto: 'no', minimo: null, maximo: null };
   const isNew = idx === undefined;
 
   const modalBody = document.getElementById('modal-tipo-body');
@@ -1068,6 +1111,13 @@ function abrirFormCaract(idx) {
           <option value="auto" ${(c.renderType || 'auto') === 'auto' ? 'selected' : ''}>Automático</option>
           <option value="dropdown" ${c.renderType === 'dropdown' ? 'selected' : ''}>Desplegable</option>
           <option value="radio" ${c.renderType === 'radio' ? 'selected' : ''}>Radio</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Condicional texto</label>
+        <select id="caract-cond-texto">
+          <option value="no" ${(c.condicionalTexto || 'no') === 'no' ? 'selected' : ''}>No</option>
+          <option value="si" ${c.condicionalTexto === 'si' ? 'selected' : ''}>Sí</option>
         </select>
       </div>
     </div>
@@ -1128,8 +1178,9 @@ function guardarCaract(idx) {
   const renderType = (tipoDato === 'seleccion' || tipoDato === 'multiseleccion')
     ? document.getElementById('caract-render-type').value
     : 'auto';
+  const condicionalTexto = document.getElementById('caract-cond-texto').value;
 
-  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden, renderType };
+  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden, renderType, condicionalTexto };
 
   if (idx === undefined || idx === -1) {
     _caractsTemp.push(caract);
@@ -1182,6 +1233,7 @@ async function guardarTipo() {
             requerido: c.requerido,
             orden: c.orden ?? 0,
             render_type: c.renderType || 'auto',
+            condicional_texto: c.condicionalTexto || 'no',
             minimo: c.minimo,
             maximo: c.maximo,
           })),

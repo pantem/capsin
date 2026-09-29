@@ -6,6 +6,7 @@ class ValorCaracteristica {
   final double? valorNumero;
   final bool? valorBooleano;
   final String? valorSeleccion;
+  final String? valorTextoCondicional;
 
   ValorCaracteristica({
     required this.id,
@@ -15,6 +16,7 @@ class ValorCaracteristica {
     this.valorNumero,
     this.valorBooleano,
     this.valorSeleccion,
+    this.valorTextoCondicional,
   });
 
   Map<String, dynamic> toMap() => {
@@ -26,6 +28,7 @@ class ValorCaracteristica {
         'valorBooleano':
             valorBooleano == null ? null : (valorBooleano! ? 1 : 0),
         'valorSeleccion': valorSeleccion,
+        'valorTextoCondicional': valorTextoCondicional,
       };
 
   factory ValorCaracteristica.fromMap(Map<String, dynamic> map) =>
@@ -39,6 +42,7 @@ class ValorCaracteristica {
             ? null
             : (map['valorBooleano'] as int) == 1,
         valorSeleccion: map['valorSeleccion'] as String?,
+        valorTextoCondicional: map['valorTextoCondicional'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -47,5 +51,6 @@ class ValorCaracteristica {
         'valor_numero': valorNumero,
         'valor_booleano': valorBooleano,
         'valor_seleccion': valorSeleccion,
+        'valor_texto_condicional': valorTextoCondicional,
       };
 }

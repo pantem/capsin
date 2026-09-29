@@ -7,6 +7,7 @@ const valorCaracteristicaSchema = new mongoose.Schema({
   valor_numero: { type: Number, default: null },
   valor_booleano: { type: Boolean, default: null },
   valor_seleccion: { type: String, default: null },
+  valor_texto_condicional: { type: String, default: null },
 });
 
 module.exports = mongoose.model('ValorCaracteristica', valorCaracteristicaSchema);

@@ -57,7 +57,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
-    _tabController.addListener(() { setState(() {}); });
+    _tabController.addListener(() {
+      setState(() {});
+    });
     _cargarCaracteristicas();
     _cargarDatosUsuario();
   }
@@ -90,8 +92,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           } else if (c.tipoDato == 'date') {
             _valoresCaracteristica[c.id] =
                 DateFormat('yyyy-MM-dd').format(DateTime.now());
-          } else if (c.tipoDato == 'texto' || c.tipoDato == 'textarea' || c.tipoDato == 'numero') {
+          } else if (c.tipoDato == 'texto' ||
+              c.tipoDato == 'textarea' ||
+              c.tipoDato == 'numero') {
             _textControllers[c.id] = TextEditingController();
+          }
+          if (c.condicionalTexto == 'si') {
+            _textControllers['${c.id}_cond'] = TextEditingController();
           }
         }
       });
@@ -223,6 +230,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
             estadoAfectacion = 'critico';
           } else if (valor.contains('Riesgo Medio')) {
             estadoAfectacion = 'moderado';
+          } else if (valor.contains('Colapso')) {
+            estadoAfectacion = 'colapso';
           }
           break;
         }
@@ -330,6 +339,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         valorNumero: valorNumero,
         valorBooleano: valorBooleano,
         valorSeleccion: valorSeleccion,
+        valorTextoCondicional: _textControllers['${c.id}_cond']?.text,
       );
     }).toList();
   }
@@ -426,7 +436,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,
                 ),
-                const SizedBox(height: 12),
+                /*const SizedBox(height: 12),
                 TextFormField(
                   controller: _areaCtrl,
                   decoration: const InputDecoration(
@@ -435,7 +445,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,
-                ),
+                ),*/
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: _seleccionarFecha,
@@ -524,11 +534,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    const Icon(Icons.sync_problem, size: 48, color: Color(0xFFE65100)),
+                    const Icon(Icons.sync_problem,
+                        size: 48, color: Color(0xFFE65100)),
                     const SizedBox(height: 8),
                     const Text(
                       'No se encontraron características',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     const Text(
@@ -805,6 +817,30 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildCampoDinamico(CaracteristicaTipo c) {
+    final campo = _buildCampoBase(c);
+    if (c.condicionalTexto == 'si') {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          campo,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: TextFormField(
+              controller: _textControllers['${c.id}_cond'],
+              decoration: InputDecoration(
+                labelText: '${c.nombre} (observaciones)',
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+          ),
+        ],
+      );
+    }
+    return campo;
+  }
+
+  Widget _buildCampoBase(CaracteristicaTipo c) {
     switch (c.tipoDato) {
       case 'texto':
         return Padding(
@@ -855,8 +891,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               if (v != null && v.isNotEmpty) {
                 final n = num.tryParse(v);
                 if (n == null) return 'Debe ser un número';
-                if (c.minimo != null && n < c.minimo!) return 'Mínimo ${c.minimo!.toInt()}';
-                if (c.maximo != null && n > c.maximo!) return 'Máximo ${c.maximo!.toInt()}';
+                if (c.minimo != null && n < c.minimo!)
+                  return 'Mínimo ${c.minimo!.toInt()}';
+                if (c.maximo != null && n > c.maximo!)
+                  return 'Máximo ${c.maximo!.toInt()}';
               }
               return null;
             },

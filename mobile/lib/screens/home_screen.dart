@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const String _appVersion = '1.0022';
+  static const String _appVersion = '1.0024';
   final DatabaseService _db = DatabaseService();
   final AuthService _auth = AuthService();
   List<Reporte> _reportes = [];
@@ -173,7 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     : r.estadoAfectacion ==
                                                             'moderado'
                                                         ? Colors.orange.shade100
-                                                        : Colors.green.shade100,
+                                                        : r.estadoAfectacion ==
+                                                                'colapso'
+                                                            ? Colors.grey.shade300
+                                                            : Colors.green.shade100,
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                           ),
@@ -183,7 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 : r.estadoAfectacion ==
                                                         'moderado'
                                                     ? 'Moderado'
-                                                    : 'Sin daños',
+                                                    : r.estadoAfectacion ==
+                                                            'colapso'
+                                                        ? 'Colapso'
+                                                        : 'Sin daños',
                                             style: TextStyle(
                                               fontSize: 11,
                                               color: r.estadoAfectacion ==
@@ -192,7 +198,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   : r.estadoAfectacion ==
                                                           'moderado'
                                                       ? Colors.orange.shade800
-                                                      : Colors.green.shade800,
+                                                      : r.estadoAfectacion ==
+                                                              'colapso'
+                                                          ? Colors.black
+                                                          : Colors.green.shade800,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),

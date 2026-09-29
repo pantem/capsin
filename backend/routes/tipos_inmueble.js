@@ -95,6 +95,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           requerido: c.requerido,
           orden: c.orden ?? existente.orden,
           render_type: c.render_type || 'auto',
+          condicional_texto: c.condicional_texto || 'no',
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         });
@@ -107,6 +108,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           requerido: c.requerido,
           orden: c.orden ?? i,
           render_type: c.render_type || 'auto',
+          condicional_texto: c.condicional_texto || 'no',
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         }).save();
@@ -130,6 +132,7 @@ router.post('/:id/caracteristicas', async (req, res) => {
   try {
     const data = { ...req.body, tipo_inmueble: req.params.id };
     if (!data.render_type) data.render_type = 'auto';
+    if (!data.condicional_texto) data.condicional_texto = 'no';
     const caracteristica = new CaracteristicaTipo(data);
     const saved = await caracteristica.save();
     res.status(201).json(saved);

@@ -238,6 +238,7 @@ const CARACTERISTICAS = [
       'Edificación en Riesgo Bajo',
       'Área Insegura o Edificación en Riesgo Medio',
       'Edificación en Riesgo Alto',
+      'Colapso',
     ],
     requerido: true,
     orden: 41,
@@ -255,7 +256,7 @@ const CARACTERISTICAS = [
     orden: 51,
   },
   {
-    nombre: '5.2 ¿Requiere D.R.O. y/o C-SE?',
+    nombre: '5.2 ¿Requiere D.R.O. o C-SE?',
     tipo_dato: 'seleccion',
     opciones: [
       'D.R.O.',

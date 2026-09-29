@@ -36,6 +36,7 @@ class Reporte {
   final String fotos;
 
   final bool sincronizado;
+  final DateTime? fechaSincronizacion;
 
   Reporte({
     required this.id,
@@ -60,11 +61,12 @@ class Reporte {
     this.observaciones = '',
     this.fotos = '',
     this.sincronizado = false,
+    this.fechaSincronizacion,
   });
 
   String get fechaDisplay => '${fecha.day.toString().padLeft(2, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.year}';
 
-  String get fechaDb => '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+  String get fechaDb => fecha.toIso8601String();
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -89,6 +91,7 @@ class Reporte {
         'observaciones': observaciones,
         'fotos': fotos,
         'sincronizado': sincronizado ? 1 : 0,
+        'fechaSincronizacion': fechaSincronizacion?.toIso8601String() ?? '',
       };
 
   factory Reporte.fromMap(Map<String, dynamic> map) => Reporte(
@@ -114,6 +117,9 @@ class Reporte {
         observaciones: map['observaciones'] as String? ?? '',
         fotos: map['fotos'] as String? ?? '',
         sincronizado: (map['sincronizado'] as int? ?? 0) == 1,
+        fechaSincronizacion: (map['fechaSincronizacion'] as String?)?.isNotEmpty == true
+            ? DateTime.tryParse(map['fechaSincronizacion'])
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -137,5 +143,6 @@ class Reporte {
         'condicion_seguridad': condicionSeguridad,
         'observaciones': observaciones,
         'fotos': fotos,
+        'fecha_sincronizacion': fechaSincronizacion?.toIso8601String() ?? '',
       };
 }

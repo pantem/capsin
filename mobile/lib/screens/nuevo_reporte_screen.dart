@@ -817,30 +817,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildCampoDinamico(CaracteristicaTipo c) {
-    final campo = _buildCampoBase(c);
-    if (c.condicionalTexto == 'si' && c.tipoDato == 'seleccion') {
-      final seleccion = _valoresCaracteristica[c.id] as String?;
-      if (seleccion == 'Sí') {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            campo,
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: TextFormField(
-                controller: _textControllers['${c.id}_cond'],
-                decoration: InputDecoration(
-                  labelText: 'Observaciones',
-                  border: const OutlineInputBorder(),
-                ),
-                maxLines: 2,
-              ),
-            ),
-          ],
-        );
-      }
-    }
-    return campo;
+    return _buildCampoBase(c);
   }
 
   Widget _buildCampoBase(CaracteristicaTipo c) {
@@ -965,32 +942,48 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         if (usarDropdown) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: DropdownButtonFormField<String>(
-              value: seleccion,
-              decoration: InputDecoration(
-                labelText: c.nombre,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String>(
-                  value: '',
-                  child:
-                      Text('Seleccione', style: TextStyle(color: Colors.grey)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: seleccion,
+                  decoration: InputDecoration(
+                    labelText: c.nombre,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: '',
+                      child:
+                          Text('Seleccione', style: TextStyle(color: Colors.grey)),
+                    ),
+                    ...c.opciones.map((o) => DropdownMenuItem<String>(
+                          value: o,
+                          child: Text(o),
+                        )),
+                  ],
+                  onChanged: (v) {
+                    setState(() => _valoresCaracteristica[c.id] = v);
+                    if (v != 'Sí' && c.condicionalTexto == 'si') {
+                      _textControllers['${c.id}_cond']?.clear();
+                    }
+                  },
+                  validator: c.requerido
+                      ? (v) => v == null || v.isEmpty ? 'Requerido' : null
+                      : null,
                 ),
-                ...c.opciones.map((o) => DropdownMenuItem<String>(
-                      value: o,
-                      child: Text(o),
-                    )),
+                if (c.condicionalTexto == 'si' && seleccion == 'Sí') ...[
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _textControllers['${c.id}_cond'],
+                    decoration: const InputDecoration(
+                      labelText: 'Observaciones',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                ],
               ],
-              onChanged: (v) {
-                setState(() => _valoresCaracteristica[c.id] = v);
-                if (v != 'Sí' && c.condicionalTexto == 'si') {
-                  _textControllers['${c.id}_cond']?.clear();
-                }
-              },
-              validator: c.requerido
-                  ? (v) => v == null || v.isEmpty ? 'Requerido' : null
-                  : null,
             ),
           );
         }

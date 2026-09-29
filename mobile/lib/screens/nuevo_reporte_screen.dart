@@ -942,7 +942,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         if (usarDropdown) {
           final bool mostrarCond = c.condicionalTexto == 'si' &&
               seleccion != null &&
-              seleccion.toLowerCase() == 'si';
+              seleccion == 'Sí';
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Column(
@@ -969,7 +969,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   onChanged: (v) {
                     setState(() {
                       _valoresCaracteristica[c.id] = v;
-                      if (v != null && v.toLowerCase() != 'si' && c.condicionalTexto == 'si') {
+                      if (v != null && v != 'Sí' && c.condicionalTexto == 'si') {
                         _textControllers['${c.id}_cond']?.clear();
                       }
                     });
@@ -1011,7 +1011,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     onChanged: (v) {
                       setState(() {
                         _valoresCaracteristica[c.id] = v;
-                        if (v != null && v.toLowerCase() != 'si' && c.condicionalTexto == 'si') {
+                        if (v != null && v != 'Sí' && c.condicionalTexto == 'si') {
                           _textControllers['${c.id}_cond']?.clear();
                         }
                       });
@@ -1034,7 +1034,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                 ),
               ],
-              if (c.condicionalTexto == 'si' && seleccion != null && seleccion.toLowerCase() == 'si')
+              if (c.condicionalTexto == 'si' && seleccion != null && seleccion == 'Sí')
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(

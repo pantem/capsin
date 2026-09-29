@@ -818,24 +818,27 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Widget _buildCampoDinamico(CaracteristicaTipo c) {
     final campo = _buildCampoBase(c);
-    if (c.condicionalTexto == 'si') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          campo,
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: TextFormField(
-              controller: _textControllers['${c.id}_cond'],
-              decoration: InputDecoration(
-                labelText: '${c.nombre} (observaciones)',
-                border: const OutlineInputBorder(),
+    if (c.condicionalTexto == 'si' && c.tipoDato == 'seleccion') {
+      final seleccion = _valoresCaracteristica[c.id] as String?;
+      if (seleccion == 'Sí') {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            campo,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _textControllers['${c.id}_cond'],
+                decoration: InputDecoration(
+                  labelText: '${c.nombre} (observaciones)',
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 2,
               ),
-              maxLines: 2,
             ),
-          ),
-        ],
-      );
+          ],
+        );
+      }
     }
     return campo;
   }
@@ -977,8 +980,12 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       child: Text(o),
                     )),
               ],
-              onChanged: (v) =>
-                  setState(() => _valoresCaracteristica[c.id] = v),
+              onChanged: (v) {
+                setState(() => _valoresCaracteristica[c.id] = v);
+                if (v != 'Sí' && c.condicionalTexto == 'si') {
+                  _textControllers['${c.id}_cond']?.clear();
+                }
+              },
               validator: c.requerido
                   ? (v) => v == null || v.isEmpty ? 'Requerido' : null
                   : null,
@@ -1000,6 +1007,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     groupValue: seleccion,
                     onChanged: (v) {
                       setState(() => _valoresCaracteristica[c.id] = v);
+                      if (v != 'Sí' && c.condicionalTexto == 'si') {
+                        _textControllers['${c.id}_cond']?.clear();
+                      }
                       if (v == 'Otro' &&
                           !_textControllers.containsKey('${c.id}_otro')) {
                         _textControllers['${c.id}_otro'] =

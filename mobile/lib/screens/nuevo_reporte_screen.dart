@@ -940,10 +940,14 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           usarDropdown = c.opciones.length > 2;
         }
         if (usarDropdown) {
+          final bool mostrarCond = c.condicionalTexto == 'si' &&
+              seleccion != null &&
+              seleccion.toLowerCase() == 'si';
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
                   value: seleccion,
@@ -963,26 +967,29 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                         )),
                   ],
                   onChanged: (v) {
-                    setState(() => _valoresCaracteristica[c.id] = v);
-                    if (v != null && v.toLowerCase() != 'si' && c.condicionalTexto == 'si') {
-                      _textControllers['${c.id}_cond']?.clear();
-                    }
+                    setState(() {
+                      _valoresCaracteristica[c.id] = v;
+                      if (v != null && v.toLowerCase() != 'si' && c.condicionalTexto == 'si') {
+                        _textControllers['${c.id}_cond']?.clear();
+                      }
+                    });
                   },
                   validator: c.requerido
                       ? (v) => v == null || v.isEmpty ? 'Requerido' : null
                       : null,
                 ),
-                if (c.condicionalTexto == 'si' && seleccion != null && seleccion.toLowerCase() == 'si') ...[
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _textControllers['${c.id}_cond'],
-                    decoration: const InputDecoration(
-                      labelText: 'Observaciones',
-                      border: OutlineInputBorder(),
+                if (mostrarCond)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: TextFormField(
+                      controller: _textControllers['${c.id}_cond'],
+                      decoration: const InputDecoration(
+                        labelText: 'Observaciones',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
                     ),
-                    maxLines: 2,
                   ),
-                ],
               ],
             ),
           );
@@ -991,6 +998,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           padding: const EdgeInsets.only(bottom: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(c.nombre,
                   style: const TextStyle(
@@ -1001,10 +1009,12 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     value: o,
                     groupValue: seleccion,
                     onChanged: (v) {
-                      setState(() => _valoresCaracteristica[c.id] = v);
-                      if (v != 'Sí' && c.condicionalTexto == 'si') {
-                        _textControllers['${c.id}_cond']?.clear();
-                      }
+                      setState(() {
+                        _valoresCaracteristica[c.id] = v;
+                        if (v != null && v.toLowerCase() != 'si' && c.condicionalTexto == 'si') {
+                          _textControllers['${c.id}_cond']?.clear();
+                        }
+                      });
                       if (v == 'Otro' &&
                           !_textControllers.containsKey('${c.id}_otro')) {
                         _textControllers['${c.id}_otro'] =
@@ -1024,6 +1034,18 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                 ),
               ],
+              if (c.condicionalTexto == 'si' && seleccion != null && seleccion.toLowerCase() == 'si')
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextFormField(
+                    controller: _textControllers['${c.id}_cond'],
+                    decoration: const InputDecoration(
+                      labelText: 'Observaciones',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                ),
             ],
           ),
         );

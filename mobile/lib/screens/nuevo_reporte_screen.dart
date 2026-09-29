@@ -964,7 +964,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ],
                   onChanged: (v) {
                     setState(() => _valoresCaracteristica[c.id] = v);
-                    if (v != 'Sí' && c.condicionalTexto == 'si') {
+                    if (v != null && v.toLowerCase() != 'si' && c.condicionalTexto == 'si') {
                       _textControllers['${c.id}_cond']?.clear();
                     }
                   },
@@ -972,7 +972,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       ? (v) => v == null || v.isEmpty ? 'Requerido' : null
                       : null,
                 ),
-                if (c.condicionalTexto == 'si' && seleccion == 'Sí') ...[
+                if (c.condicionalTexto == 'si' && seleccion != null && seleccion.toLowerCase() == 'si') ...[
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _textControllers['${c.id}_cond'],

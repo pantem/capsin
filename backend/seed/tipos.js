@@ -40,14 +40,14 @@ const CARACTERISTICAS = [
     nombre: '2.5 Entre que calles / Referencia',
     tipo_dato: 'texto',
     opciones: [],
-    requerido: false,
+    requerido: true,
     orden: 5,
   },
   {
     nombre: '2.6 Responsable del Inmueble',
     tipo_dato: 'texto',
     opciones: [],
-    requerido: false,
+    requerido: true,
     orden: 6,
   },
   {
@@ -104,7 +104,7 @@ const CARACTERISTICAS = [
     nombre: '2.12 Número de ocupantes',
     tipo_dato: 'numero',
     opciones: [],
-    requerido: false,
+    requerido: true,
     orden: 12,
   },
   {
@@ -217,7 +217,7 @@ const CARACTERISTICAS = [
     nombre: '3.14 Pretiles, balcones u otros objetos en peligro de caer',
     tipo_dato: 'seleccion',
     opciones: OPCIONES_NO_DUDAS,
-    requerido: false,
+    requerido: true,
     orden: 34,
   },
   {
@@ -300,7 +300,7 @@ const CARACTERISTICAS = [
     nombre: '6.1 Fotografías (fachada, máximo 10)',
     tipo_dato: 'texto',
     opciones: [],
-    requerido: false,
+    requerido: true,
     orden: 61,
   },
 ];

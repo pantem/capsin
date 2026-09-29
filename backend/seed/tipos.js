@@ -308,6 +308,18 @@ const CARACTERISTICAS = [
     requerido: true,
     orden: 58,
   },
+  {
+    nombre: '5.9 ¿Requiere apoyo de alguna dependencia?',
+    tipo_dato: 'seleccion',
+    opciones: [
+      'Si',
+      'No',
+    ],
+    requerido: true,
+    orden: 59,
+    render_type: 'dropdown',
+    condicional_texto: 'si',
+  },
 
   // ═══════════════════════════════════════════════════════════════
   // SECCIÓN 6: Observaciones y Fotografías

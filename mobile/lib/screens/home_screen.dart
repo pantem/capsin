@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const String _appVersion = '1.0024';
+  static const String _appVersion = '1.0025';
   final DatabaseService _db = DatabaseService();
   final AuthService _auth = AuthService();
   List<Reporte> _reportes = [];
@@ -167,16 +167,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color:
-                                                r.estadoAfectacion == 'critico'
-                                                    ? Colors.red.shade100
+                                            color: r.estadoAfectacion ==
+                                                    'critico'
+                                                ? Colors.red.shade100
+                                                : r.estadoAfectacion ==
+                                                        'moderado'
+                                                    ? Colors.orange.shade100
                                                     : r.estadoAfectacion ==
-                                                            'moderado'
-                                                        ? Colors.orange.shade100
-                                                        : r.estadoAfectacion ==
-                                                                'colapso'
-                                                            ? Colors.grey.shade300
-                                                            : Colors.green.shade100,
+                                                            'colapso'
+                                                        ? Colors.grey.shade300
+                                                        : Colors.green.shade100,
                                             borderRadius:
                                                 BorderRadius.circular(12),
                                           ),
@@ -201,7 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       : r.estadoAfectacion ==
                                                               'colapso'
                                                           ? Colors.black
-                                                          : Colors.green.shade800,
+                                                          : Colors
+                                                              .green.shade800,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),

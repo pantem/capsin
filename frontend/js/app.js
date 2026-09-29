@@ -640,7 +640,7 @@ function renderUbicacion(data, countEl, container) {
             <th style="padding:0.6rem;">Folio</th>
             <th style="padding:0.6rem;">Fecha</th>
             <th style="padding:0.6rem;">Alcaldía</th>
-            <th style="padding:0.6rem;">Colonia</th>
+            <th style="padding:0.6rem;">Dirección</th>
             <th style="padding:0.6rem;">CP</th>
             <th style="padding:0.6rem;">Uso</th>
             <th style="padding:0.6rem;">Niveles</th>

@@ -1254,6 +1254,14 @@ async function loadUbicacion() {
   }
 }
 
+function colorEstadoAfectacion(estado) {
+  return estado === 'critico' ? '#d32f2f' : estado === 'colapso' ? '#000000' : estado === 'moderado' ? '#f57c00' : '#388e3c';
+}
+
+function etiquetaEstadoAfectacion(estado) {
+  return estado === 'critico' ? 'Riesgo alto' : estado === 'colapso' ? 'Colapso' : estado === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
+}
+
 function renderUbicacion(data, countEl, container) {
   _ubicFiltered = data;
   const totalItems = data.length;
@@ -1294,8 +1302,8 @@ function renderUbicacion(data, countEl, container) {
         </thead>
         <tbody>
           ${pageItems.map(d => {
-    const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'colapso' ? '#000000' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
-    const estadoLabel = d.estadoAfectacion === 'critico' ? 'Riesgo alto' : d.estadoAfectacion === 'colapso' ? 'Colapso' : d.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
+    const estadoColor = colorEstadoAfectacion(d.estadoAfectacion);
+    const estadoLabel = etiquetaEstadoAfectacion(d.estadoAfectacion);
     return `
               <tr style="border-bottom:1px solid #e0e0e0;cursor:pointer;" onclick="showDetail('${d.siniestroId}')">
                 <td style="padding:0.5rem;font-weight:600;">${d.folio || '—'}</td>
@@ -1372,6 +1380,43 @@ function filtrarUbicacion() {
   const countEl = document.getElementById('ubic-count');
   const container = document.getElementById('ubic-resultados');
   renderUbicacion(filtered, countEl, container);
+}
+
+function exportarUbicacionXLSX() {
+  const data = _ubicFiltered || [];
+  if (data.length === 0) {
+    alert('No hay registros para exportar.');
+    return;
+  }
+  if (typeof XLSX === 'undefined') {
+    alert('No se pudo cargar la librería de Excel (XLSX). Recarga la página y verifica tu conexión.');
+    return;
+  }
+
+  const filas = data.map((d, i) => ({
+    'No.': i + 1,
+    'Folio': d.folio || '',
+    'Fecha': d.fecha ? formatDate(d.fecha) : '',
+    'Alcaldía': d.alcaldia || '',
+    'Dirección': d.direccion || '',
+    'CP': d.codigoPostal || '',
+    'Uso': d.usoInmueble || '',
+    'Niveles': d.totalNiveles,
+    'Estado': etiquetaEstadoAfectacion(d.estadoAfectacion),
+    'Tipo daño': d.tipoDanio || '',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(filas);
+  ws['!cols'] = [
+    { wch: 5 }, { wch: 18 }, { wch: 24 }, { wch: 22 }, { wch: 45 },
+    { wch: 7 }, { wch: 20 }, { wch: 8 }, { wch: 14 }, { wch: 30 },
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Ubicación');
+
+  const hoy = new Date();
+  const fecha = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+  XLSX.writeFile(wb, `Ubicacion_Inmuebles_${fecha}.xlsx`);
 }
 
 document.querySelector('#modal .close').addEventListener('click', () => {

@@ -340,6 +340,17 @@
       <section id="view-ubicacion" class="view">
         <div class="toolbar">
           <h2>Ubicación de Inmuebles</h2>
+          <button class="btn-primary" type="button" onclick="exportarUbicacionXLSX()"
+            title="Exportar la tabla (con los filtros aplicados) a Excel (.xlsx)"
+            style="display:inline-flex;align-items:center;gap:0.45rem;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Exportar XLSX
+          </button>
         </div>
         <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
           <select id="ubic-alcaldia"
@@ -523,6 +534,7 @@
   <script src="https://unpkg.com/osmtogeojson@3.0.0-beta.4/osmtogeojson.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="js/app.js"></script>
   <script src="js/map.js"></script>
 </body>

@@ -249,6 +249,7 @@ class SyncService {
                     ? null
                     : (v['valor_booleano'] as int) == 1,
                 valorSeleccion: v['valor_seleccion'] as String?,
+                valorTextoCondicional: v['valor_texto_condicional'] as String?,
               )).toList();
           await _db.insertValoresCaracteristica(valores);
         }

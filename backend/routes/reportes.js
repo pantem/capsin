@@ -177,6 +177,7 @@ router.get('/pull', async (req, res) => {
           valor_numero: v.valor_numero || null,
           valor_booleano: v.valor_booleano == null ? null : (v.valor_booleano ? 1 : 0),
           valor_seleccion: v.valor_seleccion || null,
+          valor_texto_condicional: v.valor_texto_condicional || null,
         })),
         damnificados: damnificadosData.map(d => ({
           nombre: d.nombre || '',

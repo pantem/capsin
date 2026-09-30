@@ -755,7 +755,12 @@ async function showDetail(siniestroId) {
           else if (v.valor_booleano != null) valor = v.valor_booleano ? 'Sí' : 'No';
           else if (v.valor_seleccion != null && v.valor_seleccion !== '') valor = v.valor_seleccion;
           else valor = '—';
-          return `<tr><td>${nombre}</td><td>${valor}</td></tr>`;
+          if (v.valor_texto_condicional) {
+            valor = valor && valor !== '—'
+              ? `${valor} (${v.valor_texto_condicional})`
+              : v.valor_texto_condicional;
+          }
+          return `<tr><td>${nombre}</td><td>${escHtml(valor)}</td></tr>`;
         }).join('')}
                 </table>
               </div>
@@ -932,7 +937,7 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
 
   html += `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
     <td style="width:30%;vertical-align:middle;">${logoB64 ? `<img src="${logoB64}" style="height:52px;" alt="Logo CDMX">` : ''}</td>
-    <td style="width:43%;text-align:right;vertical-align:middle;">
+    <td style="width:43%;text-align:right;vertical-align:middle;padding-right:20px;">
       <div style="font-size:13px;font-weight:bold;color:#333;">SECRETARÍA DE VIVIENDA</div>
       <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General de la</div>
       <div style="font-size:8px;font-weight:bold;color:#555;">Comisión para la Reconstrucción de la Ciudad de</div>

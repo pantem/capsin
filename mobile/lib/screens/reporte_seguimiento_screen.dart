@@ -145,9 +145,7 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
 
       final valores = _buildValores(reporteId);
       if (valores.isNotEmpty) {
-        for (final v in valores) {
-          await _db.insertValoresCaracteristica([v]);
-        }
+        await _db.insertValoresCaracteristicaSeguimiento(valores);
       }
 
       if (!mounted) return;
@@ -169,7 +167,7 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
     }
   }
 
-  List<dynamic> _buildValores(String reporteId) {
+  List<Map<String, dynamic>> _buildValores(String reporteId) {
     return _caracteristicas.where((c) {
       final val = _valoresCaracteristica[c.id];
       if (val == null) return false;

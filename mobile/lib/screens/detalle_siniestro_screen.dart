@@ -64,9 +64,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
       );
     }
 
-    final caractsTab2 = _caracteristicas.where((c) => c.orden >= 8 && c.orden <= 10).toList();
-    final caractsTab3 = _caracteristicas.where((c) => c.orden == 11).toList();
-    final caractsTab4 = _caracteristicas.where((c) => c.orden == 12).toList();
+    final caractsTab2 = _caracteristicas.where((c) => c.orden <= 14).toList();
+    final caractsResto = _caracteristicas.where((c) => c.orden > 14).toList();
 
     final valorIndex = <String, ValorCaracteristica>{
       for (final v in _valores) v.caracteristicaId: v
@@ -172,7 +171,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               ),
             ),
           ),
-          if (caractsTab3.isNotEmpty) ...[
+          if (caractsResto.isNotEmpty) ...[
             const SizedBox(height: 8),
             Card(
               child: Padding(
@@ -180,27 +179,10 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(caractsTab3.first.nombre,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const Text('Estado, clasificación y recomendaciones',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
-                    ...caractsTab3.map((c) => _buildValorRow(c, valorIndex[c.id])),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          if (caractsTab4.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(caractsTab4.first.nombre,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                    const SizedBox(height: 8),
-                    ...caractsTab4.map((c) => _buildValorRow(c, valorIndex[c.id])),
+                    ...caractsResto.map((c) => _buildValorRow(c, valorIndex[c.id])),
                   ],
                 ),
               ),
@@ -324,6 +306,11 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
         break;
       default:
         displayValue = '';
+    }
+
+    final cond = (v.valorTextoCondicional ?? '').trim();
+    if (cond.isNotEmpty) {
+      displayValue = displayValue.isEmpty ? cond : '$displayValue — $cond';
     }
 
     if (displayValue.isEmpty) return const SizedBox.shrink();

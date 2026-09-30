@@ -394,6 +394,28 @@ class DatabaseService {
     }
   }
 
+  Future<void> insertValoresCaracteristicaSeguimiento(
+      List<Map<String, dynamic>> valores) async {
+    if (valores.isEmpty) return;
+    final db = await database;
+    await db.delete('valores_caracteristica_seguimiento',
+        where: 'reporteSeguimientoId = ?',
+        whereArgs: [valores.first['reporteId'] as String? ?? '']);
+    for (final v in valores) {
+      await db.insert('valores_caracteristica_seguimiento', {
+        'id': v['id'],
+        'reporteSeguimientoId': v['reporteId'],
+        'caracteristicaId': v['caracteristicaId'],
+        'valorTexto': v['valorTexto'],
+        'valorNumero': v['valorNumero'],
+        'valorBooleano': v['valorBooleano'] == null
+            ? null
+            : ((v['valorBooleano'] as bool) ? 1 : 0),
+        'valorSeleccion': v['valorSeleccion'],
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+  }
+
   Future<List<ValorCaracteristica>> getValoresCaracteristica(
       String reporteId) async {
     final db = await database;

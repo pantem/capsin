@@ -107,6 +107,24 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     }
   }
 
+  TextEditingController _condController(String id) {
+    final key = '${id}_cond';
+    return _textControllers.putIfAbsent(key, () => TextEditingController());
+  }
+
+  void _limpiarTextoCondicional(String id) {
+    _textControllers['${id}_cond']?.clear();
+    _valoresCaracteristica.remove('${id}_cond');
+  }
+
+  String _textoCondicional(String id) {
+    final ctrl = _textControllers['${id}_cond']?.text.trim() ?? '';
+    if (ctrl.isNotEmpty) return ctrl;
+    final guardado = _valoresCaracteristica['${id}_cond'];
+    if (guardado is String) return guardado.trim();
+    return '';
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -366,6 +384,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           break;
       }
 
+      final textoCond = _textoCondicional(c.id);
+
       return ValorCaracteristica(
         id: _uuid.v4(),
         reporteId: reporteId,
@@ -374,7 +394,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         valorNumero: valorNumero,
         valorBooleano: valorBooleano,
         valorSeleccion: valorSeleccion,
-        valorTextoCondicional: _textControllers['${c.id}_cond']?.text,
+        valorTextoCondicional: textoCond.isEmpty ? null : textoCond,
       );
     }).toList();
   }
@@ -1005,7 +1025,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     setState(() {
                       _valoresCaracteristica[c.id] = v;
                       if (v != null && v != 'Sí' && c.condicionalTexto == 'si') {
-                        _textControllers['${c.id}_cond']?.clear();
+                        _limpiarTextoCondicional(c.id);
                       }
                     });
                   },
@@ -1017,7 +1037,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: TextFormField(
-                      controller: _textControllers['${c.id}_cond'],
+                      controller: _condController(c.id),
+                      onChanged: (v) =>
+                          _valoresCaracteristica['${c.id}_cond'] = v,
                       decoration: const InputDecoration(
                         labelText: 'Observaciones',
                         border: OutlineInputBorder(),
@@ -1047,7 +1069,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       setState(() {
                         _valoresCaracteristica[c.id] = v;
                         if (v != null && v != 'Sí' && c.condicionalTexto == 'si') {
-                          _textControllers['${c.id}_cond']?.clear();
+                          _limpiarTextoCondicional(c.id);
                         }
                       });
                       if (v == 'Otro' &&
@@ -1073,7 +1095,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(
-                    controller: _textControllers['${c.id}_cond'],
+                    controller: _condController(c.id),
+                    onChanged: (v) =>
+                        _valoresCaracteristica['${c.id}_cond'] = v,
                     decoration: const InputDecoration(
                       labelText: 'Observaciones',
                       border: OutlineInputBorder(),

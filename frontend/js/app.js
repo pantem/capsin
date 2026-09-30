@@ -457,6 +457,49 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
   }
 }
 
+function getAlcaldiaFromCP(cp) {
+  if (!cp) return '';
+  const cpStr = String(cp).trim();
+  if (cpStr.startsWith('01')) return 'Álvaro Obregón';
+  if (cpStr.startsWith('02')) return 'Azcapotzalco';
+  if (cpStr.startsWith('03')) return 'Benito Juárez';
+  if (cpStr.startsWith('04')) return 'Coyoacán';
+  if (cpStr.startsWith('05')) return 'Cuajimalpa de Morelos';
+  if (cpStr.startsWith('06')) return 'Cuauhtémoc';
+  if (cpStr.startsWith('07')) return 'Gustavo A. Madero';
+  if (cpStr.startsWith('08')) return 'Iztacalco';
+  if (cpStr.startsWith('09')) return 'Iztapalapa';
+  if (cpStr.startsWith('10')) return 'La Magdalena Contreras';
+  if (cpStr.startsWith('11')) return 'Miguel Hidalgo';
+  if (cpStr.startsWith('12')) return 'Milpa Alta';
+  if (cpStr.startsWith('13')) return 'Tláhuac';
+  if (cpStr.startsWith('14')) return 'Tlalpan';
+  if (cpStr.startsWith('15')) return 'Venustiano Carranza';
+  if (cpStr.startsWith('16')) return 'Xochimilco';
+  return '';
+}
+
+function resolveAlcaldia(ubicacion) {
+  if (!ubicacion) return 'Ciudad de México';
+  if (ubicacion.municipio && ubicacion.municipio !== 'Ciudad de México' && ubicacion.municipio !== 'CDMX') {
+    return ubicacion.municipio;
+  }
+  const fromCP = getAlcaldiaFromCP(ubicacion.codigo_postal);
+  if (fromCP) return fromCP;
+
+  const dir = (ubicacion.direccion || '').toLowerCase();
+  const alcList = [
+    'Álvaro Obregón', 'Azcapotzalco', 'Benito Juárez', 'Coyoacán', 'Cuajimalpa de Morelos',
+    'Cuauhtémoc', 'Gustavo A. Madero', 'Iztacalco', 'Iztapalapa', 'La Magdalena Contreras',
+    'Miguel Hidalgo', 'Milpa Alta', 'Tláhuac', 'Tlalpan', 'Venustiano Carranza', 'Xochimilco'
+  ];
+  for (const a of alcList) {
+    const cleanA = a.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (dir.includes(cleanA)) return a;
+  }
+  return ubicacion.municipio || 'Ciudad de México';
+}
+
 async function loadReportesList(filter = '') {
   const container = document.getElementById('reportes-lista');
   const countEl = document.getElementById('reportes-count');
@@ -495,9 +538,7 @@ async function loadReportesList(filter = '') {
             ${filtered.map((s) => {
               const badgeClass = getBadgeClass(s.color);
               const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
-              const alcaldia = (s.ubicacion?.municipio && s.ubicacion.municipio !== 'Ciudad de México')
-                ? s.ubicacion.municipio
-                : (getAlcaldiaFromCP(s.ubicacion?.codigo_postal) || s.ubicacion?.municipio || 'Ciudad de México');
+              const alcaldia = resolveAlcaldia(s.ubicacion);
               return `
                 <tr class="reporte-row" data-id="${s._id}">
                   <td>
@@ -540,7 +581,8 @@ async function loadReportesList(filter = '') {
       el.addEventListener('click', () => showDetail(el.dataset.id));
     });
   } catch (err) {
-    container.innerHTML = '<p style="color:#d32f2f;padding:1.5rem;">Error al cargar reportes.</p>';
+    console.error('Error al cargar reportes:', err);
+    container.innerHTML = `<p style="color:#d32f2f;padding:1.5rem;">Error al cargar reportes: ${err.message}</p>`;
   }
 }
 
@@ -750,9 +792,7 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
   };
 
   const dir = siniestro.ubicacion?.direccion || '—';
-  const alcaldiaResolv = (siniestro.ubicacion?.municipio && siniestro.ubicacion.municipio !== 'Ciudad de México')
-    ? siniestro.ubicacion.municipio
-    : (getAlcaldiaFromCP(siniestro.ubicacion?.codigo_postal) || siniestro.ubicacion?.municipio || 'Ciudad de México');
+  const alcaldiaResolv = resolveAlcaldia(siniestro.ubicacion);
   
   const cp = siniestro.ubicacion?.codigo_postal || getVal('2.4', '—');
   const coords = (siniestro.ubicacion?.lat && siniestro.ubicacion?.lng) 

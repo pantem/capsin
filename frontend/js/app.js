@@ -167,7 +167,7 @@ function renderDashboardChart(data) {
         </path>
       </g>
       <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#FFF">${effectiveTotal.toLocaleString()}</text>
-      <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#888">Inmuebles</text>
+      <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="10" fill="#FFF">Inmuebles</text>
 
       <g>
         <circle cx="${edge1.x}" cy="${edge1.y}" r="3" fill="#55b74e"/>
@@ -591,10 +591,10 @@ function renderReportesTable() {
         </thead>
         <tbody>
           ${pageItems.map((s) => {
-            const badgeClass = getBadgeClass(s.color);
-            const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
-            const alcaldia = resolveAlcaldia(s.ubicacion);
-            return `
+    const badgeClass = getBadgeClass(s.color);
+    const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
+    const alcaldia = resolveAlcaldia(s.ubicacion);
+    return `
               <tr class="reporte-row" data-id="${s._id}">
                 <td>
                   <div class="folio-cell">${s.folio || 'Sin folio'}</div>
@@ -626,7 +626,7 @@ function renderReportesTable() {
                 </td>
               </tr>
             `;
-          }).join('')}
+  }).join('')}
         </tbody>
       </table>
 
@@ -868,7 +868,7 @@ async function descargarReporte(siniestroId) {
 function generarReporteHTML({ siniestro, inmueble, valores }) {
   const folio = siniestro.folio || 'SAS-REPORTE';
   const fechaReporte = formatDate(siniestro.fecha || new Date());
-  
+
   const getVal = (code, fallback = '—') => {
     const v = valores.find(item => {
       const n = item.caracteristica?.nombre || '';
@@ -888,10 +888,10 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
 
   const dir = siniestro.ubicacion?.direccion || '—';
   const alcaldiaResolv = resolveAlcaldia(siniestro.ubicacion);
-  
+
   const cp = siniestro.ubicacion?.codigo_postal || getVal('2.4', '—');
-  const coords = (siniestro.ubicacion?.lat && siniestro.ubicacion?.lng) 
-    ? `${siniestro.ubicacion.lat}, ${siniestro.ubicacion.lng}` 
+  const coords = (siniestro.ubicacion?.lat && siniestro.ubicacion?.lng)
+    ? `${siniestro.ubicacion.lat}, ${siniestro.ubicacion.lng}`
     : 'No disponible';
   const descripcion = siniestro.descripcion || 'Sin observaciones adicionales registradas.';
   const dispositivo = siniestro.dispositivo_id || 'Dispositivo Móvil SAS';
@@ -937,8 +937,8 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
   if (!rawRisk) {
     rawRisk = inmueble.estado_afectacion === 'colapso' ? 'Colapso'
       : inmueble.estado_afectacion === 'critico' ? 'Edificación en Riesgo Alto'
-      : inmueble.estado_afectacion === 'moderado' ? 'Área Insegura o Edificación en Riesgo Medio'
-      : 'Edificación en Riesgo Bajo';
+        : inmueble.estado_afectacion === 'moderado' ? 'Área Insegura o Edificación en Riesgo Medio'
+          : 'Edificación en Riesgo Bajo';
   }
   let riskColor = '#166534';
   let riskBg = '#dcfce7';
@@ -994,7 +994,7 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       print-color-adjust: exact;
     }
     .page-wrap {
-      max-width: 860px;
+      max-width: 816px;
       margin: 25px auto 40px;
       background: #ffffff;
       padding: 34px 40px;
@@ -1042,45 +1042,97 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     
     .header-banner {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
       padding-bottom: 12px;
       border-bottom: 3px solid #7A0C38;
     }
+    .header-logo-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header-logos-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .header-logo img {
-      max-height: 54px;
+      max-height: 70px;
       width: auto;
       object-fit: contain;
     }
-    .header-center {
+    .header-logo-text {
       text-align: center;
+      margin-top: 2px;
+    }
+    .header-cdmx-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #7A0C38;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+    .header-cdmx-sub {
+      font-size: 8.5px;
+      font-weight: 600;
+      color: #8B6B3D;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+    .header-right-info {
+      text-align: right;
       flex: 1;
     }
-    .header-title-cdmx {
-      font-size: 12.5px;
+    .header-secretaria {
+      font-size: 14px;
+      font-weight: 800;
+      color: #333;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .header-direccion {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+    .header-doc-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .header-doc-circle {
+      width: 50px;
+      height: 50px;
+      min-width: 50px;
+      border-radius: 50%;
+      background: #7A0C38;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-doc-circle svg {
+      width: 28px;
+      height: 28px;
+    }
+    .header-doc-title-text .header-doc-title {
+      font-size: 17px;
       font-weight: 800;
       color: #7A0C38;
-      letter-spacing: 0.8px;
-    }
-    .header-sub-cdmx {
-      font-size: 10px;
-      font-weight: 700;
-      color: #BC955B;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .header-doc-title {
-      font-size: 16px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-top: 4px;
       letter-spacing: -0.3px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
-    .header-doc-sub {
+    .header-doc-title-text .header-doc-sub {
       font-size: 12px;
       font-weight: 700;
-      color: #7A0C38;
+      color: #BC955B;
     }
     .header-folio-badge {
       text-align: right;
@@ -1262,10 +1314,83 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     .report-footer {
       margin-top: 22px;
       padding-top: 10px;
-      border-top: 1px solid #e2e8f0;
-      text-align: center;
+      border-top: 2px solid #7A0C38;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
       font-size: 9px;
-      color: #64748b;
+      color: #475569;
+    }
+    .footer-address {
+      font-size: 8.5px;
+      color: #555;
+      line-height: 1.45;
+      max-width: 220px;
+    }
+    .footer-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .footer-marga-img {
+      width: 42px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+    }
+    .footer-marga-text {
+      text-align: center;
+      line-height: 1.2;
+    }
+    .footer-marga-year {
+      font-size: 18px;
+      font-weight: 800;
+      color: #BC955B;
+    }
+    .footer-marga-label {
+      font-size: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    .footer-marga-name {
+      font-size: 11px;
+      font-weight: 800;
+      color: #7A0C38;
+    }
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .footer-mascot-img {
+      width: 40px;
+      height: 48px;
+      object-fit: contain;
+    }
+    .footer-mundial-text {
+      text-align: center;
+      line-height: 1.15;
+    }
+    .footer-mundial-year {
+      font-size: 22px;
+      font-weight: 800;
+      color: #2e7d32;
+    }
+    .footer-mundial-label {
+      font-size: 8px;
+      font-weight: 700;
+      color: #2e7d32;
+      text-transform: uppercase;
+    }
+    .footer-page-num {
+      position: absolute;
+      top: -18px;
+      right: 0;
+      font-size: 10px;
+      font-weight: 700;
+      color: #333;
     }
 
     @media print {
@@ -1279,9 +1404,13 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       }
       .no-print { display: none !important; }
       .photo-img-wrap { height: 155px; }
+      .report-footer {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
       @page {
         size: letter portrait;
-        margin: 10mm 12mm;
+        margin: 12mm 15mm 22mm 15mm;
       }
     }
   </style>
@@ -1298,18 +1427,43 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
   <div class="page-wrap">
     <!-- Header -->
     <div class="header-banner">
-      <div class="header-logo">
-        <img src="${logoUrl}" onerror="this.style.display='none'" alt="CDMX">
+      <div class="header-logo-area">
+        <div class="header-logos-row">
+          <div class="header-logo">
+            <img src="${logoUrl}" onerror="this.style.display='none'" alt="CDMX">
+          </div>
+        </div>
+        <div class="header-logo-text">
+          <div class="header-cdmx-name">Ciudad de México</div>
+          <div class="header-cdmx-sub">Capital de la Transformación</div>
+        </div>
       </div>
-      <div class="header-center">
-        <div class="header-title-cdmx">GOBIERNO DE LA CIUDAD DE MÉXICO</div>
-        <div class="header-sub-cdmx">Secretaría de Gestión Integral de Riesgos y Protección Civil</div>
-        <div class="header-doc-title">REPORTE DE INSPECCIÓN DE INMUEBLE</div>
-        <div class="header-doc-sub">SAS • Sistema de Afectaciones por Sismo</div>
+      <div class="header-right-info">
+        <div class="header-secretaria">Secretaría de Vivienda</div>
+        <div class="header-direccion">
+          Dirección General de la<br>
+          Comisión para la Reconstrucción de la Ciudad de<br>
+          México.<br>
+          Dirección General
+        </div>
       </div>
       <div class="header-folio-badge">
         <div class="folio-lbl">Folio de Inspección</div>
         <div class="folio-val">${folio}</div>
+      </div>
+    </div>
+    <div class="header-doc-title-row">
+      <div class="header-doc-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="7" width="4" height="13" rx="0.5"/>
+          <rect x="10" y="4" width="4" height="16" rx="0.5"/>
+          <rect x="17" y="9" width="4" height="11" rx="0.5"/>
+          <line x1="1" y1="21" x2="23" y2="21" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="header-doc-title-text">
+        <div class="header-doc-title">REPORTE DE INSPECCIÓN DE INMUEBLE</div>
+        <div class="header-doc-sub">SAS • Sistema de Afectaciones por Sismo</div>
       </div>
     </div>
 
@@ -1381,15 +1535,15 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
         </thead>
         <tbody>
           ${sec3.map(row => {
-            const isYes = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('colapso') || String(row.val).toLowerCase().includes('parcial');
-            return `
+    const isYes = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('colapso') || String(row.val).toLowerCase().includes('parcial');
+    return `
               <tr>
                 <td class="col-no">${row.no}</td>
                 <td class="col-car">${row.car}</td>
                 <td class="col-val ${isYes ? 'val-yes' : 'val-no'}">${row.val}</td>
               </tr>
             `;
-          }).join('')}
+  }).join('')}
         </tbody>
       </table>
     </div>
@@ -1436,15 +1590,15 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
         </thead>
         <tbody>
           ${sec5.map(row => {
-            const isHighlighted = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('d.r.o');
-            return `
+    const isHighlighted = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('d.r.o');
+    return `
               <tr>
                 <td class="col-no">${row.no}</td>
                 <td class="col-car">${row.car}</td>
                 <td class="col-val ${isHighlighted ? 'val-yes' : 'val-no'}">${row.val}</td>
               </tr>
             `;
-          }).join('')}
+  }).join('')}
         </tbody>
       </table>
     </div>
@@ -1492,8 +1646,28 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     </div>
 
     <div class="report-footer">
-      Este documento es emitido por el Sistema de Afectaciones por Sismo (SAS) • Gobierno de la Ciudad de México.<br>
-      Generado automáticamente el ${new Date().toLocaleString('es-MX')} • Documento Oficial de Evaluación
+      <div class="footer-page-num">Página | <span id="report-page-num">1</span></div>
+      <div class="footer-address">
+        Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.<br>
+        06080, Ciudad de México.<br>
+        Alcaldía Cuauhtémoc
+      </div>
+      <div class="footer-center">
+        <img src="${window.location.origin}/images/margarita_maza.svg" class="footer-marga-img" onerror="this.style.display='none'" alt="Margarita Maza">
+        <div class="footer-marga-text">
+          <div class="footer-marga-year">2026</div>
+          <div class="footer-marga-label">año de</div>
+          <div class="footer-marga-label">Margarita</div>
+          <div class="footer-marga-name">Maza</div>
+        </div>
+      </div>
+      <div class="footer-right">
+        <img src="${window.location.origin}/images/mascota_mundial.svg" class="footer-mascot-img" onerror="this.style.display='none'" alt="Mascota">
+        <div class="footer-mundial-text">
+          <div class="footer-mundial-year">2<span style="font-size:16px;">⚽</span>26</div>
+          <div class="footer-mundial-label">Año Mundialista</div>
+        </div>
+      </div>
     </div>
   </div>
 </body>

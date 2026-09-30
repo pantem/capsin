@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const String _appVersion = '1.0025';
+  static const String _appVersion = '1.0026';
   final DatabaseService _db = DatabaseService();
   final AuthService _auth = AuthService();
   List<Reporte> _reportes = [];

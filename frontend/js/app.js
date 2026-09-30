@@ -842,7 +842,7 @@ async function descargarReporte(siniestroId) {
     const docDefinition = await construirDocDefinition({ siniestro, inmueble: inmueblePadre, valores });
 
     const folio = siniestro.folio || siniestroId;
-    pdfMake.createPdf(docDefinition).download(`Reporte_SAS_${folio}.pdf`);
+    await pdfMake.createPdf(docDefinition).download(`Reporte_SAS_${folio}.pdf`);
 
     if (win && !win.closed) {
       win.document.open();
@@ -854,7 +854,7 @@ async function descargarReporte(siniestroId) {
         </head>
         <body><div>
           <h2>Reporte PDF generado</h2>
-          <p style="color:#4b5563;">El archivo <strong>Reporte_SAS_${folio}.pdf</strong> se está descargando.</p>
+          <p style="color:#4b5563;">El archivo <strong>Reporte_SAS_${folio}.pdf</strong> se ha descargado.</p>
           <button onclick="window.close()" style="margin-top:1rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar</button>
         </div></body>
         </html>
@@ -882,6 +882,23 @@ async function urlToBase64(url) {
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const blob = await resp.blob();
+    const isWebp = blob.type === 'image/webp' || url.toLowerCase().endsWith('.webp');
+    if (isWebp) {
+      return await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = URL.createObjectURL(blob);
+      });
+    }
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result);

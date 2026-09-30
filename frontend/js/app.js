@@ -1046,18 +1046,18 @@ async function construirDocDefinition({ siniestro, inmueble, valores }) {
     margin: [0, 4, 0, 8],
   });
 
-  const sectionTitle = (icon, text) => ([
+  const sectionTitle = (num, text) => ([
     { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 1.5, lineColor: MAROON }], margin: [0, 8, 0, 2] },
-    { text: `${icon}  ${text}`, fontSize: 11, bold: true, color: MAROON, margin: [0, 6, 0, 4] },
+    { text: `${num}. ${text}`, fontSize: 11, bold: true, color: MAROON, margin: [0, 6, 0, 4] },
   ]);
 
   const buildSections = () => {
     const parts = [];
-    parts.push(...sectionTitle('🏢', '2. Inmueble (padrón)'));
+    parts.push(...sectionTitle('2', 'Inmueble (padrón)'));
     parts.push(makeTable(sec2));
-    parts.push(...sectionTitle('📋', '3. Estado de la edificación'));
+    parts.push(...sectionTitle('3', 'Estado de la edificación'));
     parts.push(makeTable(sec3, true));
-    parts.push(...sectionTitle('⚠️', '4. Clasificación global'));
+    parts.push(...sectionTitle('4', 'Clasificación global'));
     parts.push({
       table: {
         headerRows: 1,
@@ -1070,9 +1070,9 @@ async function construirDocDefinition({ siniestro, inmueble, valores }) {
       layout: { hLineWidth: () => 0.5, vLineWidth: () => 0.5, hLineColor: () => '#cbd5e1', vLineColor: () => '#cbd5e1' },
       margin: [0, 4, 0, 8],
     });
-    parts.push(...sectionTitle('✅', '5. Recomendaciones'));
+    parts.push(...sectionTitle('5', 'Recomendaciones'));
     parts.push(makeTable(sec5, true));
-    parts.push(...sectionTitle('📷', '6. Fotografías'));
+    parts.push(...sectionTitle('6', 'Fotografías'));
 
     const fotosValidas = fotosB64.map((b64, i) => ({ b64 })).filter(f => f.b64);
     if (fotosValidas.length > 0) {
@@ -1097,23 +1097,27 @@ async function construirDocDefinition({ siniestro, inmueble, valores }) {
     defaultStyle: { fontSize: 9, lineHeight: 1.3 },
     pageFooter: (currentPage, pageCount) => ({
       margin: [40, 0, 40, 0],
-      canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 2, lineColor: MAROON }],
-      columns: [
+      stack: [
+        { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 2, lineColor: MAROON }], margin: [0, 0, 0, 4] },
         {
-          width: '*',
-          stack: [
-            { text: 'Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.', fontSize: 7, color: '#555', margin: [0, 4, 0, 0] },
-            { text: '06080, Ciudad de México.', fontSize: 7, color: '#555' },
-            { text: 'Alcaldía Cuauhtémoc', fontSize: 7, color: '#555' },
-          ],
-        },
-        { width: 'auto', margin: [0, 2, 0, 0], ...(margaB64 ? { image: margaB64, fit: [95, 55] } : { text: '' }) },
-        { width: 'auto', margin: [8, 2, 0, 0], ...(mascotB64 ? { image: mascotB64, fit: [110, 55] } : { text: '' }) },
-        {
-          width: 75,
-          stack: [
-            { text: `Página | ${currentPage}`, fontSize: 8, bold: true, color: '#333', alignment: 'right', margin: [0, 4, 0, 0] },
-            { text: `de ${pageCount}`, fontSize: 7, color: '#64748b', alignment: 'right' },
+          columns: [
+            {
+              width: '*',
+              stack: [
+                { text: 'Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.', fontSize: 7, color: '#555' },
+                { text: '06080, Ciudad de México.', fontSize: 7, color: '#555' },
+                { text: 'Alcaldía Cuauhtémoc', fontSize: 7, color: '#555' },
+              ],
+            },
+            { width: 'auto', ...(margaB64 ? { image: margaB64, fit: [95, 55] } : { text: '' }) },
+            { width: 'auto', margin: [8, 0, 0, 0], ...(mascotB64 ? { image: mascotB64, fit: [110, 55] } : { text: '' }) },
+            {
+              width: 75,
+              stack: [
+                { text: `Página | ${currentPage}`, fontSize: 8, bold: true, color: '#333', alignment: 'right' },
+                { text: `de ${pageCount}`, fontSize: 7, color: '#64748b', alignment: 'right' },
+              ],
+            },
           ],
         },
       ],

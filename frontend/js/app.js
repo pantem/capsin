@@ -1297,10 +1297,13 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       margin-top: 2px;
     }
     .report-footer {
-      margin-top: 22px;
+      position: relative;
+      margin-top: 28px;
       padding-top: 10px;
       border-top: 2px solid #7A0C38;
       display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
       align-items: flex-end;
       justify-content: space-between;
       gap: 12px;
@@ -1312,28 +1315,38 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       font-size: 8.5px;
       color: #555;
       line-height: 1.45;
-      max-width: 220px;
+      flex: 0 0 auto;
       padding-bottom: 4px;
     }
     .footer-center {
       display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
       align-items: flex-end;
       gap: 8px;
+      flex: 0 0 auto;
     }
     .footer-marga-img {
-      width: auto;
+      width: 90px;
       height: 55px;
       object-fit: contain;
+      object-position: left bottom;
+      display: block;
     }
     .footer-right {
       display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
       align-items: flex-end;
       gap: 6px;
+      flex: 0 0 auto;
     }
     .footer-mascot-img {
-      width: auto;
+      width: 120px;
       height: 55px;
       object-fit: contain;
+      object-position: right bottom;
+      display: block;
     }
     .footer-page-num {
       position: absolute;

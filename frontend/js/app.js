@@ -1093,25 +1093,23 @@ async function construirDocDefinition({ siniestro, inmueble, valores }) {
 
   return {
     pageSize: 'LETTER',
-    pageMargins: [40, 40, 40, 110],
+    pageMargins: [40, 40, 40, 100],
     defaultStyle: { fontSize: 9, lineHeight: 1.3 },
-    pageFooter: {
-      margin: [40, 6, 40, 0],
-      columns: [
-        {
-          width: '*',
-          text: 'Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col. 06080, Ciudad de México. Alcaldía Cuauhtémoc',
-          fontSize: 7,
-          color: '#555',
-        },
-        {
-          width: 'auto',
-          text: 'SAS • Sistema de Afectaciones por Sismo',
-          fontSize: 7,
-          color: '#7A0C38',
-          alignment: 'right',
-        },
-      ],
+    footer: function (currentPage, pageCount) {
+      return {
+        margin: [40, 6, 40, 0],
+        columns: [
+          {
+            width: '*',
+            stack: [
+              { text: 'Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.', fontSize: 7, color: '#555' },
+              { text: '06080, Ciudad de México.', fontSize: 7, color: '#555' },
+              { text: 'Alcaldía Cuauhtémoc', fontSize: 7, color: '#555' },
+            ],
+          },
+          { width: 'auto', text: 'Página | ' + currentPage + ' de ' + pageCount, fontSize: 8, bold: true, color: '#333', alignment: 'right' },
+        ],
+      };
     },
     content: [
       {

@@ -798,6 +798,11 @@ async function showDetail(siniestroId) {
 }
 
 async function descargarReporte(siniestroId) {
+  if (typeof pdfMake === 'undefined') {
+    alert('No se pudo cargar la librería PDF. Verifica tu conexión a internet e intenta de nuevo.');
+    return;
+  }
+
   const win = window.open('', '_blank');
   if (win) {
     win.document.write(`
@@ -834,20 +839,27 @@ async function descargarReporte(siniestroId) {
       valores = await fetchJSON(`${API}/valores-caracteristica?inmueble=${inmueblePadre._id}`);
     }
 
-    const htmlContent = generarReporteHTML({ siniestro, inmueble: inmueblePadre, valores });
+    const docDefinition = await construirDocDefinition({ siniestro, inmueble: inmueblePadre, valores });
+
+    const folio = siniestro.folio || siniestroId;
+    pdfMake.createPdf(docDefinition).download(`Reporte_SAS_${folio}.pdf`);
 
     if (win && !win.closed) {
       win.document.open();
-      win.document.write(htmlContent);
+      win.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head><meta charset="UTF-8"><title>Reporte SAS</title>
+        <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8fafc;color:#7A0C38;}div{text-align:center;}</style>
+        </head>
+        <body><div>
+          <h2>Reporte PDF generado</h2>
+          <p style="color:#4b5563;">El archivo <strong>Reporte_SAS_${folio}.pdf</strong> se está descargando.</p>
+          <button onclick="window.close()" style="margin-top:1rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar</button>
+        </div></body>
+        </html>
+      `);
       win.document.close();
-    } else {
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Reporte_SAS_${siniestro.folio || siniestroId}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
   } catch (err) {
     console.error('Error al generar reporte:', err);
@@ -865,7 +877,23 @@ async function descargarReporte(siniestroId) {
   }
 }
 
-function generarReporteHTML({ siniestro, inmueble, valores }) {
+async function urlToBase64(url) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function construirDocDefinition({ siniestro, inmueble, valores }) {
   const folio = siniestro.folio || 'SAS-REPORTE';
   const fechaReporte = formatDate(siniestro.fecha || new Date());
 
@@ -888,7 +916,6 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
 
   const dir = siniestro.ubicacion?.direccion || '—';
   const alcaldiaResolv = resolveAlcaldia(siniestro.ubicacion);
-
   const cp = siniestro.ubicacion?.codigo_postal || getVal('2.4', '—');
   const coords = (siniestro.ubicacion?.lat && siniestro.ubicacion?.lng)
     ? `${siniestro.ubicacion.lat}, ${siniestro.ubicacion.lng}`
@@ -896,7 +923,6 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
   const descripcion = siniestro.descripcion || 'Sin observaciones adicionales registradas.';
   const dispositivo = siniestro.dispositivo_id || 'Dispositivo Móvil SAS';
 
-  // Section 2
   const sec2 = [
     { no: '2.1', car: 'Calle y Número (mz y lt, en su caso)', val: getVal('2.1', dir) },
     { no: '2.2', car: 'Colonia', val: getVal('2.2', 'Centro') },
@@ -904,7 +930,7 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     { no: '2.4', car: 'Código Postal', val: getVal('2.4', cp) },
     { no: '2.5', car: 'Entre que calles/referencia', val: getVal('2.5', '—') },
     { no: '2.6', car: 'Responsable del inmueble', val: getVal('2.6', '—') },
-    { no: '2.7', car: 'Teléfono del respónsale del inmueble', val: getVal('2.7', '—') },
+    { no: '2.7', car: 'Teléfono del responsable del inmueble', val: getVal('2.7', '—') },
     { no: '2.8', car: 'Año estimado de la construcción', val: getVal('2.8', '—') },
     { no: '2.9', car: 'Uso del Inmueble', val: getVal('2.9', inmueble.tipo === 'edificio' ? 'HABITACIÓN MULTIFAMILIAR' : 'HABITACIÓN UNIFAMILIAR') },
     { no: '2.10', car: 'Número de niveles sobre el terreno', val: getVal('2.10', String(inmueble.sobre_nivel_banqueta ?? inmueble.numero_niveles ?? 1)) },
@@ -913,7 +939,6 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     { no: '2.13', car: 'Tipo de inspección', val: getVal('2.13', 'INSPECCIÓN INTERIOR Y EXTERIOR') },
   ];
 
-  // Section 3
   const sec3 = [
     { no: '3.1', car: 'Sistema constructivo', val: getVal('3.1', inmueble.tipo === 'edificio' ? 'Estructura formal de mampostería / concreto' : 'Mampostería confinada') },
     { no: '3.2', car: '¿Presenta colapso estructural?', val: getVal('3.2', inmueble.estado_afectacion === 'colapso' ? 'Colapso total' : 'No presenta colapso') },
@@ -932,7 +957,6 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     { no: '3.15', car: 'Otros peligros (líneas o ductos rotos, derrames tóxicos, etc.)', val: getVal('3.15', 'No') },
   ];
 
-  // Section 4
   let rawRisk = getVal('4.1', '');
   if (!rawRisk) {
     rawRisk = inmueble.estado_afectacion === 'colapso' ? 'Colapso'
@@ -941,675 +965,214 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
           : 'Edificación en Riesgo Bajo';
   }
   let riskColor = '#166534';
-  let riskBg = '#dcfce7';
-  let riskBorder = '#86efac';
   const rLower = rawRisk.toLowerCase();
-  if (rLower.includes('colapso')) {
-    riskColor = '#ffffff';
-    riskBg = '#111827';
-    riskBorder = '#000000';
-  } else if (rLower.includes('alto') || rLower.includes('critico') || rLower.includes('crítico')) {
-    riskColor = '#991b1b';
-    riskBg = '#fee2e2';
-    riskBorder = '#fca5a5';
-  } else if (rLower.includes('medio') || rLower.includes('moderado') || rLower.includes('insegura')) {
-    riskColor = '#854d0e';
-    riskBg = '#fef9c3';
-    riskBorder = '#fde047';
-  }
+  if (rLower.includes('colapso')) riskColor = '#111827';
+  else if (rLower.includes('alto') || rLower.includes('critico') || rLower.includes('crítico')) riskColor = '#991b1b';
+  else if (rLower.includes('medio') || rLower.includes('moderado') || rLower.includes('insegura')) riskColor = '#854d0e';
 
-  // Section 5
   const sec5 = [
-    { no: '5.1', car: '5.1 Requiere revisión futura', val: getVal('5.1', 'Sí') },
-    { no: '5.2', car: '5.2 ¿Requiere D.R.O. y/o C-SE?', val: getVal('5.2', 'D.R.O.') },
-    { no: '5.3', car: '5.3 Apuntalar', val: getVal('5.3', 'No') },
-    { no: '5.4', car: '5.4 Maquinaria para remover escombro', val: getVal('5.4', 'No') },
-    { no: '5.5', car: '5.5 Inspección por SGIRPC', val: getVal('5.5', 'Sí') },
-    { no: '5.6', car: '5.6 Inspección por SACMEX', val: getVal('5.6', 'No') },
-    { no: '5.7', car: '5.7 Inspección por SSC', val: getVal('5.7', 'No') },
-    { no: '5.8', car: '5.8 Inspección por Central de fugas', val: getVal('5.8', 'No') },
+    { no: '5.1', car: 'Requiere revisión futura', val: getVal('5.1', 'Sí') },
+    { no: '5.2', car: '¿Requiere D.R.O. y/o C-SE?', val: getVal('5.2', 'D.R.O.') },
+    { no: '5.3', car: 'Apuntalar', val: getVal('5.3', 'No') },
+    { no: '5.4', car: 'Maquinaria para remover escombro', val: getVal('5.4', 'No') },
+    { no: '5.5', car: 'Inspección por SGIRPC', val: getVal('5.5', 'Sí') },
+    { no: '5.6', car: 'Inspección por SACMEX', val: getVal('5.6', 'No') },
+    { no: '5.7', car: 'Inspección por SSC', val: getVal('5.7', 'No') },
+    { no: '5.8', car: 'Inspección por Central de fugas', val: getVal('5.8', 'No') },
   ];
 
   const fotos = siniestro.fotos || [];
-  const logoUrl = `${window.location.origin}/images/logo_cdmx_comision.webp`;
+  const origin = window.location.origin;
 
-  return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reporte_SAS_${folio}.pdf</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f1f5f9;
-      color: #1e293b;
-      font-size: 11.5px;
-      line-height: 1.45;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    .page-wrap {
-      max-width: 816px;
-      margin: 25px auto 40px;
-      background: #ffffff;
-      padding: 34px 40px;
-      border-radius: 8px;
-      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-      border: 1px solid #e2e8f0;
-    }
-    .report-toolbar {
-      position: fixed;
-      top: 16px;
-      right: 20px;
-      z-index: 99999;
-      display: flex;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(10px);
-      padding: 8px 14px;
-      border-radius: 30px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
-      border: 1px solid #cbd5e1;
-    }
-    .btn-tool {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 16px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 13px;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-decoration: none;
-    }
-    .btn-tool-print {
-      background: #7A0C38;
-      color: #ffffff;
-    }
-    .btn-tool-print:hover { background: #9b1348; }
-    .btn-tool-close {
-      background: #e2e8f0;
-      color: #334155;
-    }
-    .btn-tool-close:hover { background: #cbd5e1; }
-    
-    .header-banner {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      padding-bottom: 12px;
-      border-bottom: 3px solid #7A0C38;
-    }
-    .header-logo-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .header-logos-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .header-logo img {
-      max-height: 70px;
-      width: auto;
-      object-fit: contain;
-    }
-    .header-logo-text {
-      text-align: center;
-      margin-top: 2px;
-    }
-    .header-cdmx-name {
-      font-size: 13px;
-      font-weight: 800;
-      color: #7A0C38;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-    }
-    .header-cdmx-sub {
-      font-size: 8.5px;
-      font-weight: 600;
-      color: #8B6B3D;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-    .header-right-info {
-      text-align: right;
-      flex: 1;
-    }
-    .header-secretaria {
-      font-size: 14px;
-      font-weight: 800;
-      color: #333;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .header-direccion {
-      font-size: 9.5px;
-      font-weight: 600;
-      color: #555;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      line-height: 1.4;
-      margin-top: 2px;
-    }
-    .header-doc-title-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 12px;
-    }
-    .header-doc-circle {
-      width: 50px;
-      height: 50px;
-      min-width: 50px;
-      border-radius: 50%;
-      background: #7A0C38;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .header-doc-circle svg {
-      width: 28px;
-      height: 28px;
-    }
-    .header-doc-title-text .header-doc-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: #7A0C38;
-      letter-spacing: -0.3px;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .header-doc-title-text .header-doc-sub {
-      font-size: 12px;
-      font-weight: 700;
-      color: #BC955B;
-    }
-    .header-folio-badge {
-      text-align: right;
-      background: #fdf2f4;
-      border: 1.5px solid #7A0C38;
-      padding: 6px 12px;
-      border-radius: 6px;
-    }
-    .header-folio-badge .folio-lbl {
-      font-size: 9.5px;
-      font-weight: 700;
-      color: #7A0C38;
-      text-transform: uppercase;
-    }
-    .header-folio-badge .folio-val {
-      font-size: 13px;
-      font-weight: 800;
-      color: #0f172a;
-    }
+  const [logoB64, margaB64, mascotB64] = await Promise.all([
+    urlToBase64(`${origin}/images/logo_cdmx_comision.webp`),
+    urlToBase64(`${origin}/images/margarita_maza.png`),
+    urlToBase64(`${origin}/images/mascota_mundial.png`),
+  ]);
 
-    .meta-box {
-      margin: 14px 0 18px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 10px 14px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px 16px;
-      font-size: 11px;
-    }
-    .meta-item {
-      display: flex;
-      flex-direction: column;
-    }
-    .meta-item.full-width {
-      grid-column: 1 / -1;
-    }
-    .meta-lbl {
-      font-size: 9.5px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .meta-val {
-      font-weight: 600;
-      color: #0f172a;
-      margin-top: 1px;
-    }
+  const fotosB64 = await Promise.all(fotos.map(f => urlToBase64(f.url)));
 
-    .section-block {
-      margin-bottom: 20px;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-    .section-header {
-      display: flex;
-      align-items: center;
-      background: #7A0C38;
-      color: #ffffff;
-      padding: 6px 12px;
-      border-radius: 5px;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 7px;
-    }
-    .section-header .sec-icon {
-      margin-right: 8px;
-    }
+  const MAROON = '#7A0C38';
+  const tableHeader = { fillColor: MAROON, color: '#ffffff', bold: true, fontSize: 8, margin: [4, 3, 4, 3] };
+  const cellStyle = { fontSize: 8, margin: [4, 2, 4, 2] };
+  const cellStyleNo = { ...cellStyle, bold: true, color: MAROON, alignment: 'center', margin: [2, 2, 2, 2] };
+  const valYes = { ...cellStyle, bold: true, color: '#b91c1c' };
+  const valNo = { ...cellStyle, color: '#475569' };
 
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-    }
-    .data-table th {
-      background: #f1f5f9;
-      color: #334155;
-      font-weight: 700;
-      text-align: left;
-      padding: 5px 8px;
-      border: 1px solid #cbd5e1;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    .data-table td {
-      padding: 5px 8px;
-      border: 1px solid #cbd5e1;
-      color: #1e293b;
-      vertical-align: middle;
-    }
-    .data-table tr:nth-child(even) {
-      background: #f8fafc;
-    }
-    .data-table td.col-no {
-      width: 45px;
-      font-weight: 700;
-      color: #7A0C38;
-      text-align: center;
-    }
-    .data-table td.col-car {
-      width: 50%;
-      font-weight: 500;
-    }
-    .data-table td.col-val {
-      font-weight: 600;
-    }
-    .val-yes {
-      color: #b91c1c;
-      font-weight: 700;
-    }
-    .val-no {
-      color: #475569;
-    }
+  const makeTable = (rows, highlightYes = false) => ({
+    table: {
+      headerRows: 1,
+      widths: [32, '*', 160],
+      body: [
+        [
+          { text: 'No.', ...tableHeader },
+          { text: 'Características', ...tableHeader },
+          { text: 'Valor', ...tableHeader },
+        ],
+        ...rows.map(r => {
+          const s = String(r.val).toLowerCase();
+          const isYes = s === 'sí' || s === 'si' || s.includes('colapso') || s.includes('parcial') || s.includes('d.r.o');
+          return [
+            { text: r.no, ...cellStyleNo },
+            { text: r.car, ...cellStyle },
+            { text: String(r.val), ...(highlightYes && isYes ? valYes : valNo) },
+          ];
+        }),
+      ],
+    },
+    layout: {
+      hLineWidth: () => 0.5,
+      vLineWidth: () => 0.5,
+      hLineColor: () => '#cbd5e1',
+      vLineColor: () => '#cbd5e1',
+    },
+    margin: [0, 4, 0, 8],
+  });
 
-    .photos-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .photo-card {
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      overflow: hidden;
-      background: #f8fafc;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-    .photo-img-wrap {
-      width: 100%;
-      height: 320px;
-      background: #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .photo-img-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-    .photos-footer-caption {
-      margin-top: 12px;
-      padding: 10px;
-      text-align: center;
-      font-size: 10.5px;
-      font-weight: 600;
-      color: #475569;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      background: #f8fafc;
-    }
+  const sectionTitle = (icon, text) => ([
+    { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 1.5, lineColor: MAROON }], margin: [0, 8, 0, 2] },
+    { text: `${icon}  ${text}`, fontSize: 11, bold: true, color: MAROON, margin: [0, 6, 0, 4] },
+  ]);
 
-    .signatures-block { display: none; }
-    .signature-card { display: none; }
+  const buildSections = () => {
+    const parts = [];
+    parts.push(...sectionTitle('🏢', '2. Inmueble (padrón)'));
+    parts.push(makeTable(sec2));
+    parts.push(...sectionTitle('📋', '3. Estado de la edificación'));
+    parts.push(makeTable(sec3, true));
+    parts.push(...sectionTitle('⚠️', '4. Clasificación global'));
+    parts.push({
+      table: {
+        headerRows: 1,
+        widths: [32, '*', 160],
+        body: [
+          [{ text: 'No.', ...tableHeader }, { text: 'Características', ...tableHeader }, { text: 'Valor', ...tableHeader }],
+          [{ text: '4.1', ...cellStyleNo }, { text: 'Nivel de riesgos', ...cellStyle }, { text: rawRisk, ...cellStyle, bold: true, color: riskColor }],
+        ],
+      },
+      layout: { hLineWidth: () => 0.5, vLineWidth: () => 0.5, hLineColor: () => '#cbd5e1', vLineColor: () => '#cbd5e1' },
+      margin: [0, 4, 0, 8],
+    });
+    parts.push(...sectionTitle('✅', '5. Recomendaciones'));
+    parts.push(makeTable(sec5, true));
+    parts.push(...sectionTitle('📷', '6. Fotografías'));
 
-    .report-footer {
-      position: relative;
-      margin-top: 24px;
-      padding-top: 10px;
-      border-top: 2px solid #7A0C38;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 9px;
-      color: #475569;
-    }
-    .footer-address {
-      font-size: 8.5px;
-      color: #555;
-      line-height: 1.4;
-      flex: 1 1 0;
-      min-width: 0;
-    }
-    .footer-center {
-      flex: 0 0 auto;
-      text-align: center;
-    }
-    .footer-marga-img {
-      height: 70px;
-      width: auto;
-      display: block;
-    }
-    .footer-right {
-      flex: 1 1 0;
-      min-width: 0;
-      text-align: right;
-    }
-    .footer-mascot-img {
-      height: 70px;
-      width: auto;
-      display: block;
-      margin-left: auto;
-    }
-    .footer-page-num {
-      position: absolute;
-      top: -18px;
-      right: 0;
-      font-size: 10px;
-      font-weight: 700;
-      color: #333;
-    }
-
-    @media print {
-      html, body {
-        background: #fff !important;
-        font-size: 10.5px;
-        width: auto;
-        height: auto;
+    const fotosValidas = fotosB64.map((b64, i) => ({ b64 })).filter(f => f.b64);
+    if (fotosValidas.length > 0) {
+      const fotoRows = [];
+      for (let i = 0; i < fotosValidas.length; i += 2) {
+        const left = { image: fotosValidas[i].b64, fit: [250, 200], alignment: 'center' };
+        const right = fotosValidas[i + 1] ? { image: fotosValidas[i + 1].b64, fit: [250, 200], alignment: 'center' } : { text: '' };
+        fotoRows.push([left, right]);
       }
-      .page-wrap {
-        max-width: 100% !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        border: none !important;
-        border-radius: 0 !important;
-        overflow: visible !important;
-      }
-      .no-print { display: none !important; }
-      .photo-img-wrap { height: 280px; }
-      .report-footer {
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin-top: 20px;
-        padding-top: 8px;
-      }
-      .footer-page-num {
-        position: static;
-        text-align: right;
-        margin-bottom: 4px;
-        font-weight: 700;
-      }
-      @page {
-        size: letter portrait;
-        margin: 12mm 15mm 20mm 15mm;
-      }
+      parts.push({ table: { widths: ['*', '*'], body: fotoRows }, layout: 'noBorders', margin: [0, 4, 0, 4] });
+      parts.push({ text: 'Evidencia registrada durante la inspección', fontSize: 9, bold: true, color: '#475569', alignment: 'center', margin: [0, 4, 0, 8] });
+    } else {
+      parts.push({ text: 'No se registraron evidencias fotográficas en este reporte.', fontSize: 9, color: '#64748b', italics: true, alignment: 'center', margin: [0, 8, 0, 8] });
     }
-  </style>
-</head>
-<body>
-  <div class="report-toolbar no-print">
-    <button class="btn-tool btn-tool-print" onclick="window.print()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-      Imprimir / Guardar como PDF
-    </button>
-    <button class="btn-tool btn-tool-close" onclick="window.close()">Cerrar</button>
-  </div>
 
-  <div class="page-wrap">
-    <!-- Header -->
-    <div class="header-banner">
-      <div class="header-logo-area">
-        <div class="header-logos-row">
-          <div class="header-logo">
-            <img src="${logoUrl}" onerror="this.style.display='none'" alt="CDMX">
-          </div>
-        </div>
-        <div class="header-logo-text">
-          <div class="header-cdmx-name">&nbsp;</div>
-          <div class="header-cdmx-sub">&nbsp;</div>
-        </div>
-      </div>
-      <div class="header-right-info">
-        <div class="header-secretaria">Secretaría de Vivienda</div>
-        <div class="header-direccion">
-          Dirección General de la<br>
-          Comisión para la Reconstrucción de la Ciudad de<br>
-          México.<br>
-          Dirección General
-        </div>
-      </div>
-      <div class="header-folio-badge">
-        <div class="folio-lbl">Folio de Inspección</div>
-        <div class="folio-val">${folio}</div>
-      </div>
-    </div>
-    <div class="header-doc-title-row">
-      <div class="header-doc-circle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="7" width="4" height="13" rx="0.5"/>
-          <rect x="10" y="4" width="4" height="16" rx="0.5"/>
-          <rect x="17" y="9" width="4" height="11" rx="0.5"/>
-          <line x1="1" y1="21" x2="23" y2="21" stroke-width="1.5"/>
-        </svg>
-      </div>
-      <div class="header-doc-title-text">
-        <div class="header-doc-title">REPORTE DE INSPECCIÓN DE INMUEBLE</div>
-        <div class="header-doc-sub">SAS • Sistema de Afectaciones por Sismo</div>
-      </div>
-    </div>
+    return parts;
+  };
 
-    <!-- 1. Datos Generales -->
-    <div class="meta-box">
-      <div class="meta-item">
-        <span class="meta-lbl">Fecha</span>
-        <span class="meta-val">${fechaReporte}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-lbl">Folio de inspección</span>
-        <span class="meta-val">${folio}</span>
-      </div>
-      <div class="meta-item full-width">
-        <span class="meta-lbl">Dirección</span>
-        <span class="meta-val">${dir}, ${alcaldiaResolv}, CDMX ${cp ? '• C.P. ' + cp : ''}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-lbl">Coordenadas</span>
-        <span class="meta-val">${coords}</span>
-      </div>
-      <div class="meta-item">
-        <span class="meta-lbl">Dispositivo</span>
-        <span class="meta-val">${dispositivo}</span>
-      </div>
-      <div class="meta-item full-width">
-        <span class="meta-lbl">Descripción</span>
-        <span class="meta-val">${descripcion}</span>
-      </div>
-    </div>
-
-    <!-- 2. Inmueble (padrón) -->
-    <div class="section-block">
-      <div class="section-header">
-        <span class="sec-icon">🏢</span> 2. Inmueble (padrón)
-      </div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="col-no">No.</th>
-            <th class="col-car">Características</th>
-            <th class="col-val">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sec2.map(row => `
-            <tr>
-              <td class="col-no">${row.no}</td>
-              <td class="col-car">${row.car}</td>
-              <td class="col-val">${row.val}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 3. Estado de la edificación -->
-    <div class="section-block">
-      <div class="section-header">
-        <span class="sec-icon">📋</span> 3. Estado de la edificación
-      </div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="col-no">No.</th>
-            <th class="col-car">Características</th>
-            <th class="col-val">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sec3.map(row => {
-    const isYes = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('colapso') || String(row.val).toLowerCase().includes('parcial');
-    return `
-              <tr>
-                <td class="col-no">${row.no}</td>
-                <td class="col-car">${row.car}</td>
-                <td class="col-val ${isYes ? 'val-yes' : 'val-no'}">${row.val}</td>
-              </tr>
-            `;
-  }).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 4. Clasificación global -->
-    <div class="section-block">
-      <div class="section-header">
-        <span class="sec-icon">⚠️</span> 4. Clasificación global
-      </div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="col-no">No.</th>
-            <th class="col-car">Características</th>
-            <th class="col-val">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="col-no">4.1</td>
-            <td class="col-car">Nivel de riesgos</td>
-            <td class="col-val">
-              <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-weight:700;color:${riskColor};background:${riskBg};border:1px solid ${riskBorder};">
-                ${rawRisk}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 5. Recomendaciones -->
-    <div class="section-block">
-      <div class="section-header">
-        <span class="sec-icon">✅</span> 5. Recomendaciones
-      </div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th class="col-no">No.</th>
-            <th class="col-car">Características</th>
-            <th class="col-val">Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sec5.map(row => {
-    const isHighlighted = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('d.r.o');
-    return `
-              <tr>
-                <td class="col-no">${row.no}</td>
-                <td class="col-car">${row.car}</td>
-                <td class="col-val ${isHighlighted ? 'val-yes' : 'val-no'}">${row.val}</td>
-              </tr>
-            `;
-  }).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 6. Fotografías -->
-    <div class="section-block">
-      <div class="section-header">
-        <span class="sec-icon">📷</span> 6. Fotografías
-      </div>
-      ${fotos.length > 0 ? `
-        <div class="photos-grid">
-          ${fotos.map((f, idx) => `
-            <div class="photo-card">
-              <div class="photo-img-wrap">
-                <img src="${f.url}" alt="Foto ${idx + 1}" onerror="this.parentElement.innerHTML='<div style=\\'color:#94a3b8;font-size:11px;padding:20px;text-align:center;\\'>Foto no disponible</div>'">
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="photos-footer-caption">Evidencia registrada durante la inspección</div>
-      ` : `
-        <div style="padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:6px;text-align:center;color:#64748b;font-size:10.5px;">
-          No se registraron evidencias fotográficas en este reporte.
-        </div>
-      `}
-    </div>
-
-    <div class="report-footer">
-      <div class="footer-page-num">Página | <span id="report-page-num">1</span></div>
-      <div class="footer-address">
-        Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.<br>
-        06080, Ciudad de México.<br>
-        Alcaldía Cuauhtémoc
-      </div>
-      <div class="footer-center">
-        <img src="${window.location.origin}/images/margarita_maza.png" class="footer-marga-img" onerror="this.style.display='none'" alt="Margarita Maza">
-      </div>
-      <div class="footer-right">
-        <img src="${window.location.origin}/images/mascota_mundial.png" class="footer-mascot-img" onerror="this.style.display='none'" alt="Mascota">
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
+  return {
+    pageSize: 'LETTER',
+    pageMargins: [40, 40, 40, 95],
+    defaultStyle: { fontSize: 9, lineHeight: 1.3 },
+    pageFooter: (currentPage, pageCount) => ({
+      margin: [40, 0, 40, 0],
+      canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 2, lineColor: MAROON }],
+      columns: [
+        {
+          width: '*',
+          stack: [
+            { text: 'Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.', fontSize: 7, color: '#555', margin: [0, 4, 0, 0] },
+            { text: '06080, Ciudad de México.', fontSize: 7, color: '#555' },
+            { text: 'Alcaldía Cuauhtémoc', fontSize: 7, color: '#555' },
+          ],
+        },
+        { width: 'auto', margin: [0, 2, 0, 0], ...(margaB64 ? { image: margaB64, fit: [95, 55] } : { text: '' }) },
+        { width: 'auto', margin: [8, 2, 0, 0], ...(mascotB64 ? { image: mascotB64, fit: [110, 55] } : { text: '' }) },
+        {
+          width: 75,
+          stack: [
+            { text: `Página | ${currentPage}`, fontSize: 8, bold: true, color: '#333', alignment: 'right', margin: [0, 4, 0, 0] },
+            { text: `de ${pageCount}`, fontSize: 7, color: '#64748b', alignment: 'right' },
+          ],
+        },
+      ],
+    }),
+    content: [
+      {
+        columns: [
+          { width: '*', stack: logoB64 ? [{ image: logoB64, fit: [110, 60], alignment: 'left' }] : [] },
+          {
+            width: '*',
+            stack: [
+              { text: 'SECRETARÍA DE VIVIENDA', fontSize: 12, bold: true, color: '#333', alignment: 'right' },
+              { text: 'Dirección General de la', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
+              { text: 'Comisión para la Reconstrucción de la Ciudad de', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
+              { text: 'México.', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
+              { text: 'Dirección General', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
+            ],
+          },
+          {
+            width: 110,
+            stack: [
+              { text: 'Folio de Inspección', fontSize: 7, color: MAROON, alignment: 'center', margin: [0, 0, 0, 2] },
+              { table: { widths: ['*'], body: [[{ text: folio, fontSize: 11, bold: true, color: MAROON, alignment: 'center' }]] }, layout: { fillColor: '#fdf2f8', hLineColor: () => MAROON, vLineColor: () => MAROON, hLineWidth: () => 1, vLineWidth: () => 1 } },
+            ],
+          },
+        ],
+        margin: [0, 0, 0, 6],
+      },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 3, lineColor: MAROON }], margin: [0, 0, 0, 8] },
+      {
+        columns: [
+          { width: 28, margin: [0, 0, 6, 0], canvas: [{ type: 'rect', x: 0, y: 0, w: 28, h: 28, color: MAROON, r: 14 }] },
+          {
+            width: '*',
+            stack: [
+              { text: 'REPORTE DE INSPECCIÓN DE INMUEBLE', fontSize: 13, bold: true, color: '#1e293b', decoration: 'underline' },
+              { text: 'SAS • Sistema de Afectaciones por Sismo', fontSize: 9, color: '#64748b', margin: [0, 2, 0, 0] },
+            ],
+          },
+        ],
+        margin: [0, 0, 0, 10],
+      },
+      {
+        table: {
+          widths: ['*', '*', '*', '*'],
+          body: [
+            [
+              { text: 'Fecha', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
+              { text: 'Folio de inspección', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
+              { text: 'Coordenadas', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
+              { text: 'Dispositivo', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
+            ],
+            [
+              { text: fechaReporte, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
+              { text: folio, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
+              { text: coords, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
+              { text: dispositivo, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
+            ],
+            [{ text: 'Dirección', fontSize: 7, bold: true, color: MAROON, colSpan: 4, margin: [6, 4, 6, 0] }, {}, {}, {}],
+            [{ text: `${dir}, ${alcaldiaResolv}, CDMX ${cp ? '• C.P. ' + cp : ''}`, fontSize: 8, bold: true, colSpan: 4, margin: [6, 0, 6, 4] }, {}, {}, {}],
+            [{ text: 'Descripción', fontSize: 7, bold: true, color: MAROON, colSpan: 4, margin: [6, 4, 6, 0] }, {}, {}, {}],
+            [{ text: descripcion, fontSize: 8, colSpan: 4, margin: [6, 0, 6, 6] }, {}, {}, {}],
+          ],
+        },
+        layout: {
+          fillColor: (rowIndex) => [0, 2, 4].includes(rowIndex) ? '#fdf2f8' : '#ffffff',
+          hLineColor: () => '#f3d4e0',
+          vLineColor: () => '#f3d4e0',
+          hLineWidth: () => 0.5,
+          vLineWidth: () => 0.5,
+        },
+        margin: [0, 0, 0, 6],
+      },
+      ...buildSections(),
+    ],
+  };
 }
 
 let _ubicData = [];

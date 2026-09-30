@@ -1301,69 +1301,39 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       padding-top: 10px;
       border-top: 2px solid #7A0C38;
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       justify-content: space-between;
       gap: 12px;
       font-size: 9px;
       color: #475569;
+      min-height: 55px;
     }
     .footer-address {
       font-size: 8.5px;
       color: #555;
       line-height: 1.45;
       max-width: 220px;
+      padding-bottom: 4px;
     }
     .footer-center {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: 8px;
     }
     .footer-marga-img {
-      width: 115px;
-      object-fit: cover;
-    }
-    .footer-marga-text {
-      text-align: center;
-      line-height: 1.2;
-    }
-    .footer-marga-year {
-      font-size: 18px;
-      font-weight: 800;
-      color: #BC955B;
-    }
-    .footer-marga-label {
-      font-size: 8px;
-      font-weight: 600;
-      color: #333;
-    }
-    .footer-marga-name {
-      font-size: 11px;
-      font-weight: 800;
-      color: #7A0C38;
+      width: auto;
+      height: 55px;
+      object-fit: contain;
     }
     .footer-right {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: 6px;
     }
     .footer-mascot-img {
-      width: 158px;
+      width: auto;
+      height: 55px;
       object-fit: contain;
-    }
-    .footer-mundial-text {
-      text-align: center;
-      line-height: 1.15;
-    }
-    .footer-mundial-year {
-      font-size: 22px;
-      font-weight: 800;
-      color: #2e7d32;
-    }
-    .footer-mundial-label {
-      font-size: 8px;
-      font-weight: 700;
-      color: #2e7d32;
-      text-transform: uppercase;
     }
     .footer-page-num {
       position: absolute;
@@ -1616,19 +1586,9 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       </div>
       <div class="footer-center">
         <img src="${window.location.origin}/images/margarita_maza.png" class="footer-marga-img" onerror="this.style.display='none'" alt="Margarita Maza">
-        <div class="footer-marga-text">
-          <div class="footer-marga-year">&nbsp;</div>
-          <div class="footer-marga-label">&nbsp;</div>
-          <div class="footer-marga-label">&nbsp;</div>
-          <div class="footer-marga-name">&nbsp;</div>
-        </div>
       </div>
       <div class="footer-right">
         <img src="${window.location.origin}/images/mascota_mundial.png" class="footer-mascot-img" onerror="this.style.display='none'" alt="Mascota">
-        <div class="footer-mundial-text">
-          <div class="footer-mundial-year">&nbsp;</div>
-          <div class="footer-mundial-label">&nbsp;</div>
-        </div>
       </div>
     </div>
   </div>

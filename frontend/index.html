@@ -185,7 +185,7 @@
               </svg>
             </div>
             <div class="kpi-info">
-               <span class="kpi-title">Riesgo bajo</span>
+              <span class="kpi-title">Riesgo bajo</span>
               <div class="kpi-value" id="kpi-sin-dano">724</div>
               <span class="kpi-sub"><span id="kpi-sin-dano-pct">57.9%</span> del total</span>
             </div>
@@ -199,7 +199,7 @@
               </svg>
             </div>
             <div class="kpi-info">
-               <span class="kpi-title">Riesgo medio</span>
+              <span class="kpi-title">Riesgo medio</span>
               <div class="kpi-value" id="kpi-moderado">329</div>
               <span class="kpi-sub"><span id="kpi-moderado-pct">26.3%</span> del total</span>
             </div>
@@ -213,7 +213,7 @@
               </svg>
             </div>
             <div class="kpi-info">
-               <span class="kpi-title">Riesgo alto</span>
+              <span class="kpi-title">Riesgo alto</span>
               <div class="kpi-value" id="kpi-critico">197</div>
               <span class="kpi-sub"><span id="kpi-critico-pct">15.8%</span> del total</span>
             </div>
@@ -227,7 +227,7 @@
               </svg>
             </div>
             <div class="kpi-info">
-               <span class="kpi-title">Colapso</span>
+              <span class="kpi-title">Colapso</span>
               <div class="kpi-value" id="kpi-colapso">0</div>
               <span class="kpi-sub"><span id="kpi-colapso-pct">0.0%</span> del total</span>
             </div>
@@ -302,21 +302,27 @@
           <h4>Filtrar por riesgo</h4>
           <div style="display:flex;flex-direction:column;gap:0.25rem;">
             <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
-              <input type="checkbox" class="map-filter-cb" data-color="red" onchange="toggleMapFilter('red')" checked> <span style="color:#d32f2f;font-weight:600;">Crítico</span>
+              <input type="checkbox" class="map-filter-cb" data-color="red" onchange="toggleMapFilter('red')" checked>
+              <span style="color:#d32f2f;font-weight:600;">Crítico</span>
             </label>
             <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
-              <input type="checkbox" class="map-filter-cb" data-color="yellow" onchange="toggleMapFilter('yellow')" checked> <span style="color:#f57c00;font-weight:600;">Moderado</span>
+              <input type="checkbox" class="map-filter-cb" data-color="yellow" onchange="toggleMapFilter('yellow')"
+                checked> <span style="color:#f57c00;font-weight:600;">Moderado</span>
             </label>
             <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
-              <input type="checkbox" class="map-filter-cb" data-color="black" onchange="toggleMapFilter('black')" checked> <span style="color:#222;font-weight:600;">Colapso</span>
+              <input type="checkbox" class="map-filter-cb" data-color="black" onchange="toggleMapFilter('black')"
+                checked> <span style="color:#222;font-weight:600;">Colapso</span>
             </label>
             <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
-              <input type="checkbox" class="map-filter-cb" data-color="green" onchange="toggleMapFilter('green')" checked> <span style="color:#388e3c;font-weight:600;">Riesgo bajo</span>
+              <input type="checkbox" class="map-filter-cb" data-color="green" onchange="toggleMapFilter('green')"
+                checked> <span style="color:#388e3c;font-weight:600;">Riesgo bajo</span>
             </label>
           </div>
           <div style="display:flex;gap:0.3rem;margin-top:0.4rem;">
-            <button onclick="selectAllMapFilters()" style="padding:0.2rem 0.5rem;border:1px solid #888;background:#fff;color:#555;border-radius:4px;cursor:pointer;font-size:0.75rem;">Todos</button>
-            <button onclick="clearMapFilter()" style="padding:0.2rem 0.5rem;border:1px solid #888;background:#fff;color:#555;border-radius:4px;cursor:pointer;font-size:0.75rem;">Ninguno</button>
+            <button onclick="selectAllMapFilters()"
+              style="padding:0.2rem 0.5rem;border:1px solid #888;background:#fff;color:#555;border-radius:4px;cursor:pointer;font-size:0.75rem;">Todos</button>
+            <button onclick="clearMapFilter()"
+              style="padding:0.2rem 0.5rem;border:1px solid #888;background:#fff;color:#555;border-radius:4px;cursor:pointer;font-size:0.75rem;">Ninguno</button>
           </div>
           <p id="map-filter-info" style="margin-top:0.5rem;font-size:0.8rem;color:#888;"></p>
         </div>
@@ -325,7 +331,8 @@
       <section id="view-lista" class="view">
         <div class="toolbar">
           <input type="text" id="search-input" placeholder="Buscar por folio, dirección, alcaldía..." />
-          <span id="reportes-count" style="font-size:0.9rem;font-weight:600;color:var(--text-muted);margin-left:auto;"></span>
+          <span id="reportes-count"
+            style="font-size:0.9rem;font-weight:600;color:var(--text-muted);margin-left:auto;"></span>
         </div>
         <div id="reportes-lista"></div>
       </section>
@@ -436,7 +443,7 @@
     <footer class="app-footer">
       <div class="footer-cdmx">
         <div class="footer-cdmx-logo">
-          <img src="images/logo_cdmx_comision.webp" class="cdmx-svg-logo" alt="Escudo CDMX" />
+          <img src="images/logo_cdmx_comision_orig.webp" class="cdmx-svg-logo" alt="Escudo CDMX" />
         </div>
       </div>
       <div class="footer-sas">

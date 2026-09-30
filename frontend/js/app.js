@@ -1253,8 +1253,8 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     }
 
     .photos-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      display: flex;
+      flex-direction: column;
       gap: 12px;
       margin-top: 8px;
     }
@@ -1268,7 +1268,7 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     }
     .photo-img-wrap {
       width: 100%;
-      height: 180px;
+      height: 320px;
       background: #e2e8f0;
       display: flex;
       align-items: center;
@@ -1277,37 +1277,22 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     .photo-img-wrap img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
     }
-    .photo-caption {
-      padding: 6px 9px;
-      font-size: 10px;
+    .photos-footer-caption {
+      margin-top: 12px;
+      padding: 10px;
+      text-align: center;
+      font-size: 10.5px;
       font-weight: 600;
       color: #475569;
-      background: #ffffff;
-      border-top: 1px solid #e2e8f0;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #f8fafc;
     }
 
-    .signatures-block {
-      margin-top: 26px;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 28px;
-      page-break-inside: avoid;
-      break-inside: avoid;
-    }
-    .signature-card {
-      text-align: center;
-      border-top: 1.5px solid #94a3b8;
-      padding-top: 6px;
-    }
-    .sig-role {
-      font-size: 10.5px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-    .sig-name {
-      font-size: 9.5px;
+    .signatures-block { display: none; }
+    .signature-card { display: none; }
       color: #64748b;
       margin-top: 2px;
     }
@@ -1403,7 +1388,7 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
         border: none !important;
       }
       .no-print { display: none !important; }
-      .photo-img-wrap { height: 155px; }
+      .photo-img-wrap { height: 280px; }
       .report-footer {
         page-break-inside: avoid;
         break-inside: avoid;
@@ -1608,9 +1593,6 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       <div class="section-header">
         <span class="sec-icon">📷</span> 6. Fotografías
       </div>
-      <div style="font-size:10.5px;color:#64748b;margin-bottom:6px;font-weight:500;">
-        Evidencia fotográfica del inmueble
-      </div>
       ${fotos.length > 0 ? `
         <div class="photos-grid">
           ${fotos.map((f, idx) => `
@@ -1618,31 +1600,15 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
               <div class="photo-img-wrap">
                 <img src="${f.url}" alt="Foto ${idx + 1}" onerror="this.parentElement.innerHTML='<div style=\\'color:#94a3b8;font-size:11px;padding:20px;text-align:center;\\'>Foto no disponible</div>'">
               </div>
-              <div class="photo-caption">
-                Fotografía ${idx + 1}. Evidencia registrada durante la inspección.
-              </div>
             </div>
           `).join('')}
         </div>
+        <div class="photos-footer-caption">Evidencia registrada durante la inspección</div>
       ` : `
         <div style="padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:6px;text-align:center;color:#64748b;font-size:10.5px;">
           No se registraron evidencias fotográficas en este reporte.
         </div>
       `}
-    </div>
-
-    <!-- Signatures block -->
-    <div class="signatures-block">
-      <div class="signature-card">
-        <div style="height:32px;"></div>
-        <div class="sig-role">Evaluador / Inspector Técnico</div>
-        <div class="sig-name">Personal Autorizado SAS CDMX</div>
-      </div>
-      <div class="signature-card">
-        <div style="height:32px;"></div>
-        <div class="sig-role">Responsable del Inmueble</div>
-        <div class="sig-name">${sec2[5].val !== '—' ? sec2[5].val : 'Nombre y Firma'}</div>
-      </div>
     </div>
 
     <div class="report-footer">

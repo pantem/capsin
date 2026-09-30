@@ -1083,6 +1083,106 @@ main {
   flex-shrink: 0;
 }
 
+/* Pagination controls for reports table */
+.pagination-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-top: 1px solid #eef0f3;
+  border-radius: 0 0 12px 12px;
+  font-size: 0.88rem;
+  color: var(--text-dark);
+}
+
+.pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.pagination-size-select {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pagination-size-select select {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 0.85rem;
+  background: #fff;
+  color: var(--text-dark);
+  cursor: pointer;
+  outline: none;
+}
+
+.pagination-size-select select:focus {
+  border-color: var(--primary-burgundy);
+}
+
+.pagination-right {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 0.45rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: var(--text-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #fdf2f4;
+  border-color: rgba(122, 12, 56, 0.3);
+  color: var(--primary-burgundy);
+}
+
+.pagination-btn.active {
+  background: #7A0C38 !important;
+  color: #ffffff !important;
+  border-color: #7A0C38 !important;
+  box-shadow: 0 2px 6px rgba(122, 12, 56, 0.25);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.pagination-dots {
+  padding: 0 0.3rem;
+  color: #9ca3af;
+  font-weight: 700;
+}
+
 /* Modals */
 .modal {
   position: fixed;

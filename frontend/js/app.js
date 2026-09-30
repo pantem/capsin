@@ -500,89 +500,184 @@ function resolveAlcaldia(ubicacion) {
   return ubicacion.municipio || 'Ciudad de México';
 }
 
-async function loadReportesList(filter = '') {
+let _reportesCurrentPage = 1;
+let _reportesPerPage = 15;
+let _reportesFilter = '';
+let _reportesSearchDebounce = null;
+
+function getPaginationButtons(current, total) {
+  if (total <= 1) return '';
+  let pages = [];
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    if (current <= 4) {
+      pages = [1, 2, 3, 4, 5, '...', total];
+    } else if (current >= total - 3) {
+      pages = [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    } else {
+      pages = [1, '...', current - 1, current, current + 1, '...', total];
+    }
+  }
+
+  return pages.map(p => {
+    if (p === '...') {
+      return `<span class="pagination-dots">…</span>`;
+    }
+    const isActive = p === current;
+    return `<button class="pagination-btn ${isActive ? 'active' : ''}" onclick="setReportesPage(${p})" type="button">${p}</button>`;
+  }).join('');
+}
+
+function setReportesPage(page) {
+  _reportesCurrentPage = page;
+  renderReportesTable();
+  const container = document.getElementById('view-lista');
+  if (container) {
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function cambiarReportesPageSize(size) {
+  _reportesPerPage = parseInt(size, 10) || 15;
+  _reportesCurrentPage = 1;
+  renderReportesTable();
+}
+
+function renderReportesTable() {
   const container = document.getElementById('reportes-lista');
   const countEl = document.getElementById('reportes-count');
-  try {
-    const mapaData = await fetchJSON(`${API}/mapa`);
-    allSiniestros = mapaData;
-    const filtered = filter
-      ? mapaData.filter((s) =>
-        (s.folio || '').toLowerCase().includes(filter.toLowerCase()) ||
-        (s.ubicacion?.direccion || '').toLowerCase().includes(filter.toLowerCase()) ||
-        (s.ubicacion?.municipio || '').toLowerCase().includes(filter.toLowerCase()) ||
-        (s.ubicacion?.codigo_postal || '').toLowerCase().includes(filter.toLowerCase())
-      )
-      : mapaData;
+  if (!container) return;
 
-    if (countEl) countEl.textContent = `${filtered.length} reporte(s)`;
+  const filter = _reportesFilter.trim().toLowerCase();
+  const filtered = filter
+    ? (allSiniestros || []).filter((s) =>
+      (s.folio || '').toLowerCase().includes(filter) ||
+      (s.ubicacion?.direccion || '').toLowerCase().includes(filter) ||
+      (s.ubicacion?.municipio || '').toLowerCase().includes(filter) ||
+      (s.ubicacion?.codigo_postal || '').toLowerCase().includes(filter)
+    )
+    : (allSiniestros || []);
 
-    if (filtered.length === 0) {
-      container.innerHTML = '<p style="color:#777;padding:2rem;text-align:center;">No se encontraron reportes.</p>';
-      return;
-    }
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / _reportesPerPage));
+  if (_reportesCurrentPage > totalPages) _reportesCurrentPage = totalPages;
+  if (_reportesCurrentPage < 1) _reportesCurrentPage = 1;
 
-    container.innerHTML = `
-      <div class="reportes-table-container">
-        <table class="reportes-table">
-          <thead>
-            <tr>
-              <th>Folio</th>
-              <th>Fecha de Registro</th>
-              <th>Dirección / Ubicación</th>
-              <th>Nivel de Riesgo</th>
-              <th style="text-align:center;min-width:140px;">Descargar Reporte</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered.map((s) => {
-              const badgeClass = getBadgeClass(s.color);
-              const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
-              const alcaldia = resolveAlcaldia(s.ubicacion);
-              return `
-                <tr class="reporte-row" data-id="${s._id}">
-                  <td>
-                    <div class="folio-cell">${s.folio || 'Sin folio'}</div>
-                  </td>
-                  <td>
-                    <div class="fecha-cell">
-                      <div>${formatDate(s.fecha)}</div>
-                      ${s.fecha_sincronizacion ? `<div style="font-size:0.75rem;color:#888;">Sinc: ${formatDate(s.fecha_sincronizacion)}</div>` : ''}
-                    </div>
-                  </td>
-                  <td>
-                    <div class="ubicacion-cell">
-                      <strong>${s.ubicacion?.direccion || 'Sin dirección'}</strong>
-                      <div style="font-size:0.8rem;color:#666;">${alcaldia}${s.ubicacion?.codigo_postal ? ` • C.P. ${s.ubicacion.codigo_postal}` : ''}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="${badgeClass}">${labelRisk}</span>
-                  </td>
-                  <td style="text-align:center;" onclick="event.stopPropagation();">
-                    <button class="btn-download-report" onclick="descargarReporte('${s._id}')" title="Descargar Reporte Oficial (${s.folio || 'PDF'})">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                      </svg>
-                      <span>Descargar</span>
-                    </button>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+  const startIndex = totalItems === 0 ? 0 : (_reportesCurrentPage - 1) * _reportesPerPage;
+  const endIndex = Math.min(startIndex + _reportesPerPage, totalItems);
+  const pageItems = filtered.slice(startIndex, endIndex);
+
+  if (countEl) {
+    countEl.textContent = totalItems === 0 ? '0 reportes' : `${totalItems.toLocaleString()} reporte(s) en total`;
+  }
+
+  if (totalItems === 0) {
+    container.innerHTML = '<p style="color:#777;padding:2.5rem;text-align:center;background:#fff;border-radius:12px;border:1px solid #eef0f3;">No se encontraron reportes con el criterio de búsqueda.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="reportes-table-container">
+      <table class="reportes-table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Fecha de Registro</th>
+            <th>Dirección / Ubicación</th>
+            <th>Nivel de Riesgo</th>
+            <th style="text-align:center;min-width:140px;">Descargar Reporte</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pageItems.map((s) => {
+            const badgeClass = getBadgeClass(s.color);
+            const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
+            const alcaldia = resolveAlcaldia(s.ubicacion);
+            return `
+              <tr class="reporte-row" data-id="${s._id}">
+                <td>
+                  <div class="folio-cell">${s.folio || 'Sin folio'}</div>
+                </td>
+                <td>
+                  <div class="fecha-cell">
+                    <div>${formatDate(s.fecha)}</div>
+                    ${s.fecha_sincronizacion ? `<div style="font-size:0.75rem;color:#888;">Sinc: ${formatDate(s.fecha_sincronizacion)}</div>` : ''}
+                  </div>
+                </td>
+                <td>
+                  <div class="ubicacion-cell">
+                    <strong>${s.ubicacion?.direccion || 'Sin dirección'}</strong>
+                    <div style="font-size:0.8rem;color:#666;">${alcaldia}${s.ubicacion?.codigo_postal ? ` • C.P. ${s.ubicacion.codigo_postal}` : ''}</div>
+                  </div>
+                </td>
+                <td>
+                  <span class="${badgeClass}">${labelRisk}</span>
+                </td>
+                <td style="text-align:center;" onclick="event.stopPropagation();">
+                  <button class="btn-download-report" onclick="descargarReporte('${s._id}')" title="Descargar Reporte Oficial (${s.folio || 'PDF'})" type="button">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Descargar</span>
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <!-- Pagination Footer -->
+      <div class="pagination-footer">
+        <div class="pagination-left">
+          <span class="pagination-info">
+            Mostrando <strong>${startIndex + 1}</strong> a <strong>${endIndex}</strong> de <strong>${totalItems.toLocaleString()}</strong> reportes
+          </span>
+          <div class="pagination-size-select">
+            <span>Mostrar</span>
+            <select onchange="cambiarReportesPageSize(this.value)">
+              <option value="10" ${_reportesPerPage === 10 ? 'selected' : ''}>10</option>
+              <option value="15" ${_reportesPerPage === 15 ? 'selected' : ''}>15</option>
+              <option value="25" ${_reportesPerPage === 25 ? 'selected' : ''}>25</option>
+              <option value="50" ${_reportesPerPage === 50 ? 'selected' : ''}>50</option>
+              <option value="100" ${_reportesPerPage === 100 ? 'selected' : ''}>100</option>
+            </select>
+            <span>por página</span>
+          </div>
+        </div>
+
+        <div class="pagination-right">
+          <button class="pagination-btn" onclick="setReportesPage(1)" ${_reportesCurrentPage === 1 ? 'disabled' : ''} title="Primera página" type="button">«</button>
+          <button class="pagination-btn" onclick="setReportesPage(${_reportesCurrentPage - 1})" ${_reportesCurrentPage === 1 ? 'disabled' : ''} title="Página anterior" type="button">‹</button>
+          ${getPaginationButtons(_reportesCurrentPage, totalPages)}
+          <button class="pagination-btn" onclick="setReportesPage(${_reportesCurrentPage + 1})" ${_reportesCurrentPage === totalPages ? 'disabled' : ''} title="Página siguiente" type="button">›</button>
+          <button class="pagination-btn" onclick="setReportesPage(${totalPages})" ${_reportesCurrentPage === totalPages ? 'disabled' : ''} title="Última página" type="button">»</button>
+        </div>
       </div>
-    `;
+    </div>
+  `;
 
-    container.querySelectorAll('.reporte-row').forEach((el) => {
-      el.addEventListener('click', () => showDetail(el.dataset.id));
-    });
+  container.querySelectorAll('.reporte-row').forEach((el) => {
+    el.addEventListener('click', () => showDetail(el.dataset.id));
+  });
+}
+
+async function loadReportesList(filter = '') {
+  const container = document.getElementById('reportes-lista');
+  _reportesFilter = filter;
+  try {
+    if (!allSiniestros || allSiniestros.length === 0) {
+      if (container) container.innerHTML = '<p style="color:#777;padding:2rem;text-align:center;">Cargando reportes...</p>';
+      const mapaData = await fetchJSON(`${API}/mapa`);
+      allSiniestros = mapaData;
+    }
+    renderReportesTable();
   } catch (err) {
     console.error('Error al cargar reportes:', err);
-    container.innerHTML = `<p style="color:#d32f2f;padding:1.5rem;">Error al cargar reportes: ${err.message}</p>`;
+    if (container) container.innerHTML = `<p style="color:#d32f2f;padding:1.5rem;">Error al cargar reportes: ${err.message}</p>`;
   }
 }
 
@@ -1654,7 +1749,12 @@ document.getElementById('modal-login').addEventListener('click', (e) => {
 actualizarHeaderAuth();
 
 document.getElementById('search-input').addEventListener('input', (e) => {
-  loadReportesList(e.target.value);
+  clearTimeout(_reportesSearchDebounce);
+  _reportesSearchDebounce = setTimeout(() => {
+    _reportesFilter = e.target.value;
+    _reportesCurrentPage = 1;
+    renderReportesTable();
+  }, 100);
 });
 
 initAlcaldiaSelect();

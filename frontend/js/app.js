@@ -797,120 +797,36 @@ async function showDetail(siniestroId) {
   }
 }
 
-async function descargarReporte(siniestroId) {
-  if (typeof pdfMake === 'undefined') {
-    alert('No se pudo cargar la librería PDF. Verifica tu conexión a internet e intenta de nuevo.');
-    return;
-  }
-
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <title>Generando Reporte SAS...</title>
-        <style>
-          body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #7A0C38; }
-          .loader { text-align: center; }
-          .spinner { width: 44px; height: 44px; border: 4px solid #e2e8f0; border-top-color: #7A0C38; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-          @keyframes spin { to { transform: rotate(360deg); } }
-        </style>
-      </head>
-      <body>
-        <div class="loader">
-          <div class="spinner"></div>
-          <h2 style="font-size:1.15rem;margin:0 0 6px;">Generando Reporte Oficial SAS...</h2>
-          <p style="font-size:0.85rem;color:#64748b;margin:0;">Sistema de Afectaciones por Sismo • CDMX</p>
-        </div>
-      </body>
-      </html>
-    `);
-  }
-
-  try {
-    const siniestro = await fetchJSON(`${API}/siniestros/${siniestroId}`);
-    const inmuebles = await fetchJSON(`${API}/inmuebles?siniestro=${siniestroId}`);
-    const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
-    const inmueblePadre = inmueblesPadre[0] || inmuebles[0] || {};
-    let valores = [];
-    if (inmueblePadre._id) {
-      valores = await fetchJSON(`${API}/valores-caracteristica?inmueble=${inmueblePadre._id}`);
-    }
-
-    const docDefinition = await construirDocDefinition({ siniestro, inmueble: inmueblePadre, valores });
-
-    const folio = siniestro.folio || siniestroId;
-    await pdfMake.createPdf(docDefinition).download(`Reporte_SAS_${folio}.pdf`);
-
-    if (win && !win.closed) {
-      win.document.open();
-      win.document.write(`
-        <!DOCTYPE html>
-        <html lang="es">
-        <head><meta charset="UTF-8"><title>Reporte SAS</title>
-        <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8fafc;color:#7A0C38;}div{text-align:center;}</style>
-        </head>
-        <body><div>
-          <h2>Reporte PDF generado</h2>
-          <p style="color:#4b5563;">El archivo <strong>Reporte_SAS_${folio}.pdf</strong> se ha descargado.</p>
-          <button onclick="window.close()" style="margin-top:1rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar</button>
-        </div></body>
-        </html>
-      `);
-      win.document.close();
-    }
-  } catch (err) {
-    console.error('Error al generar reporte:', err);
-    if (win && !win.closed) {
-      win.document.body.innerHTML = `
-        <div style="font-family:system-ui;padding:2.5rem;text-align:center;color:#dc2626;">
-          <h3 style="margin-bottom:0.5rem;">Error al generar reporte</h3>
-          <p style="color:#4b5563;">${err.message}</p>
-          <button onclick="window.close()" style="margin-top:1.2rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar Ventana</button>
-        </div>
-      `;
-    } else {
-      alert(`Error al generar el reporte: ${err.message}`);
-    }
-  }
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
-async function urlToBase64(url) {
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
-    const blob = await resp.blob();
-    const isWebp = blob.type === 'image/webp' || url.toLowerCase().endsWith('.webp');
-    if (isWebp) {
-      return await new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => resolve(null);
-        img.src = URL.createObjectURL(blob);
-      });
-    }
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+function cargarImagenB64(url) {
+  return new Promise((resolve) => {
+    if (!url) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
 }
 
-async function construirDocDefinition({ siniestro, inmueble, valores }) {
+function generarReporteHTML({ siniestro, inmueble, valores, logoB64, margaB64, mascotB64, fotosB64 }) {
   const folio = siniestro.folio || 'SAS-REPORTE';
   const fechaReporte = formatDate(siniestro.fecha || new Date());
 
@@ -998,191 +914,283 @@ async function construirDocDefinition({ siniestro, inmueble, valores }) {
     { no: '5.8', car: 'Inspección por Central de fugas', val: getVal('5.8', 'No') },
   ];
 
-  const fotos = siniestro.fotos || [];
-  const origin = window.location.origin;
-
-  const [logoB64, margaB64, mascotB64] = await Promise.all([
-    urlToBase64(`${origin}/images/logo_cdmx_comision.webp`),
-    urlToBase64(`${origin}/images/margarita_maza.png`),
-    urlToBase64(`${origin}/images/mascota_mundial.png`),
-  ]);
-
-  const fotosB64 = await Promise.all(fotos.map(f => urlToBase64(f.url)));
-
   const MAROON = '#7A0C38';
-  const tableHeader = { fillColor: MAROON, color: '#ffffff', bold: true, fontSize: 8, margin: [4, 3, 4, 3] };
-  const cellStyle = { fontSize: 8, margin: [4, 2, 4, 2] };
-  const cellStyleNo = { ...cellStyle, bold: true, color: MAROON, alignment: 'center', margin: [2, 2, 2, 2] };
-  const valYes = { ...cellStyle, bold: true, color: '#b91c1c' };
-  const valNo = { ...cellStyle, color: '#475569' };
+  const th = `background:${MAROON};color:#fff;font-weight:bold;font-size:8px;padding:4px 6px;border:0.5px solid #cbd5e1;`;
+  const td = 'font-size:8px;padding:3px 6px;border:0.5px solid #cbd5e1;vertical-align:top;';
+  const tdNo = `font-size:8px;padding:3px 4px;border:0.5px solid #cbd5e1;text-align:center;font-weight:bold;color:${MAROON};vertical-align:top;`;
 
-  const makeTable = (rows, highlightYes = false) => ({
-    table: {
-      headerRows: 1,
-      widths: [32, '*', 160],
-      body: [
-        [
-          { text: 'No.', ...tableHeader },
-          { text: 'Características', ...tableHeader },
-          { text: 'Valor', ...tableHeader },
-        ],
-        ...rows.map(r => {
-          const s = String(r.val).toLowerCase();
-          const isYes = s === 'sí' || s === 'si' || s.includes('colapso') || s.includes('parcial') || s.includes('d.r.o');
-          return [
-            { text: r.no, ...cellStyleNo },
-            { text: r.car, ...cellStyle },
-            { text: String(r.val), ...(highlightYes && isYes ? valYes : valNo) },
-          ];
-        }),
-      ],
-    },
-    layout: {
-      hLineWidth: () => 0.5,
-      vLineWidth: () => 0.5,
-      hLineColor: () => '#cbd5e1',
-      vLineColor: () => '#cbd5e1',
-    },
-    margin: [0, 4, 0, 8],
-  });
-
-  const sectionTitle = (num, text) => ([
-    { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 1.5, lineColor: MAROON }], margin: [0, 8, 0, 2] },
-    { text: `${num}. ${text}`, fontSize: 11, bold: true, color: MAROON, margin: [0, 6, 0, 4] },
-  ]);
-
-  const buildSections = () => {
-    const parts = [];
-    parts.push(...sectionTitle('2', 'Inmueble (padrón)'));
-    parts.push(makeTable(sec2));
-    parts.push(...sectionTitle('3', 'Estado de la edificación'));
-    parts.push(makeTable(sec3, true));
-    parts.push(...sectionTitle('4', 'Clasificación global'));
-    parts.push({
-      table: {
-        headerRows: 1,
-        widths: [32, '*', 160],
-        body: [
-          [{ text: 'No.', ...tableHeader }, { text: 'Características', ...tableHeader }, { text: 'Valor', ...tableHeader }],
-          [{ text: '4.1', ...cellStyleNo }, { text: 'Nivel de riesgos', ...cellStyle }, { text: rawRisk, ...cellStyle, bold: true, color: riskColor }],
-        ],
-      },
-      layout: { hLineWidth: () => 0.5, vLineWidth: () => 0.5, hLineColor: () => '#cbd5e1', vLineColor: () => '#cbd5e1' },
-      margin: [0, 4, 0, 8],
+  const makeSectionTable = (rows, highlightYes) => {
+    let html = '<table style="width:100%;border-collapse:collapse;margin:4px 0 10px 0;">';
+    html += `<tr><th style="${th}width:32px;">No.</th><th style="${th}">Características</th><th style="${th}width:40%;">Valor</th></tr>`;
+    rows.forEach(r => {
+      const s = String(r.val).toLowerCase();
+      const isYes = s === 'sí' || s === 'si' || s.includes('colapso') || s.includes('parcial') || s.includes('d.r.o');
+      const valStyle = (highlightYes && isYes)
+        ? `${td}font-weight:bold;color:#b91c1c;`
+        : `${td}color:#475569;`;
+      html += `<tr><td style="${tdNo}">${escHtml(r.no)}</td><td style="${td}">${escHtml(r.car)}</td><td style="${valStyle}">${escHtml(r.val)}</td></tr>`;
     });
-    parts.push(...sectionTitle('5', 'Recomendaciones'));
-    parts.push(makeTable(sec5, true));
-    parts.push(...sectionTitle('6', 'Fotografías'));
+    html += '</table>';
+    return html;
+  };
 
-    const fotosValidas = fotosB64.map((b64, i) => ({ b64 })).filter(f => f.b64);
-    if (fotosValidas.length > 0) {
-      const fotoRows = [];
-      for (let i = 0; i < fotosValidas.length; i += 2) {
-        const left = { image: fotosValidas[i].b64, fit: [250, 200], alignment: 'center' };
-        const right = fotosValidas[i + 1] ? { image: fotosValidas[i + 1].b64, fit: [250, 200], alignment: 'center' } : { text: '' };
-        fotoRows.push([left, right]);
-      }
-      parts.push({ table: { widths: ['*', '*'], body: fotoRows }, layout: 'noBorders', margin: [0, 4, 0, 4] });
-      parts.push({ text: 'Evidencia registrada durante la inspección', fontSize: 9, bold: true, color: '#475569', alignment: 'center', margin: [0, 4, 0, 8] });
-    } else {
-      parts.push({ text: 'No se registraron evidencias fotográficas en este reporte.', fontSize: 9, color: '#64748b', italics: true, alignment: 'center', margin: [0, 8, 0, 8] });
+  const sectionTitle = (num, text) => `
+    <div style="border-top:1.5px solid ${MAROON};margin-top:10px;"></div>
+    <div style="font-size:11px;font-weight:bold;color:${MAROON};margin:8px 0 4px 0;">${num}. ${escHtml(text)}</div>`;
+
+  let html = '';
+
+  html += `<div style="width:720px;margin:0 auto;padding:16px 20px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">`;
+
+  html += `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
+    <td style="width:30%;vertical-align:middle;">${logoB64 ? `<img src="${logoB64}" style="height:52px;" alt="Logo CDMX">` : ''}</td>
+    <td style="width:43%;text-align:right;vertical-align:middle;">
+      <div style="font-size:13px;font-weight:bold;color:#333;">SECRETARÍA DE VIVIENDA</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General de la</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">Comisión para la Reconstrucción de la Ciudad de</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">México.</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General</div>
+    </td>
+    <td style="width:27%;vertical-align:middle;">
+      <div style="font-size:7px;color:${MAROON};text-align:center;margin-bottom:2px;">Folio de Inspección</div>
+      <div style="border:1px solid ${MAROON};background:#fdf2f8;text-align:center;padding:5px;font-size:12px;font-weight:bold;color:${MAROON};">${escHtml(folio)}</div>
+    </td>
+  </tr></table>`;
+
+  html += `<div style="border-top:3px solid ${MAROON};margin-bottom:10px;"></div>`;
+
+  html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+    <div style="width:28px;height:28px;background:${MAROON};border-radius:14px;flex-shrink:0;"></div>
+    <div>
+      <div style="font-size:14px;font-weight:bold;color:#1e293b;text-decoration:underline;">REPORTE DE INSPECCIÓN DE INMUEBLE</div>
+      <div style="font-size:9px;color:#64748b;margin-top:2px;">SAS • Sistema de Afectaciones por Sismo</div>
+    </div>
+  </div>`;
+
+  html += `<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+    <tr>
+      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Fecha</td>
+      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Folio de inspección</td>
+      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Coordenadas</td>
+      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dispositivo</td>
+    </tr>
+    <tr>
+      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(fechaReporte)}</td>
+      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(folio)}</td>
+      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(coords)}</td>
+      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dispositivo)}</td>
+    </tr>
+    <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dirección</td></tr>
+    <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dir)}, ${escHtml(alcaldiaResolv)}, CDMX${cp ? ' • C.P. ' + escHtml(cp) : ''}</td></tr>
+    <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Descripción</td></tr>
+    <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;">${escHtml(descripcion)}</td></tr>
+  </table>`;
+
+  html += sectionTitle('2', 'Inmueble (padrón)');
+  html += makeSectionTable(sec2, false);
+  html += sectionTitle('3', 'Estado de la edificación');
+  html += makeSectionTable(sec3, true);
+  html += sectionTitle('4', 'Clasificación global');
+  html += `<table style="width:100%;border-collapse:collapse;margin:4px 0 10px 0;">
+    <tr><th style="${th}width:32px;">No.</th><th style="${th}">Características</th><th style="${th}width:40%;">Valor</th></tr>
+    <tr>
+      <td style="${tdNo}">4.1</td>
+      <td style="${td}">Nivel de riesgos</td>
+      <td style="${td}font-weight:bold;color:${riskColor};">${escHtml(rawRisk)}</td>
+    </tr>
+  </table>`;
+  html += sectionTitle('5', 'Recomendaciones');
+  html += makeSectionTable(sec5, true);
+  html += sectionTitle('6', 'Fotografías');
+
+  const fotosValidas = (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0);
+  if (fotosValidas.length > 0) {
+    html += '<table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr>';
+    fotosValidas.forEach((b64, i) => {
+      if (i % 2 === 0 && i > 0) html += '</tr><tr>';
+      html += `<td style="width:50%;text-align:center;padding:4px;border:none;"><img src="${b64}" style="max-width:320px;max-height:220px;border:1px solid #e2e8f0;border-radius:4px;" alt="Evidencia"></td>`;
+    });
+    if (fotosValidas.length % 2 === 1) html += '<td style="width:50%;border:none;"></td>';
+    html += '</tr></table>';
+    html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:4px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
+  } else {
+    html += `<div style="font-size:9px;color:#64748b;font-style:italic;text-align:center;margin:10px 0;">No se registraron evidencias fotográficas en este reporte.</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function dibujarFooterPDF(pdf, pageNum, totalPages, margaB64, mascotB64) {
+  const pageW = 215.9;
+  const pageH = 279.4;
+  const marginL = 12;
+  const footerTop = pageH - 26;
+
+  pdf.setDrawColor(122, 12, 56);
+  pdf.setLineWidth(0.5);
+  pdf.line(marginL, footerTop, pageW - marginL, footerTop);
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(7);
+  pdf.setTextColor(85, 85, 85);
+  pdf.text('Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.', marginL, footerTop + 4);
+  pdf.text('06080, Ciudad de México.', marginL, footerTop + 7.5);
+  pdf.text('Alcaldía Cuauhtémoc', marginL, footerTop + 11);
+
+  const imgY = footerTop + 3;
+  const imgH = 14;
+  if (margaB64 && margaB64.indexOf('data:image') === 0) {
+    try { pdf.addImage(margaB64, 'PNG', pageW - marginL - 88, imgY, 28, imgH); } catch (e) { /* ignore */ }
+  }
+  if (mascotB64 && mascotB64.indexOf('data:image') === 0) {
+    try { pdf.addImage(mascotB64, 'PNG', pageW - marginL - 55, imgY, 35, imgH); } catch (e) { /* ignore */ }
+  }
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(51, 51, 51);
+  pdf.text(`Página | ${pageNum} de ${totalPages}`, pageW - marginL, footerTop + 4, { align: 'right' });
+}
+
+async function descargarReporte(siniestroId) {
+  const jspdfLib = window.jsPDF || (window.jspdf && window.jspdf.jsPDF);
+  if (typeof html2canvas === 'undefined' || !jspdfLib) {
+    alert('No se pudo cargar la librería PDF. Verifica tu conexión a internet e intenta de nuevo.');
+    return;
+  }
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Generando Reporte SAS...</title>
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #7A0C38; }
+          .loader { text-align: center; }
+          .spinner { width: 44px; height: 44px; border: 4px solid #e2e8f0; border-top-color: #7A0C38; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+        </style>
+      </head>
+      <body>
+        <div class="loader">
+          <div class="spinner"></div>
+          <h2 style="font-size:1.15rem;margin:0 0 6px;">Generando Reporte Oficial SAS...</h2>
+          <p style="font-size:0.85rem;color:#64748b;margin:0;">Sistema de Afectaciones por Sismo • CDMX</p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  try {
+    const siniestro = await fetchJSON(`${API}/siniestros/${siniestroId}`);
+    const inmuebles = await fetchJSON(`${API}/inmuebles?siniestro=${siniestroId}`);
+    const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
+    const inmueblePadre = inmueblesPadre[0] || inmuebles[0] || {};
+    let valores = [];
+    if (inmueblePadre._id) {
+      valores = await fetchJSON(`${API}/valores-caracteristica?inmueble=${inmueblePadre._id}`);
     }
 
-    return parts;
-  };
+    const folio = siniestro.folio || siniestroId;
+    const origin = window.location.origin;
 
-  return {
-    pageSize: 'LETTER',
-    pageMargins: [40, 40, 40, 100],
-    defaultStyle: { fontSize: 9, lineHeight: 1.3 },
-    footer: function (currentPage, pageCount) {
-      return {
-        margin: [40, 6, 40, 0],
-        columns: [
-          {
-            width: '*',
-            stack: [
-              { text: 'Edificio Juana de Arco Tlaxcoaque No. 8, piso 3, Col.', fontSize: 7, color: '#555' },
-              { text: '06080, Ciudad de México.', fontSize: 7, color: '#555' },
-              { text: 'Alcaldía Cuauhtémoc', fontSize: 7, color: '#555' },
-            ],
-          },
-          { width: 'auto', text: 'Página | ' + currentPage + ' de ' + pageCount, fontSize: 8, bold: true, color: '#333', alignment: 'right' },
-        ],
-      };
-    },
-    content: [
-      {
-        columns: [
-          { width: '*', stack: logoB64 ? [{ image: logoB64, fit: [110, 60], alignment: 'left' }] : [] },
-          {
-            width: '*',
-            stack: [
-              { text: 'SECRETARÍA DE VIVIENDA', fontSize: 12, bold: true, color: '#333', alignment: 'right' },
-              { text: 'Dirección General de la', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
-              { text: 'Comisión para la Reconstrucción de la Ciudad de', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
-              { text: 'México.', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
-              { text: 'Dirección General', fontSize: 8, bold: true, color: '#555', alignment: 'right' },
-            ],
-          },
-          {
-            width: 110,
-            stack: [
-              { text: 'Folio de Inspección', fontSize: 7, color: MAROON, alignment: 'center', margin: [0, 0, 0, 2] },
-              { table: { widths: ['*'], body: [[{ text: folio, fontSize: 11, bold: true, color: MAROON, alignment: 'center' }]] }, layout: { fillColor: '#fdf2f8', hLineColor: () => MAROON, vLineColor: () => MAROON, hLineWidth: () => 1, vLineWidth: () => 1 } },
-            ],
-          },
-        ],
-        margin: [0, 0, 0, 6],
-      },
-      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 532, y2: 0, lineWidth: 3, lineColor: MAROON }], margin: [0, 0, 0, 8] },
-      {
-        columns: [
-          { width: 28, margin: [0, 0, 6, 0], canvas: [{ type: 'rect', x: 0, y: 0, w: 28, h: 28, color: MAROON, r: 14 }] },
-          {
-            width: '*',
-            stack: [
-              { text: 'REPORTE DE INSPECCIÓN DE INMUEBLE', fontSize: 13, bold: true, color: '#1e293b', decoration: 'underline' },
-              { text: 'SAS • Sistema de Afectaciones por Sismo', fontSize: 9, color: '#64748b', margin: [0, 2, 0, 0] },
-            ],
-          },
-        ],
-        margin: [0, 0, 0, 10],
-      },
-      {
-        table: {
-          widths: ['*', '*', '*', '*'],
-          body: [
-            [
-              { text: 'Fecha', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
-              { text: 'Folio de inspección', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
-              { text: 'Coordenadas', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
-              { text: 'Dispositivo', fontSize: 7, bold: true, color: MAROON, margin: [6, 4, 6, 0] },
-            ],
-            [
-              { text: fechaReporte, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
-              { text: folio, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
-              { text: coords, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
-              { text: dispositivo, fontSize: 8, bold: true, margin: [6, 0, 6, 4] },
-            ],
-            [{ text: 'Dirección', fontSize: 7, bold: true, color: MAROON, colSpan: 4, margin: [6, 4, 6, 0] }, {}, {}, {}],
-            [{ text: `${dir}, ${alcaldiaResolv}, CDMX ${cp ? '• C.P. ' + cp : ''}`, fontSize: 8, bold: true, colSpan: 4, margin: [6, 0, 6, 4] }, {}, {}, {}],
-            [{ text: 'Descripción', fontSize: 7, bold: true, color: MAROON, colSpan: 4, margin: [6, 4, 6, 0] }, {}, {}, {}],
-            [{ text: descripcion, fontSize: 8, colSpan: 4, margin: [6, 0, 6, 6] }, {}, {}, {}],
-          ],
-        },
-        layout: {
-          fillColor: (rowIndex) => [0, 2, 4].includes(rowIndex) ? '#fdf2f8' : '#ffffff',
-          hLineColor: () => '#f3d4e0',
-          vLineColor: () => '#f3d4e0',
-          hLineWidth: () => 0.5,
-          vLineWidth: () => 0.5,
-        },
-        margin: [0, 0, 0, 6],
-      },
-      ...buildSections(),
-    ],
-  };
+    const [logoB64, margaB64, mascotB64] = await Promise.all([
+      cargarImagenB64(`${origin}/images/logo_cdmx_comision.webp`),
+      cargarImagenB64(`${origin}/images/margarita_maza.png`),
+      cargarImagenB64(`${origin}/images/mascota_mundial.png`),
+    ]);
+
+    const fotos = siniestro.fotos || [];
+    const fotosB64 = await Promise.all(fotos.map(f => cargarImagenB64(f.url)));
+
+    const htmlContent = generarReporteHTML({ siniestro, inmueble: inmueblePadre, valores, logoB64, margaB64, mascotB64, fotosB64 });
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;background:#fff;font-family:Arial,Helvetica,sans-serif;';
+    container.innerHTML = htmlContent;
+    document.body.appendChild(container);
+
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    document.body.removeChild(container);
+
+    const pdf = new jspdfLib('p', 'mm', 'letter');
+    const pageW = 215.9;
+    const pageH = 279.4;
+    const marginL = 12;
+    const marginR = 12;
+    const marginT = 10;
+    const footerH = 26;
+    const contentW = pageW - marginL - marginR;
+    const contentH = pageH - marginT - footerH;
+
+    const canvasW = canvas.width;
+    const canvasH = canvas.height;
+    const imgHmm = (canvasH * contentW) / canvasW;
+    const totalPages = Math.max(1, Math.ceil(imgHmm / contentH));
+    const pxPerMmY = canvasH / imgHmm;
+    const pageContentPxH = contentH * pxPerMmY;
+
+    for (let i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+
+      const srcY = Math.floor(i * pageContentPxH);
+      const srcH = Math.min(Math.ceil(pageContentPxH), canvasH - srcY);
+
+      const slice = document.createElement('canvas');
+      slice.width = canvasW;
+      slice.height = srcH;
+      const ctx = slice.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, srcY, canvasW, srcH, 0, 0, canvasW, srcH);
+
+      const sliceData = slice.toDataURL('image/jpeg', 0.95);
+      const sliceHmm = srcH / pxPerMmY;
+      pdf.addImage(sliceData, 'JPEG', marginL, marginT, contentW, sliceHmm);
+
+      dibujarFooterPDF(pdf, i + 1, totalPages, margaB64, mascotB64);
+    }
+
+    pdf.save(`Reporte_SAS_${folio}.pdf`);
+
+    if (win && !win.closed) {
+      win.document.open();
+      win.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head><meta charset="UTF-8"><title>Reporte SAS</title>
+        <style>body{font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f8fafc;color:#7A0C38;}div{text-align:center;}</style>
+        </head>
+        <body><div>
+          <h2>Reporte PDF generado</h2>
+          <p style="color:#4b5563;">El archivo <strong>Reporte_SAS_${folio}.pdf</strong> se ha descargado.</p>
+          <button onclick="window.close()" style="margin-top:1rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar</button>
+        </div></body>
+        </html>
+      `);
+      win.document.close();
+    }
+  } catch (err) {
+    console.error('Error al generar reporte:', err);
+    if (win && !win.closed) {
+      win.document.body.innerHTML = `
+        <div style="font-family:system-ui;padding:2.5rem;text-align:center;color:#dc2626;">
+          <h3 style="margin-bottom:0.5rem;">Error al generar reporte</h3>
+          <p style="color:#4b5563;">${err.message}</p>
+          <button onclick="window.close()" style="margin-top:1.2rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar Ventana</button>
+        </div>
+      `;
+    } else {
+      alert(`Error al generar el reporte: ${err.message}`);
+    }
+  }
 }
 
 let _ubicData = [];

@@ -826,109 +826,98 @@ function cargarImagenB64(url) {
   });
 }
 
-function generarReporteHTML({ siniestro, inmueble, valores, logoB64, margaB64, mascotB64, fotosB64 }) {
+const TITULOS_SECCIONES = {
+  2: 'Inmueble (padrón)',
+  3: 'Estado de la edificación',
+  4: 'Clasificación global',
+  5: 'Recomendaciones',
+  6: 'Fotografías',
+};
+
+function extraerNumSeccion(nombre) {
+  const m = String(nombre || '').match(/^(\d+)\./);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function extraerNumCaracteristica(nombre) {
+  const m = String(nombre || '').match(/^(\d+(?:\.\d+)*)/);
+  return m ? m[1] : '';
+}
+
+function extraerNombreLimpio(nombre) {
+  return String(nombre || '').replace(/^\d+(?:\.\d+)*\s*/, '').trim();
+}
+
+function extraerValorDeValor(v) {
+  if (!v) return null;
+  if (v.valor_texto != null && v.valor_texto !== '') {
+    return v.valor_texto_condicional ? `${v.valor_texto} (${v.valor_texto_condicional})` : v.valor_texto;
+  }
+  if (v.valor_numero != null) return String(v.valor_numero);
+  if (v.valor_booleano != null) return v.valor_booleano ? 'Sí' : 'No';
+  if (v.valor_seleccion != null && v.valor_seleccion !== '') {
+    return v.valor_texto_condicional ? `${v.valor_seleccion} (${v.valor_texto_condicional})` : v.valor_seleccion;
+  }
+  return null;
+}
+
+function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, logoB64, fotosB64 }) {
   const folio = siniestro.folio || 'SAS-REPORTE';
   const fechaReporte = formatDate(siniestro.fecha || new Date());
 
-  const getVal = (code, fallback = '—') => {
-    const v = valores.find(item => {
-      const n = item.caracteristica?.nombre || '';
-      return n.startsWith(code + ' ') || n.startsWith(code + '.') || n.startsWith(code);
-    });
-    if (!v) return fallback;
-    if (v.valor_texto != null && v.valor_texto !== '') {
-      return v.valor_texto_condicional ? `${v.valor_texto} (${v.valor_texto_condicional})` : v.valor_texto;
-    }
-    if (v.valor_numero != null) return String(v.valor_numero);
-    if (v.valor_booleano != null) return v.valor_booleano ? 'Sí' : 'No';
-    if (v.valor_seleccion != null && v.valor_seleccion !== '') {
-      return v.valor_texto_condicional ? `${v.valor_seleccion} (${v.valor_texto_condicional})` : v.valor_seleccion;
-    }
-    return fallback;
-  };
-
   const dir = siniestro.ubicacion?.direccion || '—';
   const alcaldiaResolv = resolveAlcaldia(siniestro.ubicacion);
-  const cp = siniestro.ubicacion?.codigo_postal || getVal('2.4', '—');
   const coords = (siniestro.ubicacion?.lat && siniestro.ubicacion?.lng)
     ? `${siniestro.ubicacion.lat}, ${siniestro.ubicacion.lng}`
     : 'No disponible';
   const descripcion = siniestro.descripcion || 'Sin observaciones adicionales registradas.';
   const dispositivo = siniestro.dispositivo_id || 'Dispositivo Móvil SAS';
 
-  const sec2 = [
-    { no: '2.1', car: 'Calle y Número (mz y lt, en su caso)', val: getVal('2.1', dir) },
-    { no: '2.2', car: 'Colonia', val: getVal('2.2', 'Centro') },
-    { no: '2.3', car: 'Alcaldía', val: getVal('2.3', alcaldiaResolv) },
-    { no: '2.4', car: 'Código Postal', val: getVal('2.4', cp) },
-    { no: '2.5', car: 'Entre que calles/referencia', val: getVal('2.5', '—') },
-    { no: '2.6', car: 'Responsable del inmueble', val: getVal('2.6', '—') },
-    { no: '2.7', car: 'Teléfono del responsable del inmueble', val: getVal('2.7', '—') },
-    { no: '2.8', car: 'Año estimado de la construcción', val: getVal('2.8', '—') },
-    { no: '2.9', car: 'Uso del Inmueble', val: getVal('2.9', inmueble.tipo === 'edificio' ? 'HABITACIÓN MULTIFAMILIAR' : 'HABITACIÓN UNIFAMILIAR') },
-    { no: '2.10', car: 'Número de niveles sobre el terreno', val: getVal('2.10', String(inmueble.sobre_nivel_banqueta ?? inmueble.numero_niveles ?? 1)) },
-    { no: '2.11', car: 'Número de sótanos', val: getVal('2.11', String(inmueble.bajo_nivel_banqueta ?? 0)) },
-    { no: '2.12', car: 'Número de ocupantes', val: getVal('2.12', '—') },
-    { no: '2.13', car: 'Tipo de inspección', val: getVal('2.13', 'INSPECCIÓN INTERIOR Y EXTERIOR') },
-  ];
+  const valoresMap = new Map();
+  (valores || []).forEach(v => {
+    if (v.caracteristica && v.caracteristica._id) {
+      valoresMap.set(v.caracteristica._id, v);
+    }
+  });
 
-  const sec3 = [
-    { no: '3.1', car: 'Sistema constructivo', val: getVal('3.1', inmueble.tipo === 'edificio' ? 'Estructura formal de mampostería / concreto' : 'Mampostería confinada') },
-    { no: '3.2', car: '¿Presenta colapso estructural?', val: getVal('3.2', inmueble.estado_afectacion === 'colapso' ? 'Colapso total' : 'No presenta colapso') },
-    { no: '3.3', car: 'Edificación separada de su cimentación', val: getVal('3.3', 'No') },
-    { no: '3.4', car: 'Asentamiento diferencial o hundimiento', val: getVal('3.4', 'No') },
-    { no: '3.5', car: 'Inclinación notoria de la edificación o de algún entrepiso', val: getVal('3.5', 'No') },
-    { no: '3.6', car: 'Daños severos en elementos estructurales (columnas, vigas, muros de carga)', val: getVal('3.6', inmueble.estado_afectacion === 'critico' ? 'Sí' : 'No') },
-    { no: '3.7', car: 'Daños moderados en elementos estructurales', val: getVal('3.7', inmueble.estado_afectacion === 'moderado' ? 'Sí' : 'No') },
-    { no: '3.8', car: 'Daños severos en elementos no estructurales (muros divisorios, acabados, cancelería)', val: getVal('3.8', 'No') },
-    { no: '3.9', car: 'Daños moderados en elementos no estructurales', val: getVal('3.9', 'No') },
-    { no: '3.10', car: 'Daños en instalaciones eléctricas', val: getVal('3.10', 'No') },
-    { no: '3.11', car: 'Daños en instalaciones hidrosanitarias', val: getVal('3.11', 'No') },
-    { no: '3.12', car: 'Daños en instalaciones de gas', val: getVal('3.12', 'No') },
-    { no: '3.13', car: 'Deslizamiento de talud o corte', val: getVal('3.13', 'No') },
-    { no: '3.14', car: 'Pretiles, balcones u otros objetos en peligro de caer', val: getVal('3.14', 'No') },
-    { no: '3.15', car: 'Otros peligros (líneas o ductos rotos, derrames tóxicos, etc.)', val: getVal('3.15', 'No') },
-  ];
-
-  let rawRisk = getVal('4.1', '');
-  if (!rawRisk) {
-    rawRisk = inmueble.estado_afectacion === 'colapso' ? 'Colapso'
-      : inmueble.estado_afectacion === 'critico' ? 'Edificación en Riesgo Alto'
-        : inmueble.estado_afectacion === 'moderado' ? 'Área Insegura o Edificación en Riesgo Medio'
-          : 'Edificación en Riesgo Bajo';
-  }
-  let riskColor = '#166534';
-  const rLower = rawRisk.toLowerCase();
-  if (rLower.includes('colapso')) riskColor = '#111827';
-  else if (rLower.includes('alto') || rLower.includes('critico') || rLower.includes('crítico')) riskColor = '#991b1b';
-  else if (rLower.includes('medio') || rLower.includes('moderado') || rLower.includes('insegura')) riskColor = '#854d0e';
-
-  const sec5 = [
-    { no: '5.1', car: 'Requiere revisión futura', val: getVal('5.1', 'Sí') },
-    { no: '5.2', car: '¿Requiere D.R.O. y/o C-SE?', val: getVal('5.2', 'D.R.O.') },
-    { no: '5.3', car: 'Apuntalar', val: getVal('5.3', 'No') },
-    { no: '5.4', car: 'Maquinaria para remover escombro', val: getVal('5.4', 'No') },
-    { no: '5.5', car: 'Inspección por SGIRPC', val: getVal('5.5', 'Sí') },
-    { no: '5.6', car: 'Inspección por SACMEX', val: getVal('5.6', 'No') },
-    { no: '5.7', car: 'Inspección por SSC', val: getVal('5.7', 'No') },
-    { no: '5.8', car: 'Inspección por Central de fugas', val: getVal('5.8', 'No') },
-  ];
+  const secciones = new Map();
+  (caracteristicas || []).forEach(c => {
+    const secNum = extraerNumSeccion(c.nombre);
+    if (!secNum) return;
+    if (!secciones.has(secNum)) secciones.set(secNum, []);
+    const valorObj = valoresMap.get(c._id);
+    const valorTxt = extraerValorDeValor(valorObj);
+    secciones.get(secNum).push({
+      num: extraerNumCaracteristica(c.nombre),
+      nombre: extraerNombreLimpio(c.nombre),
+      valor: valorTxt != null ? valorTxt : '—',
+      esRiesgo: /riesgo|colapso/i.test(c.nombre),
+    });
+  });
 
   const MAROON = '#7A0C38';
   const th = `background:${MAROON};color:#fff;font-weight:bold;font-size:8px;padding:4px 6px;border:0.5px solid #cbd5e1;`;
   const td = 'font-size:8px;padding:3px 6px;border:0.5px solid #cbd5e1;vertical-align:top;';
   const tdNo = `font-size:8px;padding:3px 4px;border:0.5px solid #cbd5e1;text-align:center;font-weight:bold;color:${MAROON};vertical-align:top;`;
 
-  const makeSectionTable = (rows, highlightYes) => {
+  const colorParaValor = (texto) => {
+    const s = String(texto).toLowerCase();
+    if (s.includes('colapso')) return '#111827';
+    if (s.includes('alto') || s.includes('crítico') || s.includes('critico')) return '#991b1b';
+    if (s.includes('medio') || s.includes('moderado') || s.includes('insegura')) return '#854d0e';
+    if (s.includes('bajo') || s === 'no' || s === 'sí' || s === 'si') return '#166534';
+    return null;
+  };
+
+  const makeSectionTable = (rows) => {
     let html = '<table style="width:100%;border-collapse:collapse;margin:4px 0 10px 0;">';
     html += `<tr><th style="${th}width:32px;">No.</th><th style="${th}">Características</th><th style="${th}width:40%;">Valor</th></tr>`;
     rows.forEach(r => {
-      const s = String(r.val).toLowerCase();
-      const isYes = s === 'sí' || s === 'si' || s.includes('colapso') || s.includes('parcial') || s.includes('d.r.o');
-      const valStyle = (highlightYes && isYes)
-        ? `${td}font-weight:bold;color:#b91c1c;`
+      const valColor = colorParaValor(r.valor);
+      const valStyle = (r.esRiesgo && valColor)
+        ? `${td}font-weight:bold;color:${valColor};`
         : `${td}color:#475569;`;
-      html += `<tr><td style="${tdNo}">${escHtml(r.no)}</td><td style="${td}">${escHtml(r.car)}</td><td style="${valStyle}">${escHtml(r.val)}</td></tr>`;
+      html += `<tr><td style="${tdNo}">${escHtml(r.num)}</td><td style="${td}">${escHtml(r.nombre)}</td><td style="${valStyle}">${escHtml(r.valor)}</td></tr>`;
     });
     html += '</table>';
     return html;
@@ -939,7 +928,6 @@ function generarReporteHTML({ siniestro, inmueble, valores, logoB64, margaB64, m
     <div style="font-size:11px;font-weight:bold;color:${MAROON};margin:8px 0 4px 0;">${num}. ${escHtml(text)}</div>`;
 
   let html = '';
-
   html += `<div style="width:720px;margin:0 auto;padding:16px 20px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">`;
 
   html += `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
@@ -981,40 +969,35 @@ function generarReporteHTML({ siniestro, inmueble, valores, logoB64, margaB64, m
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dispositivo)}</td>
     </tr>
     <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dirección</td></tr>
-    <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dir)}, ${escHtml(alcaldiaResolv)}, CDMX${cp ? ' • C.P. ' + escHtml(cp) : ''}</td></tr>
+    <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dir)}, ${escHtml(alcaldiaResolv)}, CDMX</td></tr>
     <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Descripción</td></tr>
     <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;">${escHtml(descripcion)}</td></tr>
   </table>`;
 
-  html += sectionTitle('2', 'Inmueble (padrón)');
-  html += makeSectionTable(sec2, false);
-  html += sectionTitle('3', 'Estado de la edificación');
-  html += makeSectionTable(sec3, true);
-  html += sectionTitle('4', 'Clasificación global');
-  html += `<table style="width:100%;border-collapse:collapse;margin:4px 0 10px 0;">
-    <tr><th style="${th}width:32px;">No.</th><th style="${th}">Características</th><th style="${th}width:40%;">Valor</th></tr>
-    <tr>
-      <td style="${tdNo}">4.1</td>
-      <td style="${td}">Nivel de riesgos</td>
-      <td style="${td}font-weight:bold;color:${riskColor};">${escHtml(rawRisk)}</td>
-    </tr>
-  </table>`;
-  html += sectionTitle('5', 'Recomendaciones');
-  html += makeSectionTable(sec5, true);
-  html += sectionTitle('6', 'Fotografías');
+  const numsSeccion = [...secciones.keys()].sort((a, b) => a - b);
+  numsSeccion.forEach(secNum => {
+    const rows = secciones.get(secNum);
+    const titulo = TITULOS_SECCIONES[secNum] || `Sección ${secNum}`;
+    html += sectionTitle(String(secNum), titulo);
+    html += makeSectionTable(rows);
 
-  const fotosValidas = (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0);
-  if (fotosValidas.length > 0) {
-    html += '<table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr>';
-    fotosValidas.forEach((b64, i) => {
-      if (i % 2 === 0 && i > 0) html += '</tr><tr>';
-      html += `<td style="width:50%;text-align:center;padding:4px;border:none;"><img src="${b64}" style="max-width:320px;max-height:220px;border:1px solid #e2e8f0;border-radius:4px;" alt="Evidencia"></td>`;
-    });
-    if (fotosValidas.length % 2 === 1) html += '<td style="width:50%;border:none;"></td>';
-    html += '</tr></table>';
-    html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:4px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
-  } else {
-    html += `<div style="font-size:9px;color:#64748b;font-style:italic;text-align:center;margin:10px 0;">No se registraron evidencias fotográficas en este reporte.</div>`;
+    if (secNum === 6) {
+      const fotosValidas = (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0);
+      if (fotosValidas.length > 0) {
+        html += '<table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr>';
+        fotosValidas.forEach((b64, i) => {
+          if (i % 2 === 0 && i > 0) html += '</tr><tr>';
+          html += `<td style="width:50%;text-align:center;padding:4px;border:none;"><img src="${b64}" style="max-width:320px;max-height:220px;border:1px solid #e2e8f0;border-radius:4px;" alt="Evidencia"></td>`;
+        });
+        if (fotosValidas.length % 2 === 1) html += '<td style="width:50%;border:none;"></td>';
+        html += '</tr></table>';
+        html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:4px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
+      }
+    }
+  });
+
+  if (numsSeccion.length === 0) {
+    html += `<div style="font-size:9px;color:#64748b;font-style:italic;text-align:center;margin:10px 0;">No hay características definidas para este tipo de inmueble.</div>`;
   }
 
   html += `</div>`;
@@ -1091,6 +1074,18 @@ async function descargarReporte(siniestroId) {
     const inmuebles = await fetchJSON(`${API}/inmuebles?siniestro=${siniestroId}`);
     const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
     const inmueblePadre = inmueblesPadre[0] || inmuebles[0] || {};
+
+    let tipoId = inmueblePadre.tipo_inmueble_ref;
+    if (!tipoId) {
+      const tipos = await fetchJSON(`${API}/tipos-inmueble?activos=true`);
+      tipoId = tipos[0]?._id || null;
+    }
+
+    let caracteristicas = [];
+    if (tipoId) {
+      caracteristicas = await fetchJSON(`${API}/tipos-inmueble/${tipoId}/caracteristicas`);
+    }
+
     let valores = [];
     if (inmueblePadre._id) {
       valores = await fetchJSON(`${API}/valores-caracteristica?inmueble=${inmueblePadre._id}`);
@@ -1108,7 +1103,7 @@ async function descargarReporte(siniestroId) {
     const fotos = siniestro.fotos || [];
     const fotosB64 = await Promise.all(fotos.map(f => cargarImagenB64(f.url)));
 
-    const htmlContent = generarReporteHTML({ siniestro, inmueble: inmueblePadre, valores, logoB64, margaB64, mascotB64, fotosB64 });
+    const htmlContent = generarReporteHTML({ siniestro, inmueble: inmueblePadre, caracteristicas, valores, logoB64, fotosB64 });
 
     const container = document.createElement('div');
     container.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;background:#fff;font-family:Arial,Helvetica,sans-serif;';

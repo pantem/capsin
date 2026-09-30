@@ -1319,11 +1319,8 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       gap: 8px;
     }
     .footer-marga-img {
-      width: 42px;
-      height: 52px;
+      width: 115px;
       object-fit: cover;
-      border-radius: 2px;
-      border: 1px solid #ccc;
     }
     .footer-marga-text {
       text-align: center;
@@ -1350,8 +1347,7 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       gap: 6px;
     }
     .footer-mascot-img {
-      width: 40px;
-      height: 48px;
+      width: 158px;
       object-fit: contain;
     }
     .footer-mundial-text {
@@ -1419,8 +1415,8 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
           </div>
         </div>
         <div class="header-logo-text">
-          <div class="header-cdmx-name">Ciudad de México</div>
-          <div class="header-cdmx-sub">Capital de la Transformación</div>
+          <div class="header-cdmx-name">&nbsp;</div>
+          <div class="header-cdmx-sub">&nbsp;</div>
         </div>
       </div>
       <div class="header-right-info">
@@ -1619,19 +1615,19 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
         Alcaldía Cuauhtémoc
       </div>
       <div class="footer-center">
-        <img src="${window.location.origin}/images/margarita_maza.svg" class="footer-marga-img" onerror="this.style.display='none'" alt="Margarita Maza">
+        <img src="${window.location.origin}/images/margarita_maza.png" class="footer-marga-img" onerror="this.style.display='none'" alt="Margarita Maza">
         <div class="footer-marga-text">
-          <div class="footer-marga-year">2026</div>
-          <div class="footer-marga-label">año de</div>
-          <div class="footer-marga-label">Margarita</div>
-          <div class="footer-marga-name">Maza</div>
+          <div class="footer-marga-year">&nbsp;</div>
+          <div class="footer-marga-label">&nbsp;</div>
+          <div class="footer-marga-label">&nbsp;</div>
+          <div class="footer-marga-name">&nbsp;</div>
         </div>
       </div>
       <div class="footer-right">
-        <img src="${window.location.origin}/images/mascota_mundial.svg" class="footer-mascot-img" onerror="this.style.display='none'" alt="Mascota">
+        <img src="${window.location.origin}/images/mascota_mundial.png" class="footer-mascot-img" onerror="this.style.display='none'" alt="Mascota">
         <div class="footer-mundial-text">
-          <div class="footer-mundial-year">2<span style="font-size:16px;">⚽</span>26</div>
-          <div class="footer-mundial-label">Año Mundialista</div>
+          <div class="footer-mundial-year">&nbsp;</div>
+          <div class="footer-mundial-label">&nbsp;</div>
         </div>
       </div>
     </div>

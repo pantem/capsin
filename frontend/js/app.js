@@ -810,7 +810,7 @@ function escHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-function cargarImagenB64(url) {
+function cargarImagenB64(url, { normalizar43 = false } = {}) {
   return new Promise((resolve) => {
     if (!url) return resolve(null);
     const img = new Image();
@@ -818,10 +818,25 @@ function cargarImagenB64(url) {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        canvas.getContext('2d').drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
+        const ctx = canvas.getContext('2d');
+        if (normalizar43) {
+          const W = 1600;
+          const H = 1200;
+          canvas.width = W;
+          canvas.height = H;
+          const scale = Math.max(W / img.width, H / img.height);
+          const dw = img.width * scale;
+          const dh = img.height * scale;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, W, H);
+          ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        } else {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        }
       } catch {
         resolve(null);
       }
@@ -989,14 +1004,15 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
     if (secNum === 6) {
       const fotosValidas = (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0);
       if (fotosValidas.length > 0) {
-        html += '<table style="width:100%;border-collapse:collapse;margin:4px 0;"><tr>';
         fotosValidas.forEach((b64, i) => {
-          if (i % 2 === 0 && i > 0) html += '</tr><tr>';
-          html += `<td style="width:50%;text-align:center;padding:4px;border:none;"><img src="${b64}" style="max-width:320px;max-height:220px;border:1px solid #e2e8f0;border-radius:4px;" alt="Evidencia"></td>`;
+          html += `<div style="margin:4px 0 8px 0;">
+            <div style="width:calc(100% + 40px);margin-left:-20px;">
+              <img src="${b64}" style="width:100%;height:auto;display:block;border:1px solid #e2e8f0;border-radius:4px;" alt="Evidencia">
+            </div>
+            <div style="font-size:8px;color:#475569;text-align:right;margin-top:2px;">Foto ${i + 1}</div>
+          </div>`;
         });
-        if (fotosValidas.length % 2 === 1) html += '<td style="width:50%;border:none;"></td>';
-        html += '</tr></table>';
-        html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:4px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
+        html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:8px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
       }
     }
   });
@@ -1106,7 +1122,7 @@ async function descargarReporte(siniestroId) {
     ]);
 
     const fotos = siniestro.fotos || [];
-    const fotosB64 = await Promise.all(fotos.map(f => cargarImagenB64(f.url)));
+    const fotosB64 = await Promise.all(fotos.map(f => cargarImagenB64(f.url, { normalizar43: true })));
 
     const htmlContent = generarReporteHTML({ siniestro, inmueble: inmueblePadre, caracteristicas, valores, logoB64, fotosB64 });
 

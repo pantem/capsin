@@ -29,6 +29,15 @@ router.post('/:folio', upload.array('fotos', 20), async (req, res) => {
           {
             folder: `capsin/${folio}`,
             resource_type: 'image',
+            transformation: [
+              {
+                width: 1600,
+                height: 1200,
+                crop: 'fill',
+                quality: 'auto',
+                format: 'auto',
+              },
+            ],
           },
           (error, result) => {
             if (error) reject(error);

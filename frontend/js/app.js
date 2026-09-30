@@ -1501,6 +1501,22 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
 }
 
 let _ubicData = [];
+let _ubicFiltered = [];
+let _ubicCurrentPage = 1;
+let _ubicPerPage = 15;
+
+function setUbicacionPage(page) {
+  _ubicCurrentPage = page;
+  renderUbicacion(_ubicFiltered, document.getElementById('ubic-count'), document.getElementById('ubic-resultados'));
+  const container = document.getElementById('view-ubicacion');
+  if (container) container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cambiarUbicacionPageSize(size) {
+  _ubicPerPage = parseInt(size, 10) || 15;
+  _ubicCurrentPage = 1;
+  renderUbicacion(_ubicFiltered, document.getElementById('ubic-count'), document.getElementById('ubic-resultados'));
+}
 
 async function loadUbicacion() {
   const container = document.getElementById('ubic-resultados');
@@ -1514,6 +1530,7 @@ async function loadUbicacion() {
     ]);
 
     _ubicData = data;
+    _ubicCurrentPage = 1;
 
     const alcaldiaSelect = document.getElementById('ubic-alcaldia');
     const coloniaSelect = document.getElementById('ubic-colonia');
@@ -1532,12 +1549,25 @@ async function loadUbicacion() {
 }
 
 function renderUbicacion(data, countEl, container) {
-  countEl.textContent = `${data.length} registro(s) encontrado(s)`;
+  _ubicFiltered = data;
+  const totalItems = data.length;
 
-  if (data.length === 0) {
+  if (countEl) {
+    countEl.textContent = totalItems === 0 ? '0 registro(s) encontrado(s)' : `${totalItems.toLocaleString()} registro(s) en total`;
+  }
+
+  if (totalItems === 0) {
     container.innerHTML = '<p style="color:#777;">No se encontraron inmuebles con los filtros seleccionados.</p>';
     return;
   }
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / _ubicPerPage));
+  if (_ubicCurrentPage > totalPages) _ubicCurrentPage = totalPages;
+  if (_ubicCurrentPage < 1) _ubicCurrentPage = 1;
+
+  const startIndex = totalItems === 0 ? 0 : (_ubicCurrentPage - 1) * _ubicPerPage;
+  const endIndex = Math.min(startIndex + _ubicPerPage, totalItems);
+  const pageItems = data.slice(startIndex, endIndex);
 
   container.innerHTML = `
     <div style="overflow-x:auto;">
@@ -1557,7 +1587,7 @@ function renderUbicacion(data, countEl, container) {
           </tr>
         </thead>
         <tbody>
-          ${data.map(d => {
+          ${pageItems.map(d => {
     const estadoColor = d.estadoAfectacion === 'critico' ? '#d32f2f' : d.estadoAfectacion === 'colapso' ? '#000000' : d.estadoAfectacion === 'moderado' ? '#f57c00' : '#388e3c';
     const estadoLabel = d.estadoAfectacion === 'critico' ? 'Riesgo alto' : d.estadoAfectacion === 'colapso' ? 'Colapso' : d.estadoAfectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
     return `
@@ -1590,11 +1620,38 @@ function renderUbicacion(data, countEl, container) {
   }).join('')}
         </tbody>
       </table>
+
+      <div class="pagination-footer">
+        <div class="pagination-left">
+          <span class="pagination-info">
+            Mostrando <strong>${startIndex + 1}</strong> a <strong>${endIndex}</strong> de <strong>${totalItems.toLocaleString()}</strong> registros
+          </span>
+          <div class="pagination-size-select">
+            <span>Mostrar</span>
+            <select onchange="cambiarUbicacionPageSize(this.value)">
+              <option value="10" ${_ubicPerPage === 10 ? 'selected' : ''}>10</option>
+              <option value="15" ${_ubicPerPage === 15 ? 'selected' : ''}>15</option>
+              <option value="25" ${_ubicPerPage === 25 ? 'selected' : ''}>25</option>
+              <option value="50" ${_ubicPerPage === 50 ? 'selected' : ''}>50</option>
+              <option value="100" ${_ubicPerPage === 100 ? 'selected' : ''}>100</option>
+            </select>
+            <span>por página</span>
+          </div>
+        </div>
+        <div class="pagination-right">
+          <button class="pagination-btn" onclick="setUbicacionPage(1)" ${_ubicCurrentPage === 1 ? 'disabled' : ''} title="Primera página" type="button">«</button>
+          <button class="pagination-btn" onclick="setUbicacionPage(${_ubicCurrentPage - 1})" ${_ubicCurrentPage === 1 ? 'disabled' : ''} title="Página anterior" type="button">‹</button>
+          ${getPaginationButtons(_ubicCurrentPage, totalPages)}
+          <button class="pagination-btn" onclick="setUbicacionPage(${_ubicCurrentPage + 1})" ${_ubicCurrentPage === totalPages ? 'disabled' : ''} title="Página siguiente" type="button">›</button>
+          <button class="pagination-btn" onclick="setUbicacionPage(${totalPages})" ${_ubicCurrentPage === totalPages ? 'disabled' : ''} title="Última página" type="button">»</button>
+        </div>
+      </div>
     </div>
   `;
 }
 
 function filtrarUbicacion() {
+  _ubicCurrentPage = 1;
   const alcaldia = document.getElementById('ubic-alcaldia').value;
   const colonia = document.getElementById('ubic-colonia').value;
   const cp = document.getElementById('ubic-cp').value.trim().toLowerCase();

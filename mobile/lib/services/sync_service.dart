@@ -92,6 +92,7 @@ class SyncService {
             }
 
             await _db.marcarReporteSincronizado(reporte.id);
+            await _db.derivarEstadoAfectacion(reporte.id);
             for (final d in damnificados) {
               await _db.marcarDamnificadoSincronizado(d.id);
             }

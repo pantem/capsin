@@ -207,6 +207,41 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
+
+    for (final c in _caracteristicas) {
+      if (!c.requerido) continue;
+      final raw = _valoresCaracteristica[c.id];
+      bool vacio = false;
+      switch (c.tipoDato) {
+        case 'texto':
+        case 'textarea':
+        case 'numero':
+          final ctrl = _textControllers[c.id];
+          if (ctrl == null || ctrl.text.trim().isEmpty) vacio = true;
+          break;
+        case 'seleccion':
+          final sel = raw as String?;
+          if (sel == null || sel.isEmpty) vacio = true;
+          break;
+        case 'booleano':
+          if (raw == null) vacio = true;
+          break;
+        case 'date':
+          if (raw == null || (raw as String? ?? '').isEmpty) vacio = true;
+          break;
+        case 'multiseleccion':
+          final s = raw as Set<String>?;
+          if (s == null || s.isEmpty) vacio = true;
+          break;
+      }
+      if (vacio) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${c.nombre} es requerido')),
+        );
+        return;
+      }
+    }
     try {
       final folio =
           'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
@@ -223,7 +258,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
       String estadoAfectacion = 'sin_daños';
       for (final c in _caracteristicas) {
-        if (c.nombre.contains('Clasificación de Nivel de Daño')) {
+        if (c.nombre.contains('Nivel de riesgo') || c.nombre.contains('Clasificación de Nivel de Daño')) {
           final raw = _valoresCaracteristica[c.id];
           final valor = raw as String? ?? '';
           if (valor.contains('Riesgo Alto')) {

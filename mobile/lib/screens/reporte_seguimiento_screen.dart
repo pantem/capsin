@@ -90,6 +90,44 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
 
   Future<void> _guardar() async {
     if (_guardando) return;
+
+    if (!_formKey.currentState!.validate()) return;
+
+    for (final c in _caracteristicas) {
+      if (!c.requerido) continue;
+      final raw = _valoresCaracteristica[c.id];
+      bool vacio = false;
+      switch (c.tipoDato) {
+        case 'texto':
+        case 'textarea':
+        case 'numero':
+          final ctrl = _textControllers[c.id];
+          if (ctrl == null || ctrl.text.trim().isEmpty) vacio = true;
+          break;
+        case 'seleccion':
+          final sel = raw as String?;
+          if (sel == null || sel.isEmpty) vacio = true;
+          break;
+        case 'booleano':
+          if (raw == null) vacio = true;
+          break;
+        case 'date':
+          if (raw == null || (raw as String? ?? '').isEmpty) vacio = true;
+          break;
+        case 'multiseleccion':
+          final s = raw as Set<String>?;
+          if (s == null || s.isEmpty) vacio = true;
+          break;
+      }
+      if (vacio) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${c.nombre} es requerido')),
+        );
+        return;
+      }
+    }
+
     setState(() => _guardando = true);
 
     try {

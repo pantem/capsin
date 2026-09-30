@@ -261,6 +261,30 @@ class DatabaseService {
     }, where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> derivarEstadoAfectacion(String reporteId) async {
+    final db = await database;
+    final tipos = await getTiposInmueble(soloActivos: true);
+    if (tipos.isEmpty) return;
+    final caracts = await getCaracteristicas(tipos.first.id);
+    final valores = await getValoresCaracteristica(reporteId);
+    String estado = 'sin_daños';
+    for (final c in caracts) {
+      if (c.nombre.contains('Nivel de riesgo') || c.nombre.contains('Clasificación de Nivel de Daño')) {
+        final v = valores.where((val) => val.caracteristicaId == c.id).toList();
+        if (v.isNotEmpty) {
+          final sel = v.first.valorSeleccion ?? '';
+          if (sel.contains('Riesgo Alto')) estado = 'critico';
+          else if (sel.contains('Riesgo Medio')) estado = 'moderado';
+          else if (sel.contains('Colapso')) estado = 'colapso';
+          else estado = 'sin_daños';
+        }
+        break;
+      }
+    }
+    await db.update('reportes', {'estadoAfectacion': estado},
+        where: 'id = ?', whereArgs: [reporteId]);
+  }
+
   Future<void> actualizarFotosReporte(String id, String fotos) async {
     final db = await database;
     await db.update('reportes', {'fotos': fotos},

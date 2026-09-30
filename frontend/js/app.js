@@ -9,8 +9,10 @@ async function fetchJSON(url) {
 }
 
 function formatDate(d) {
-  return new Date(d).toLocaleDateString('es-MX', {
+  const date = new Date(d);
+  return date.toLocaleDateString('es-MX', {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    timeZone: 'America/Mexico_City',
   });
 }
 
@@ -365,6 +367,7 @@ async function loadDashboard() {
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
+          timeZone: 'America/Mexico_City',
         });
       } else {
         tsEl.textContent = '15 de septiembre de 2026, 17:24';
@@ -416,6 +419,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
               <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Tipo de Inmueble</th>
               <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Nivel de Daño</th>
               <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;">Dirección</th>
+              <th style="padding:0.6rem;border-bottom:2px solid #e5e7eb;text-align:center;">Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -429,6 +433,16 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
                   </span>
                 </td>
                 <td style="padding:0.5rem;color:#555;">${r.direccion || '—'}</td>
+                <td style="padding:0.5rem;text-align:center;" onclick="event.stopPropagation();">
+                  <button class="btn-download-report" onclick="descargarReporte('${r.siniestroId}')" title="Descargar Reporte (${r.folio || 'PDF'})" style="padding:0.3rem 0.6rem;font-size:0.75rem;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Descargar</span>
+                  </button>
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -445,6 +459,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
 
 async function loadReportesList(filter = '') {
   const container = document.getElementById('reportes-lista');
+  const countEl = document.getElementById('reportes-count');
   try {
     const mapaData = await fetchJSON(`${API}/mapa`);
     allSiniestros = mapaData;
@@ -452,38 +467,80 @@ async function loadReportesList(filter = '') {
       ? mapaData.filter((s) =>
         (s.folio || '').toLowerCase().includes(filter.toLowerCase()) ||
         (s.ubicacion?.direccion || '').toLowerCase().includes(filter.toLowerCase()) ||
-        (s.ubicacion?.municipio || '').toLowerCase().includes(filter.toLowerCase())
+        (s.ubicacion?.municipio || '').toLowerCase().includes(filter.toLowerCase()) ||
+        (s.ubicacion?.codigo_postal || '').toLowerCase().includes(filter.toLowerCase())
       )
       : mapaData;
 
+    if (countEl) countEl.textContent = `${filtered.length} reporte(s)`;
+
     if (filtered.length === 0) {
-      container.innerHTML = '<p style="color:#777;">No se encontraron reportes.</p>';
+      container.innerHTML = '<p style="color:#777;padding:2rem;text-align:center;">No se encontraron reportes.</p>';
       return;
     }
 
-    container.innerHTML = filtered
-      .map(
-        (s) => `
-          <div class="reporte-card" data-id="${s._id}">
-            <div>
-              <div class="folio">${s.folio || 'Sin folio'}</div>
-              <div class="fecha">Creado: ${formatDate(s.fecha)}</div>
-              ${s.fecha_sincronizacion ? `<div class="fecha" style="color:#888;">Sincronizado: ${formatDate(s.fecha_sincronizacion)}</div>` : ''}
-              <div class="ubicacion">${s.ubicacion?.direccion || ''} ${s.ubicacion?.municipio || ''}</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0.8rem;">
-              <!--span>${s.totalDamnificados} damnificados</span-->
-              <span class="${getBadgeClass(s.color)}">${s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo'}</span>
-            </div>
-          </div>`
-      )
-      .join('');
+    container.innerHTML = `
+      <div class="reportes-table-container">
+        <table class="reportes-table">
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Fecha de Registro</th>
+              <th>Dirección / Ubicación</th>
+              <th>Nivel de Riesgo</th>
+              <th style="text-align:center;min-width:140px;">Descargar Reporte</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.map((s) => {
+              const badgeClass = getBadgeClass(s.color);
+              const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
+              const alcaldia = (s.ubicacion?.municipio && s.ubicacion.municipio !== 'Ciudad de México')
+                ? s.ubicacion.municipio
+                : (getAlcaldiaFromCP(s.ubicacion?.codigo_postal) || s.ubicacion?.municipio || 'Ciudad de México');
+              return `
+                <tr class="reporte-row" data-id="${s._id}">
+                  <td>
+                    <div class="folio-cell">${s.folio || 'Sin folio'}</div>
+                  </td>
+                  <td>
+                    <div class="fecha-cell">
+                      <div>${formatDate(s.fecha)}</div>
+                      ${s.fecha_sincronizacion ? `<div style="font-size:0.75rem;color:#888;">Sinc: ${formatDate(s.fecha_sincronizacion)}</div>` : ''}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="ubicacion-cell">
+                      <strong>${s.ubicacion?.direccion || 'Sin dirección'}</strong>
+                      <div style="font-size:0.8rem;color:#666;">${alcaldia}${s.ubicacion?.codigo_postal ? ` • C.P. ${s.ubicacion.codigo_postal}` : ''}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="${badgeClass}">${labelRisk}</span>
+                  </td>
+                  <td style="text-align:center;" onclick="event.stopPropagation();">
+                    <button class="btn-download-report" onclick="descargarReporte('${s._id}')" title="Descargar Reporte Oficial (${s.folio || 'PDF'})">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      <span>Descargar</span>
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
 
-    container.querySelectorAll('.reporte-card').forEach((el) => {
+    container.querySelectorAll('.reporte-row').forEach((el) => {
       el.addEventListener('click', () => showDetail(el.dataset.id));
     });
   } catch (err) {
-    container.innerHTML = '<p style="color:#d32f2f;">Error al cargar reportes.</p>';
+    container.innerHTML = '<p style="color:#d32f2f;padding:1.5rem;">Error al cargar reportes.</p>';
   }
 }
 
@@ -497,7 +554,17 @@ async function showDetail(siniestroId) {
     const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
 
     let html = `
-      <h2>${siniestro.folio || 'Sin folio'}</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;gap:0.75rem;">
+        <h2 style="margin:0;color:var(--primary-burgundy);">${siniestro.folio || 'Sin folio'}</h2>
+        <button class="btn-download-report" onclick="descargarReporte('${siniestro._id}')" style="padding:0.5rem 1rem;font-size:0.85rem;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Descargar Reporte Oficial (PDF)</span>
+        </button>
+      </div>
       <p><strong>Fecha de creación:</strong> ${formatDate(siniestro.fecha)}</p>
       ${siniestro.fecha_sincronizacion ? `<p><strong>Fecha de sincronización:</strong> ${formatDate(siniestro.fecha_sincronizacion)}</p>` : ''}
       <p><strong>Dirección:</strong> ${siniestro.ubicacion?.direccion || ''}, ${siniestro.ubicacion?.municipio || ''}, ${siniestro.ubicacion?.estado || ''}</p>
@@ -593,6 +660,711 @@ async function showDetail(siniestroId) {
   }
 }
 
+async function descargarReporte(siniestroId) {
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Generando Reporte SAS...</title>
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #7A0C38; }
+          .loader { text-align: center; }
+          .spinner { width: 44px; height: 44px; border: 4px solid #e2e8f0; border-top-color: #7A0C38; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+        </style>
+      </head>
+      <body>
+        <div class="loader">
+          <div class="spinner"></div>
+          <h2 style="font-size:1.15rem;margin:0 0 6px;">Generando Reporte Oficial SAS...</h2>
+          <p style="font-size:0.85rem;color:#64748b;margin:0;">Sistema de Afectaciones por Sismo • CDMX</p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  try {
+    const siniestro = await fetchJSON(`${API}/siniestros/${siniestroId}`);
+    const inmuebles = await fetchJSON(`${API}/inmuebles?siniestro=${siniestroId}`);
+    const inmueblesPadre = inmuebles.filter(inm => !inm.padre);
+    const inmueblePadre = inmueblesPadre[0] || inmuebles[0] || {};
+    let valores = [];
+    if (inmueblePadre._id) {
+      valores = await fetchJSON(`${API}/valores-caracteristica?inmueble=${inmueblePadre._id}`);
+    }
+
+    const htmlContent = generarReporteHTML({ siniestro, inmueble: inmueblePadre, valores });
+
+    if (win && !win.closed) {
+      win.document.open();
+      win.document.write(htmlContent);
+      win.document.close();
+    } else {
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_SAS_${siniestro.folio || siniestroId}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  } catch (err) {
+    console.error('Error al generar reporte:', err);
+    if (win && !win.closed) {
+      win.document.body.innerHTML = `
+        <div style="font-family:system-ui;padding:2.5rem;text-align:center;color:#dc2626;">
+          <h3 style="margin-bottom:0.5rem;">Error al generar reporte</h3>
+          <p style="color:#4b5563;">${err.message}</p>
+          <button onclick="window.close()" style="margin-top:1.2rem;padding:0.6rem 1.2rem;background:#7A0C38;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Cerrar Ventana</button>
+        </div>
+      `;
+    } else {
+      alert(`Error al generar el reporte: ${err.message}`);
+    }
+  }
+}
+
+function generarReporteHTML({ siniestro, inmueble, valores }) {
+  const folio = siniestro.folio || 'SAS-REPORTE';
+  const fechaReporte = formatDate(siniestro.fecha || new Date());
+  
+  const getVal = (code, fallback = '—') => {
+    const v = valores.find(item => {
+      const n = item.caracteristica?.nombre || '';
+      return n.startsWith(code + ' ') || n.startsWith(code + '.') || n.startsWith(code);
+    });
+    if (!v) return fallback;
+    if (v.valor_texto != null && v.valor_texto !== '') {
+      return v.valor_texto_condicional ? `${v.valor_texto} (${v.valor_texto_condicional})` : v.valor_texto;
+    }
+    if (v.valor_numero != null) return String(v.valor_numero);
+    if (v.valor_booleano != null) return v.valor_booleano ? 'Sí' : 'No';
+    if (v.valor_seleccion != null && v.valor_seleccion !== '') {
+      return v.valor_texto_condicional ? `${v.valor_seleccion} (${v.valor_texto_condicional})` : v.valor_seleccion;
+    }
+    return fallback;
+  };
+
+  const dir = siniestro.ubicacion?.direccion || '—';
+  const alcaldiaResolv = (siniestro.ubicacion?.municipio && siniestro.ubicacion.municipio !== 'Ciudad de México')
+    ? siniestro.ubicacion.municipio
+    : (getAlcaldiaFromCP(siniestro.ubicacion?.codigo_postal) || siniestro.ubicacion?.municipio || 'Ciudad de México');
+  
+  const cp = siniestro.ubicacion?.codigo_postal || getVal('2.4', '—');
+  const coords = (siniestro.ubicacion?.lat && siniestro.ubicacion?.lng) 
+    ? `${siniestro.ubicacion.lat}, ${siniestro.ubicacion.lng}` 
+    : 'No disponible';
+  const descripcion = siniestro.descripcion || 'Sin observaciones adicionales registradas.';
+  const dispositivo = siniestro.dispositivo_id || 'Dispositivo Móvil SAS';
+
+  // Section 2
+  const sec2 = [
+    { no: '2.1', car: 'Calle y Número (mz y lt, en su caso)', val: getVal('2.1', dir) },
+    { no: '2.2', car: 'Colonia', val: getVal('2.2', 'Centro') },
+    { no: '2.3', car: 'Alcaldía', val: getVal('2.3', alcaldiaResolv) },
+    { no: '2.4', car: 'Código Postal', val: getVal('2.4', cp) },
+    { no: '2.5', car: 'Entre que calles/referencia', val: getVal('2.5', '—') },
+    { no: '2.6', car: 'Responsable del inmueble', val: getVal('2.6', '—') },
+    { no: '2.7', car: 'Teléfono del respónsale del inmueble', val: getVal('2.7', '—') },
+    { no: '2.8', car: 'Año estimado de la construcción', val: getVal('2.8', '—') },
+    { no: '2.9', car: 'Uso del Inmueble', val: getVal('2.9', inmueble.tipo === 'edificio' ? 'HABITACIÓN MULTIFAMILIAR' : 'HABITACIÓN UNIFAMILIAR') },
+    { no: '2.10', car: 'Número de niveles sobre el terreno', val: getVal('2.10', String(inmueble.sobre_nivel_banqueta ?? inmueble.numero_niveles ?? 1)) },
+    { no: '2.11', car: 'Número de sótanos', val: getVal('2.11', String(inmueble.bajo_nivel_banqueta ?? 0)) },
+    { no: '2.12', car: 'Número de ocupantes', val: getVal('2.12', '—') },
+    { no: '2.13', car: 'Tipo de inspección', val: getVal('2.13', 'INSPECCIÓN INTERIOR Y EXTERIOR') },
+  ];
+
+  // Section 3
+  const sec3 = [
+    { no: '3.1', car: 'Sistema constructivo', val: getVal('3.1', inmueble.tipo === 'edificio' ? 'Estructura formal de mampostería / concreto' : 'Mampostería confinada') },
+    { no: '3.2', car: '¿Presenta colapso estructural?', val: getVal('3.2', inmueble.estado_afectacion === 'colapso' ? 'Colapso total' : 'No presenta colapso') },
+    { no: '3.3', car: 'Edificación separada de su cimentación', val: getVal('3.3', 'No') },
+    { no: '3.4', car: 'Asentamiento diferencial o hundimiento', val: getVal('3.4', 'No') },
+    { no: '3.5', car: 'Inclinación notoria de la edificación o de algún entrepiso', val: getVal('3.5', 'No') },
+    { no: '3.6', car: 'Daños severos en elementos estructurales (columnas, vigas, muros de carga)', val: getVal('3.6', inmueble.estado_afectacion === 'critico' ? 'Sí' : 'No') },
+    { no: '3.7', car: 'Daños moderados en elementos estructurales', val: getVal('3.7', inmueble.estado_afectacion === 'moderado' ? 'Sí' : 'No') },
+    { no: '3.8', car: 'Daños severos en elementos no estructurales (muros divisorios, acabados, cancelería)', val: getVal('3.8', 'No') },
+    { no: '3.9', car: 'Daños moderados en elementos no estructurales', val: getVal('3.9', 'No') },
+    { no: '3.10', car: 'Daños en instalaciones eléctricas', val: getVal('3.10', 'No') },
+    { no: '3.11', car: 'Daños en instalaciones hidrosanitarias', val: getVal('3.11', 'No') },
+    { no: '3.12', car: 'Daños en instalaciones de gas', val: getVal('3.12', 'No') },
+    { no: '3.13', car: 'Deslizamiento de talud o corte', val: getVal('3.13', 'No') },
+    { no: '3.14', car: 'Pretiles, balcones u otros objetos en peligro de caer', val: getVal('3.14', 'No') },
+    { no: '3.15', car: 'Otros peligros (líneas o ductos rotos, derrames tóxicos, etc.)', val: getVal('3.15', 'No') },
+  ];
+
+  // Section 4
+  let rawRisk = getVal('4.1', '');
+  if (!rawRisk) {
+    rawRisk = inmueble.estado_afectacion === 'colapso' ? 'Colapso'
+      : inmueble.estado_afectacion === 'critico' ? 'Edificación en Riesgo Alto'
+      : inmueble.estado_afectacion === 'moderado' ? 'Área Insegura o Edificación en Riesgo Medio'
+      : 'Edificación en Riesgo Bajo';
+  }
+  let riskColor = '#166534';
+  let riskBg = '#dcfce7';
+  let riskBorder = '#86efac';
+  const rLower = rawRisk.toLowerCase();
+  if (rLower.includes('colapso')) {
+    riskColor = '#ffffff';
+    riskBg = '#111827';
+    riskBorder = '#000000';
+  } else if (rLower.includes('alto') || rLower.includes('critico') || rLower.includes('crítico')) {
+    riskColor = '#991b1b';
+    riskBg = '#fee2e2';
+    riskBorder = '#fca5a5';
+  } else if (rLower.includes('medio') || rLower.includes('moderado') || rLower.includes('insegura')) {
+    riskColor = '#854d0e';
+    riskBg = '#fef9c3';
+    riskBorder = '#fde047';
+  }
+
+  // Section 5
+  const sec5 = [
+    { no: '5.1', car: '5.1 Requiere revisión futura', val: getVal('5.1', 'Sí') },
+    { no: '5.2', car: '5.2 ¿Requiere D.R.O. y/o C-SE?', val: getVal('5.2', 'D.R.O.') },
+    { no: '5.3', car: '5.3 Apuntalar', val: getVal('5.3', 'No') },
+    { no: '5.4', car: '5.4 Maquinaria para remover escombro', val: getVal('5.4', 'No') },
+    { no: '5.5', car: '5.5 Inspección por SGIRPC', val: getVal('5.5', 'Sí') },
+    { no: '5.6', car: '5.6 Inspección por SACMEX', val: getVal('5.6', 'No') },
+    { no: '5.7', car: '5.7 Inspección por SSC', val: getVal('5.7', 'No') },
+    { no: '5.8', car: '5.8 Inspección por Central de fugas', val: getVal('5.8', 'No') },
+  ];
+
+  const fotos = siniestro.fotos || [];
+  const logoUrl = `${window.location.origin}/images/logo_cdmx_comision.webp`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte_SAS_${folio}.pdf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      font-size: 11.5px;
+      line-height: 1.45;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .page-wrap {
+      max-width: 860px;
+      margin: 25px auto 40px;
+      background: #ffffff;
+      padding: 34px 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .report-toolbar {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 99999;
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      padding: 8px 14px;
+      border-radius: 30px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+      border: 1px solid #cbd5e1;
+    }
+    .btn-tool {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-tool-print {
+      background: #7A0C38;
+      color: #ffffff;
+    }
+    .btn-tool-print:hover { background: #9b1348; }
+    .btn-tool-close {
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .btn-tool-close:hover { background: #cbd5e1; }
+    
+    .header-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 3px solid #7A0C38;
+    }
+    .header-logo img {
+      max-height: 54px;
+      width: auto;
+      object-fit: contain;
+    }
+    .header-center {
+      text-align: center;
+      flex: 1;
+    }
+    .header-title-cdmx {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #7A0C38;
+      letter-spacing: 0.8px;
+    }
+    .header-sub-cdmx {
+      font-size: 10px;
+      font-weight: 700;
+      color: #BC955B;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .header-doc-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 4px;
+      letter-spacing: -0.3px;
+    }
+    .header-doc-sub {
+      font-size: 12px;
+      font-weight: 700;
+      color: #7A0C38;
+    }
+    .header-folio-badge {
+      text-align: right;
+      background: #fdf2f4;
+      border: 1.5px solid #7A0C38;
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+    .header-folio-badge .folio-lbl {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #7A0C38;
+      text-transform: uppercase;
+    }
+    .header-folio-badge .folio-val {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .meta-box {
+      margin: 14px 0 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 16px;
+      font-size: 11px;
+    }
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .meta-item.full-width {
+      grid-column: 1 / -1;
+    }
+    .meta-lbl {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .meta-val {
+      font-weight: 600;
+      color: #0f172a;
+      margin-top: 1px;
+    }
+
+    .section-block {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      background: #7A0C38;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+    .section-header .sec-icon {
+      margin-right: 8px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+    }
+    .data-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .data-table td {
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      color: #1e293b;
+      vertical-align: middle;
+    }
+    .data-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .data-table td.col-no {
+      width: 45px;
+      font-weight: 700;
+      color: #7A0C38;
+      text-align: center;
+    }
+    .data-table td.col-car {
+      width: 50%;
+      font-weight: 500;
+    }
+    .data-table td.col-val {
+      font-weight: 600;
+    }
+    .val-yes {
+      color: #b91c1c;
+      font-weight: 700;
+    }
+    .val-no {
+      color: #475569;
+    }
+
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .photo-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #f8fafc;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .photo-img-wrap {
+      width: 100%;
+      height: 180px;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .photo-caption {
+      padding: 6px 9px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #475569;
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .signatures-block {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .signature-card {
+      text-align: center;
+      border-top: 1.5px solid #94a3b8;
+      padding-top: 6px;
+    }
+    .sig-role {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .sig-name {
+      font-size: 9.5px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .report-footer {
+      margin-top: 22px;
+      padding-top: 10px;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      font-size: 9px;
+      color: #64748b;
+    }
+
+    @media print {
+      body { background: #fff; font-size: 10.5px; }
+      .page-wrap {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .no-print { display: none !important; }
+      .photo-img-wrap { height: 155px; }
+      @page {
+        size: letter portrait;
+        margin: 10mm 12mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="report-toolbar no-print">
+    <button class="btn-tool btn-tool-print" onclick="window.print()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      Imprimir / Guardar como PDF
+    </button>
+    <button class="btn-tool btn-tool-close" onclick="window.close()">Cerrar</button>
+  </div>
+
+  <div class="page-wrap">
+    <!-- Header -->
+    <div class="header-banner">
+      <div class="header-logo">
+        <img src="${logoUrl}" onerror="this.style.display='none'" alt="CDMX">
+      </div>
+      <div class="header-center">
+        <div class="header-title-cdmx">GOBIERNO DE LA CIUDAD DE MÉXICO</div>
+        <div class="header-sub-cdmx">Secretaría de Gestión Integral de Riesgos y Protección Civil</div>
+        <div class="header-doc-title">REPORTE DE INSPECCIÓN DE INMUEBLE</div>
+        <div class="header-doc-sub">SAS • Sistema de Afectaciones por Sismo</div>
+      </div>
+      <div class="header-folio-badge">
+        <div class="folio-lbl">Folio de Inspección</div>
+        <div class="folio-val">${folio}</div>
+      </div>
+    </div>
+
+    <!-- 1. Datos Generales -->
+    <div class="meta-box">
+      <div class="meta-item">
+        <span class="meta-lbl">Fecha</span>
+        <span class="meta-val">${fechaReporte}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-lbl">Folio de inspección</span>
+        <span class="meta-val">${folio}</span>
+      </div>
+      <div class="meta-item full-width">
+        <span class="meta-lbl">Dirección</span>
+        <span class="meta-val">${dir}, ${alcaldiaResolv}, CDMX ${cp ? '• C.P. ' + cp : ''}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-lbl">Coordenadas</span>
+        <span class="meta-val">${coords}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-lbl">Dispositivo</span>
+        <span class="meta-val">${dispositivo}</span>
+      </div>
+      <div class="meta-item full-width">
+        <span class="meta-lbl">Descripción</span>
+        <span class="meta-val">${descripcion}</span>
+      </div>
+    </div>
+
+    <!-- 2. Inmueble (padrón) -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="sec-icon">🏢</span> 2. Inmueble (padrón)
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-no">No.</th>
+            <th class="col-car">Características</th>
+            <th class="col-val">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sec2.map(row => `
+            <tr>
+              <td class="col-no">${row.no}</td>
+              <td class="col-car">${row.car}</td>
+              <td class="col-val">${row.val}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. Estado de la edificación -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="sec-icon">📋</span> 3. Estado de la edificación
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-no">No.</th>
+            <th class="col-car">Características</th>
+            <th class="col-val">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sec3.map(row => {
+            const isYes = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('colapso') || String(row.val).toLowerCase().includes('parcial');
+            return `
+              <tr>
+                <td class="col-no">${row.no}</td>
+                <td class="col-car">${row.car}</td>
+                <td class="col-val ${isYes ? 'val-yes' : 'val-no'}">${row.val}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. Clasificación global -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="sec-icon">⚠️</span> 4. Clasificación global
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-no">No.</th>
+            <th class="col-car">Características</th>
+            <th class="col-val">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-no">4.1</td>
+            <td class="col-car">Nivel de riesgos</td>
+            <td class="col-val">
+              <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-weight:700;color:${riskColor};background:${riskBg};border:1px solid ${riskBorder};">
+                ${rawRisk}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5. Recomendaciones -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="sec-icon">✅</span> 5. Recomendaciones
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="col-no">No.</th>
+            <th class="col-car">Características</th>
+            <th class="col-val">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sec5.map(row => {
+            const isHighlighted = String(row.val).toLowerCase() === 'sí' || String(row.val).toLowerCase() === 'si' || String(row.val).toLowerCase().includes('d.r.o');
+            return `
+              <tr>
+                <td class="col-no">${row.no}</td>
+                <td class="col-car">${row.car}</td>
+                <td class="col-val ${isHighlighted ? 'val-yes' : 'val-no'}">${row.val}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 6. Fotografías -->
+    <div class="section-block">
+      <div class="section-header">
+        <span class="sec-icon">📷</span> 6. Fotografías
+      </div>
+      <div style="font-size:10.5px;color:#64748b;margin-bottom:6px;font-weight:500;">
+        Evidencia fotográfica del inmueble
+      </div>
+      ${fotos.length > 0 ? `
+        <div class="photos-grid">
+          ${fotos.map((f, idx) => `
+            <div class="photo-card">
+              <div class="photo-img-wrap">
+                <img src="${f.url}" alt="Foto ${idx + 1}" onerror="this.parentElement.innerHTML='<div style=\\'color:#94a3b8;font-size:11px;padding:20px;text-align:center;\\'>Foto no disponible</div>'">
+              </div>
+              <div class="photo-caption">
+                Fotografía ${idx + 1}. Evidencia registrada durante la inspección.
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div style="padding:14px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:6px;text-align:center;color:#64748b;font-size:10.5px;">
+          No se registraron evidencias fotográficas en este reporte.
+        </div>
+      `}
+    </div>
+
+    <!-- Signatures block -->
+    <div class="signatures-block">
+      <div class="signature-card">
+        <div style="height:32px;"></div>
+        <div class="sig-role">Evaluador / Inspector Técnico</div>
+        <div class="sig-name">Personal Autorizado SAS CDMX</div>
+      </div>
+      <div class="signature-card">
+        <div style="height:32px;"></div>
+        <div class="sig-role">Responsable del Inmueble</div>
+        <div class="sig-name">${sec2[5].val !== '—' ? sec2[5].val : 'Nombre y Firma'}</div>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      Este documento es emitido por el Sistema de Afectaciones por Sismo (SAS) • Gobierno de la Ciudad de México.<br>
+      Generado automáticamente el ${new Date().toLocaleString('es-MX')} • Documento Oficial de Evaluación
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 let _ubicData = [];
 
 async function loadUbicacion() {
@@ -646,8 +1418,7 @@ function renderUbicacion(data, countEl, container) {
             <th style="padding:0.6rem;">Niveles</th>
             <th style="padding:0.6rem;">Estado</th>
             <th style="padding:0.6rem;">Tipo daño</th>
-            <!--th style="padding:0.6rem;">Damnificados</th-->
-            <!--th style="padding:0.6rem;">Fallecidos</th-->
+            <th style="padding:0.6rem;text-align:center;">Descargar</th>
           </tr>
         </thead>
         <tbody>
@@ -669,8 +1440,16 @@ function renderUbicacion(data, countEl, container) {
                   </span>
                 </td>
                 <td style="padding:0.5rem;">${d.tipoDanio || '—'}</td>
-                <!--td style="padding:0.5rem;text-align:center;">${d.totalDamnificados}</td-->
-                <!--td style="padding:0.5rem;text-align:center;${d.fallecidos > 0 ? 'color:#d32f2f;font-weight:700;' : ''}">${d.fallecidos}</td-->
+                <td style="padding:0.5rem;text-align:center;" onclick="event.stopPropagation();">
+                  <button class="btn-download-report" onclick="descargarReporte('${d.siniestroId}')" title="Descargar Reporte (${d.folio || 'PDF'})" style="padding:0.3rem 0.6rem;font-size:0.75rem;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Descargar</span>
+                  </button>
+                </td>
               </tr>
             `;
   }).join('')}

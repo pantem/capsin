@@ -32,8 +32,8 @@ router.post('/:folio', upload.array('fotos', 20), async (req, res) => {
             transformation: [
               {
                 width: 1600,
-                height: 1200,
-                crop: 'fill',
+                height: 1600,
+                crop: 'limit',
                 quality: 'auto',
                 format: 'auto',
               },

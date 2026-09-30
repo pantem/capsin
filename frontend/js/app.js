@@ -1293,12 +1293,10 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
 
     .signatures-block { display: none; }
     .signature-card { display: none; }
-      color: #64748b;
-      margin-top: 2px;
-    }
+
     .report-footer {
       position: relative;
-      margin-top: 28px;
+      margin-top: 24px;
       padding-top: 10px;
       border-top: 2px solid #7A0C38;
       display: flex;
@@ -1306,51 +1304,40 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
       flex-wrap: nowrap;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
       font-size: 9px;
       color: #475569;
-      min-height: 60px;
     }
     .footer-address {
       font-size: 8.5px;
       color: #555;
-      line-height: 1.45;
-      flex: 0 0 auto;
-      padding-bottom: 4px;
+      line-height: 1.4;
+      flex: 1 1 0;
+      min-width: 0;
     }
     .footer-center {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: flex-end;
-      gap: 8px;
       flex: 0 0 auto;
+      text-align: center;
     }
     .footer-marga-img {
-      height: 60px;
+      height: 70px;
       width: auto;
-      object-fit: contain;
-      object-position: left bottom;
       display: block;
     }
     .footer-right {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      align-items: flex-end;
-      gap: 8px;
-      flex: 0 0 auto;
+      flex: 1 1 0;
+      min-width: 0;
+      text-align: right;
     }
     .footer-mascot-img {
-      height: 60px;
+      height: 70px;
       width: auto;
-      object-fit: contain;
-      object-position: right bottom;
       display: block;
+      margin-left: auto;
     }
     .footer-page-num {
       position: absolute;
-      top: -20px;
+      top: -18px;
       right: 0;
       font-size: 10px;
       font-weight: 700;
@@ -1358,23 +1345,39 @@ function generarReporteHTML({ siniestro, inmueble, valores }) {
     }
 
     @media print {
-      body { background: #fff; font-size: 10.5px; }
+      html, body {
+        background: #fff !important;
+        font-size: 10.5px;
+        width: auto;
+        height: auto;
+      }
       .page-wrap {
         max-width: 100% !important;
+        width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
       }
       .no-print { display: none !important; }
       .photo-img-wrap { height: 280px; }
       .report-footer {
         page-break-inside: avoid;
         break-inside: avoid;
+        margin-top: 20px;
+        padding-top: 8px;
+      }
+      .footer-page-num {
+        position: static;
+        text-align: right;
+        margin-bottom: 4px;
+        font-weight: 700;
       }
       @page {
         size: letter portrait;
-        margin: 12mm 15mm 22mm 15mm;
+        margin: 12mm 15mm 20mm 15mm;
       }
     }
   </style>

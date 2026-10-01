@@ -1143,8 +1143,7 @@ function encabezadoReporteHTML(logoB64) {
       <div style="font-size:8px;font-weight:bold;color:#555;">México.</div>
     </td>
     <td style="width:10%;vertical-align:middle;">
-      <div style="font-size:7px;color:${MAROON};text-align:center;margin-bottom:2px;">&nbsp;</div>
-      <div style="border:1px solid ${MAROON};background:#fdf2f8;text-align:center;padding:5px;font-size:12px;font-weight:bold;color:${MAROON};">&nbsp;</div>
+      <div>&nbsp;</div>
     </td>
   </tr></table>
   <div style="border-top:3px solid ${MAROON};">&nbsp;</div>
@@ -1226,8 +1225,10 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
   };
 
   const sectionTitle = (num, text) => `
-    <div style="border-top:1.5px solid ${MAROON};margin-top:10px;"></div>
-    <div style="font-size:11px;font-weight:bold;color:${MAROON};margin:8px 0 4px 0;">${num}. ${escHtml(text)}</div>`;
+    <div class="corte-pdf">
+      <div style="border-top:1.5px solid ${MAROON};margin-top:10px;"></div>
+      <div style="font-size:11px;font-weight:bold;color:${MAROON};margin:8px 0 4px 0;">${num}. ${escHtml(text)}</div>
+    </div>`;
 
   let html = '';
   html += `<div style="width:720px;margin:0 auto;padding:0 20px 16px 20px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">`;
@@ -1322,6 +1323,21 @@ function dibujarFooterPDF(pdf, pageNum, totalPages, margaB64, mascotB64) {
   pdf.text(`Página | ${pageNum} de ${totalPages}`, pageW - marginL, footerTop + 4, { align: 'right' });
 }
 
+function obtenerCortesSeguros(container, escala) {
+  const base = container.getBoundingClientRect().top;
+  const puntos = new Set();
+  const add = (v) => {
+    const y = Math.round((v - base) * escala);
+    if (y > 0) puntos.add(y);
+  };
+  container.querySelectorAll('tr, table, img, .corte-pdf').forEach((el) => {
+    const r = el.getBoundingClientRect();
+    add(r.top);
+    add(r.bottom);
+  });
+  return Array.from(puntos).sort((a, b) => a - b);
+}
+
 async function descargarReporte(siniestroId) {
   const jspdfLib = window.jsPDF || (window.jspdf && window.jspdf.jsPDF);
   if (typeof html2canvas === 'undefined' || !jspdfLib) {
@@ -1401,6 +1417,7 @@ async function descargarReporte(siniestroId) {
     await new Promise(r => setTimeout(r, 300));
 
     const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const cortesSeguros = obtenerCortesSeguros(container, canvas.width / container.offsetWidth);
     document.body.removeChild(container);
 
     const pdf = new jspdfLib('p', 'mm', 'letter');
@@ -1421,16 +1438,37 @@ async function descargarReporte(siniestroId) {
     const bodyTop = marginT + encHmm + gapHmm;
     const bodyHmmMax = Math.max(20, contentH - encHmm - gapHmm);
     const pageBodyPxH = Math.max(1, Math.floor(bodyHmmMax * pxPerMm));
-    const totalPages = Math.max(1, Math.ceil(canvasH / pageBodyPxH));
     const encabezadoData = encabezadoCanvas.toDataURL('image/jpeg', 0.95);
+
+    const minCuerpoPx = Math.floor(pageBodyPxH * 0.35);
+    const hojas = [];
+    let y = 0;
+    while (y < canvasH) {
+      let fin = y + pageBodyPxH;
+      if (fin >= canvasH) {
+        fin = canvasH;
+      } else {
+        let mejor = -1;
+        for (const p of cortesSeguros) {
+          if (p < y + minCuerpoPx) continue;
+          if (p > fin) break;
+          mejor = p;
+        }
+        if (mejor > 0) fin = Math.max(y + minCuerpoPx, mejor);
+      }
+      hojas.push([y, fin]);
+      y = fin;
+    }
+
+    const totalPages = hojas.length;
 
     for (let i = 0; i < totalPages; i++) {
       if (i > 0) pdf.addPage();
 
       pdf.addImage(encabezadoData, 'JPEG', marginL, marginT, contentW, encHmm);
 
-      const srcY = Math.floor(i * pageBodyPxH);
-      const srcH = Math.min(pageBodyPxH, canvasH - srcY);
+      const srcY = hojas[i][0];
+      const srcH = Math.min(hojas[i][1], canvasH) - srcY;
 
       if (srcH > 0) {
         const slice = document.createElement('canvas');

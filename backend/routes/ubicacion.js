@@ -22,20 +22,25 @@ router.get('/', async (req, res) => {
     const inmuebleFilter = { siniestro: { $in: siniestroIds } };
     if (dano) inmuebleFilter.estado_afectacion = dano;
 
-    const RE_USO = /uso del inmueble/i;
-    const RE_TIPO_DANO = /tipo de da[ñn]o observado/i;
+    const normalizarNombre = (s) =>
+      String(s || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    const esUso = (n) => n.includes('uso del inmueble');
+    const esTipoDanio = (n) => n.includes('tipo de dano observado');
+    const esNiveles = (n) => n.includes('numero de niveles sobre el terreno');
+    const esSotanos = (n) => n.includes('numero de sotanos');
 
-    const [inmuebles, caracteristicas] = await Promise.all([
+    const [inmuebles, todasLasCaracteristicas] = await Promise.all([
       Inmueble.find(inmuebleFilter).lean(),
-      CaracteristicaTipo.find({
-        $or: [
-          { nombre: { $regex: 'uso del inmueble', $options: 'i' } },
-          { nombre: { $regex: 'tipo de da[ñn]o observado', $options: 'i' } },
-        ],
-      })
-        .select('_id nombre')
-        .lean(),
+      CaracteristicaTipo.find({}).select('_id nombre').lean(),
     ]);
+
+    const caracteristicas = todasLasCaracteristicas.filter((c) => {
+      const n = normalizarNombre(c.nombre);
+      return esUso(n) || esTipoDanio(n) || esNiveles(n) || esSotanos(n);
+    });
 
     const ordenSiniestro = new Map(siniestros.map((s, i) => [String(s._id), i]));
     inmuebles.sort(
@@ -79,11 +84,15 @@ router.get('/', async (req, res) => {
     const damnPorInm = new Map(agrupados.map((g) => [String(g._id), g]));
     const usoPorInm = new Map();
     const danoPorInm = new Map();
+    const nivelesPorInm = new Map();
+    const sotanosPorInm = new Map();
     for (const v of valores) {
-      const nombre = nombrePorId.get(String(v.caracteristica)) || '';
+      const nombre = normalizarNombre(nombrePorId.get(String(v.caracteristica)));
       const valor = v.valor_seleccion || v.valor_texto || '';
-      if (RE_USO.test(nombre)) usoPorInm.set(String(v.inmueble), valor);
-      else if (RE_TIPO_DANO.test(nombre)) danoPorInm.set(String(v.inmueble), valor);
+      if (esUso(nombre)) usoPorInm.set(String(v.inmueble), valor);
+      else if (esTipoDanio(nombre)) danoPorInm.set(String(v.inmueble), valor);
+      else if (esNiveles(nombre)) nivelesPorInm.set(String(v.inmueble), valor);
+      else if (esSotanos(nombre)) sotanosPorInm.set(String(v.inmueble), valor);
     }
 
     const siniestroById = new Map(siniestros.map((s) => [String(s._id), s]));
@@ -93,6 +102,16 @@ router.get('/', async (req, res) => {
       const s = siniestroById.get(String(inm.siniestro));
       if (!s) continue;
       const d = damnPorInm.get(String(inm._id));
+
+      const niveles = parseInt(nivelesPorInm.get(String(inm._id)), 10);
+      const sotanos = parseInt(sotanosPorInm.get(String(inm._id)), 10);
+      const usaCaracteristicas = !isNaN(niveles) || !isNaN(sotanos);
+      const sobreNivel = usaCaracteristicas
+        ? (isNaN(niveles) ? 0 : niveles)
+        : (inm.sobre_nivel_banqueta || 0);
+      const bajoNivel = usaCaracteristicas
+        ? (isNaN(sotanos) ? 0 : sotanos)
+        : (inm.bajo_nivel_banqueta || 0);
 
       results.push({
         siniestroId: s._id.toString(),
@@ -107,11 +126,11 @@ router.get('/', async (req, res) => {
         inmuebleId: inm._id.toString(),
         tipo: inm.tipo || '',
         estadoAfectacion: inm.estado_afectacion || 'sin_daños',
-        sobreNivelBanqueta: inm.sobre_nivel_banqueta || 0,
-        bajoNivelBanqueta: inm.bajo_nivel_banqueta || 0,
+        sobreNivelBanqueta: sobreNivel,
+        bajoNivelBanqueta: bajoNivel,
         usoInmueble: usoPorInm.get(String(inm._id)) || '',
         tipoDanio: danoPorInm.get(String(inm._id)) || '',
-        totalNiveles: (inm.sobre_nivel_banqueta || 0) + (inm.bajo_nivel_banqueta || 0),
+        totalNiveles: sobreNivel + bajoNivel,
         totalDamnificados: d ? d.total : 0,
         fallecidos: d ? d.fallecidos : 0,
         lesionadosGrave: d ? d.lesionadosGrave : 0,

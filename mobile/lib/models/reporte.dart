@@ -1,4 +1,11 @@
 class Reporte {
+  // Convierte a hora local del dispositivo valores como "2026-10-01T18:43:14.284Z"
+  static DateTime? aLocal(String valor) {
+    if (valor.isEmpty) return null;
+    final fecha = DateTime.tryParse(valor);
+    return fecha?.toLocal();
+  }
+
   final String id;
   final String folio;
   final DateTime fecha;
@@ -66,7 +73,11 @@ class Reporte {
 
   String get fechaDisplay => '${fecha.day.toString().padLeft(2, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.year}';
 
-  String get fechaDb => fecha.toIso8601String();
+  // SQLite guarda la hora local (sin zona) para mostrarla en la app
+  String get fechaDb => fecha.toLocal().toIso8601String();
+
+  // Al servidor se manda en UTC para que no dependa de la zona del backend
+  String get fechaIso => fecha.toUtc().toIso8601String();
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -91,13 +102,13 @@ class Reporte {
         'observaciones': observaciones,
         'fotos': fotos,
         'sincronizado': sincronizado ? 1 : 0,
-        'fechaSincronizacion': fechaSincronizacion?.toIso8601String() ?? '',
+        'fechaSincronizacion': fechaSincronizacion?.toLocal().toIso8601String() ?? '',
       };
 
   factory Reporte.fromMap(Map<String, dynamic> map) => Reporte(
         id: map['id'] as String,
         folio: map['folio'] as String,
-        fecha: DateTime.tryParse(map['fecha'] as String? ?? '') ?? DateTime.now(),
+        fecha: Reporte.aLocal(map['fecha'] as String? ?? '') ?? DateTime.now(),
         nombreCapturista: map['nombreCapturista'] as String? ?? '',
         area: map['area'] as String? ?? '',
         calleNumero: map['calleNumero'] as String? ?? '',
@@ -117,14 +128,12 @@ class Reporte {
         observaciones: map['observaciones'] as String? ?? '',
         fotos: map['fotos'] as String? ?? '',
         sincronizado: (map['sincronizado'] as int? ?? 0) == 1,
-        fechaSincronizacion: (map['fechaSincronizacion'] as String?)?.isNotEmpty == true
-            ? DateTime.tryParse(map['fechaSincronizacion'])
-            : null,
+        fechaSincronizacion: Reporte.aLocal(map['fechaSincronizacion'] as String? ?? ''),
       );
 
   Map<String, dynamic> toJson() => {
         'folio': folio,
-        'fecha': fechaDb,
+        'fecha': fechaIso,
         'nombre_capturista': nombreCapturista,
         'area': area,
         'calle_numero': calleNumero,
@@ -143,6 +152,6 @@ class Reporte {
         'condicion_seguridad': condicionSeguridad,
         'observaciones': observaciones,
         'fotos': fotos,
-        'fecha_sincronizacion': fechaSincronizacion?.toIso8601String() ?? '',
+        'fecha_sincronizacion': fechaSincronizacion?.toUtc().toIso8601String() ?? '',
       };
 }

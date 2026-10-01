@@ -1552,6 +1552,15 @@ async function loadUbicacion() {
       fetchJSON(`${API}/ubicacion/filtros`),
     ]);
 
+    data.forEach((d) => {
+      d.alcaldia = resolveAlcaldia({
+        municipio: d.alcaldia,
+        codigo_postal: d.codigoPostal,
+        direccion: d.direccion,
+        estado: d.estado,
+      });
+    });
+
     _ubicData = data;
     _ubicCurrentPage = 1;
 
@@ -1560,8 +1569,9 @@ async function loadUbicacion() {
     const currentAlcaldia = alcaldiaSelect.value;
     const currentColonia = coloniaSelect.value;
 
+    const alcaldias = [...new Set(data.map((d) => d.alcaldia).filter(Boolean))].sort();
     alcaldiaSelect.innerHTML = '<option value="">Todas las alcaldías</option>' +
-      filtros.alcaldias.map(a => `<option value="${a}" ${a === currentAlcaldia ? 'selected' : ''}>${a}</option>`).join('');
+      alcaldias.map(a => `<option value="${escHtml(a)}" ${a === currentAlcaldia ? 'selected' : ''}>${escHtml(a)}</option>`).join('');
     coloniaSelect.innerHTML = '<option value="">Todas las colonias</option>' +
       filtros.colonias.map(c => `<option value="${c}" ${c === currentColonia ? 'selected' : ''}>${c}</option>`).join('');
 

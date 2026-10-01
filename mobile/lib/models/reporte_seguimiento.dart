@@ -42,7 +42,8 @@ class ReporteSeguimiento {
         inmueblePadronId: map['inmueblePadronId'] as String? ?? '',
         capturista: map['capturista'] as String? ?? '',
         fecha:
-            DateTime.tryParse(map['fecha'] as String? ?? '') ?? DateTime.now(),
+            DateTime.tryParse(map['fecha'] as String? ?? '')?.toLocal() ??
+                DateTime.now(),
         clasificacionGlobal: map['clasificacionGlobal'] as String? ?? '',
         observaciones: map['observaciones'] as String? ?? '',
         fotos: map['fotos'] as String? ?? '',

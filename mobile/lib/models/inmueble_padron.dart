@@ -86,7 +86,7 @@ class InmueblePadron {
         lng: (map['lng'] as num?)?.toDouble(),
         estadoAfectacion: map['estadoAfectacion'] as String? ?? 'sin_daños',
         fechaUltimoReporte: map['fechaUltimoReporte'] != null
-            ? DateTime.tryParse(map['fechaUltimoReporte'] as String)
+            ? DateTime.tryParse(map['fechaUltimoReporte'] as String)?.toLocal()
             : null,
         activo: (map['activo'] as int? ?? 1) == 1,
       );
@@ -120,6 +120,7 @@ class InmueblePadron {
         estadoAfectacion: json['estado_afectacion'] as String? ?? 'sin_daños',
         fechaUltimoReporte: json['fecha_ultimo_reporte'] != null
             ? DateTime.tryParse(json['fecha_ultimo_reporte'] as String)
+                ?.toLocal()
             : null,
         activo: json['activo'] as bool? ?? true,
       );

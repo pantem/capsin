@@ -6,6 +6,7 @@ const Damnificado = require('../models/Damnificado');
 const ValorCaracteristica = require('../models/ValorCaracteristica');
 const TipoInmueble = require('../models/TipoInmueble');
 const { generarFolio } = require('../services/folioService');
+const { fechaMX } = require('../utils/fechas');
 
 router.post('/sync', async (req, res) => {
   try {
@@ -34,8 +35,8 @@ router.post('/sync', async (req, res) => {
       const siniestroData = {
         folio: folioFinal,
         folio_original: exists ? exists.folio_original : reporteData.folio,
-        fecha: reporteData.fecha ? new Date(reporteData.fecha) : new Date(),
-        fecha_sincronizacion: reporteData.fecha_sincronizacion ? new Date(reporteData.fecha_sincronizacion) : new Date(),
+        fecha: fechaMX(reporteData.fecha, new Date()),
+        fecha_sincronizacion: fechaMX(reporteData.fecha_sincronizacion, new Date()),
         ubicacion: {
           lat: reporteData.lat || 0,
           lng: reporteData.lng || 0,

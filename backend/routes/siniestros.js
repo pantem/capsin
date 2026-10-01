@@ -5,6 +5,16 @@ const Inmueble = require('../models/Inmueble');
 const Damnificado = require('../models/Damnificado');
 const ValorCaracteristica = require('../models/ValorCaracteristica');
 const TipoInmueble = require('../models/TipoInmueble');
+const { fechaMX } = require('../utils/fechas');
+
+const normalizarFechas = (data) => {
+  const out = { ...data };
+  if (out.fecha !== undefined) out.fecha = fechaMX(out.fecha, new Date());
+  if (out.fecha_sincronizacion !== undefined) {
+    out.fecha_sincronizacion = fechaMX(out.fecha_sincronizacion, null);
+  }
+  return out;
+};
 
 router.get('/', async (req, res) => {
   try {
@@ -106,7 +116,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const siniestro = new Siniestro(req.body);
+    const siniestro = new Siniestro(normalizarFechas(req.body));
     const saved = await siniestro.save();
     res.status(201).json(saved);
   } catch (err) {
@@ -157,9 +167,11 @@ router.post('/sync', async (req, res) => {
       const { inmuebles, ...siniestroData } = item;
       const exists = await Siniestro.findOne({ folio: siniestroData.folio });
       let siniestro;
-      const dataToSave = dispositivo_id
-        ? { ...siniestroData, dispositivo_id, sincronizado: true }
-        : { ...siniestroData, sincronizado: true };
+      const dataToSave = normalizarFechas(
+        dispositivo_id
+          ? { ...siniestroData, dispositivo_id, sincronizado: true }
+          : { ...siniestroData, sincronizado: true }
+      );
       if (exists) {
         siniestro = await Siniestro.findByIdAndUpdate(exists._id, dataToSave, { new: true });
       } else {

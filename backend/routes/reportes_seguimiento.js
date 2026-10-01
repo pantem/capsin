@@ -3,6 +3,7 @@ const router = express.Router();
 const ReporteSeguimiento = require('../models/ReporteSeguimiento');
 const ValorCaracteristicaSeguimiento = require('../models/ValorCaracteristicaSeguimiento');
 const InmueblePadron = require('../models/InmueblePadron');
+const { fechaMX } = require('../utils/fechas');
 
 router.get('/', async (req, res) => {
   try {
@@ -45,11 +46,15 @@ router.post('/', async (req, res) => {
       return res.json({
         duplicado: true,
         reporte_existente: existente,
-        mensaje: `Este inmueble ya tiene un reporte reciente (${new Date(existente.fecha).toLocaleString()})`,
+        mensaje: `Este inmueble ya tiene un reporte reciente (${new Date(existente.fecha).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })})`,
       });
     }
 
-    const reporte = new ReporteSeguimiento({ ...reporteData, inmueble_padron });
+    const reporte = new ReporteSeguimiento({
+      ...reporteData,
+      fecha: fechaMX(reporteData.fecha, new Date()),
+      inmueble_padron,
+    });
     const saved = await reporte.save();
 
     if (valores_caracteristica && valores_caracteristica.length > 0) {

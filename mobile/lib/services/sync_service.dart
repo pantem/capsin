@@ -213,7 +213,8 @@ class SyncService {
         final reporte = Reporte(
           id: reporteId,
           folio: folio,
-          fecha: DateTime.tryParse(item['fecha'] as String? ?? '') ??
+          fecha: DateTime.tryParse(item['fecha'] as String? ?? '')
+                  ?.toLocal() ??
               DateTime.now(),
           nombreCapturista: item['nombre_capturista'] as String? ?? '',
           area: item['area'] as String? ?? '',

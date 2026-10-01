@@ -958,7 +958,7 @@ async function showDetail(siniestroId) {
       </div>
       <p><strong>Fecha de creación:</strong> ${formatDate(siniestro.fecha)}</p>
       ${siniestro.fecha_sincronizacion ? `<p><strong>Fecha de sincronización:</strong> ${formatDate(siniestro.fecha_sincronizacion)}</p>` : ''}
-      <p><strong>Dirección:</strong> ${siniestro.ubicacion?.direccion || ''}, ${siniestro.ubicacion?.municipio || ''}, ${siniestro.ubicacion?.estado || ''}</p>
+      <p><strong>Dirección:</strong> ${siniestro.ubicacion?.direccion || ''}, ${resolveAlcaldia(siniestro.ubicacion)}, ${siniestro.ubicacion?.estado || ''}</p>
       <p><strong>Coordenadas:</strong> ${siniestro.ubicacion?.lat}, ${siniestro.ubicacion?.lng}</p>
       <p><strong>Descripción:</strong> ${siniestro.descripcion || 'Sin descripción'}</p>
       ${siniestro.dispositivo_id ? `<p><strong>Dispositivo:</strong> ${siniestro.dispositivo_id}</p>` : ''}
@@ -1205,7 +1205,8 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
     if (!secNum) return;
     if (!secciones.has(secNum)) secciones.set(secNum, []);
     const valorObj = valoresMap.get(c._id);
-    const valorTxt = extraerValorDeValor(valorObj);
+    let valorTxt = extraerValorDeValor(valorObj);
+    if (/alcald[ií]a/i.test(c.nombre)) valorTxt = alcaldiaResolv;
     secciones.get(secNum).push({
       num: extraerNumCaracteristica(c.nombre),
       nombre: extraerNombreLimpio(c.nombre),

@@ -1235,7 +1235,7 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
 
   html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
     <div>
-      <img src="../images/logo_reporte.png" alt="SAS">
+      <img src="../images/logo_reporte.png" width="50" height="50" alt="SAS">
     </div>
     <div>
       <div style="font-size:14px;font-weight:bold;color:#1e293b;text-decoration:underline;">REPORTE DE INSPECCIÓN DE INMUEBLE</div>

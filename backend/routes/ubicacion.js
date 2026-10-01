@@ -22,10 +22,16 @@ router.get('/', async (req, res) => {
     const inmuebleFilter = { siniestro: { $in: siniestroIds } };
     if (dano) inmuebleFilter.estado_afectacion = dano;
 
+    const RE_USO = /uso del inmueble/i;
+    const RE_TIPO_DANO = /tipo de da[ñn]o observado/i;
+
     const [inmuebles, caracteristicas] = await Promise.all([
       Inmueble.find(inmuebleFilter).lean(),
       CaracteristicaTipo.find({
-        nombre: { $in: ['Uso del Inmueble', 'Tipo de daño observado'] },
+        $or: [
+          { nombre: { $regex: 'uso del inmueble', $options: 'i' } },
+          { nombre: { $regex: 'tipo de da[ñn]o observado', $options: 'i' } },
+        ],
       })
         .select('_id nombre')
         .lean(),
@@ -76,8 +82,8 @@ router.get('/', async (req, res) => {
     for (const v of valores) {
       const nombre = nombrePorId.get(String(v.caracteristica)) || '';
       const valor = v.valor_seleccion || v.valor_texto || '';
-      if (nombre === 'Uso del Inmueble') usoPorInm.set(String(v.inmueble), valor);
-      else if (nombre === 'Tipo de daño observado') danoPorInm.set(String(v.inmueble), valor);
+      if (RE_USO.test(nombre)) usoPorInm.set(String(v.inmueble), valor);
+      else if (RE_TIPO_DANO.test(nombre)) danoPorInm.set(String(v.inmueble), valor);
     }
 
     const siniestroById = new Map(siniestros.map((s) => [String(s._id), s]));

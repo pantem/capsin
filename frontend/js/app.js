@@ -1234,7 +1234,9 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
   html += `<div style="width:720px;margin:0 auto;padding:0 20px 16px 20px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">`;
 
   html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-    <div style="width:28px;height:28px;background:${MAROON};border-radius:14px;flex-shrink:0;"></div>
+    <div>
+      <img src="../images/logo_reporte.png" alt="SAS">
+    </div>
     <div>
       <div style="font-size:14px;font-weight:bold;color:#1e293b;text-decoration:underline;">REPORTE DE INSPECCIÓN DE INMUEBLE</div>
       <div style="font-size:9px;color:#64748b;margin-top:2px;">SAS • Sistema de Afectaciones por Sismo</div>

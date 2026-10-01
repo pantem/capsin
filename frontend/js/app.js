@@ -610,9 +610,9 @@ async function exportarDashboardPDF() {
     const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
     document.body.removeChild(container);
 
-    const pdf = new jspdfLib('p', 'mm', 'letter');
-    const pageW = 215.9;
-    const pageH = 279.4;
+    const pdf = new jspdfLib('l', 'mm', 'letter');
+    const pageW = 279.4;
+    const pageH = 215.9;
     const margin = 12;
     const contentW = pageW - margin * 2;
     const contentH = pageH - margin * 2;

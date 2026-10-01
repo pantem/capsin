@@ -47,6 +47,38 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     });
   }
 
+  String _norm(String s) {
+    var t = s.toLowerCase();
+    const mapa = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ü': 'u',
+      'ñ': 'n',
+    };
+    mapa.forEach((k, v) => t = t.replaceAll(k, v));
+    return t;
+  }
+
+  int? _numeroDe(String clave) {
+    String? id;
+    for (final c in _caracteristicas) {
+      if (_norm(c.nombre).contains(clave)) {
+        id = c.id;
+        break;
+      }
+    }
+    if (id == null) return null;
+    for (final v in _valores) {
+      if (v.caracteristicaId != id) continue;
+      final n = int.tryParse(v.valorSeleccion ?? '') ?? v.valorNumero?.round();
+      if (n != null) return n;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -70,6 +102,14 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     final valorIndex = <String, ValorCaracteristica>{
       for (final v in _valores) v.caracteristicaId: v
     };
+
+    int? niveles = _numeroDe('numero de niveles sobre el terreno');
+    int? sotanos = _numeroDe('numero de sotanos');
+    if (niveles == null && sotanos == null) {
+      niveles = r.sobreNivelBanqueta;
+      sotanos = r.bajoNivelBanqueta;
+    }
+    final nivelesTotales = (niveles ?? 0) + (sotanos ?? 0);
 
     return Scaffold(
       appBar: AppBar(title: Text(r.folio)),
@@ -159,7 +199,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   if (r.lat != null && r.lng != null)
                     _infoRow(Icons.gps_fixed,
                         '${r.lat!.toStringAsFixed(5)}, ${r.lng!.toStringAsFixed(5)}'),
-                  _infoRow(Icons.layers, 'Sobre banqueta: ${r.sobreNivelBanqueta} | Bajo banqueta: ${r.bajoNivelBanqueta} | Niveles totales: ${r.sobreNivelBanqueta + r.bajoNivelBanqueta}'),
+                  _infoRow(Icons.layers, 'Niveles sobre el terreno (2.10): ${niveles ?? 0} | Sótanos (2.11): ${sotanos ?? 0} | Niveles totales: $nivelesTotales'),
                   if (caractsTab2.isNotEmpty) ...[
                     const Divider(height: 24),
                     const Text('Características',

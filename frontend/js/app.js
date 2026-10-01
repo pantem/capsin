@@ -987,6 +987,24 @@ async function showDetail(siniestroId) {
         ]);
         const hijos = inm.tipo === 'edificio' && inm.es_padre ? await fetchJSON(`${API}/inmuebles/${inm._id}/hijos`) : [];
 
+        const nombreNorm = (v) =>
+          (v.caracteristica?.nombre || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const numeroDe = (clave) => {
+          for (const v of valores.filter((x) => nombreNorm(x).includes(clave))) {
+            const crudo = v.valor_seleccion ?? v.valor_texto ?? v.valor_numero;
+            const n = parseInt(crudo, 10);
+            if (!Number.isNaN(n)) return n;
+          }
+          return null;
+        };
+        let nivelesSobre = numeroDe('numero de niveles sobre el terreno');
+        let nivelesSotano = numeroDe('numero de sotanos');
+        if (nivelesSobre === null && nivelesSotano === null) {
+          nivelesSobre = inm.sobre_nivel_banqueta || 0;
+          nivelesSotano = inm.bajo_nivel_banqueta || 0;
+        }
+        const nivelesTotales = (nivelesSobre || 0) + (nivelesSotano || 0);
+
         html += `
           <div style="background:#f8f9fa;padding:0.8rem;border-radius:8px;margin:0.5rem 0;">
             <p><strong>${inm.tipo === 'edificio' ? 'Edificio' : 'Casa'}</strong>
@@ -995,7 +1013,7 @@ async function showDetail(siniestroId) {
                 ${inm.estado_afectacion === 'critico' ? 'Riesgo alto' : inm.estado_afectacion === 'moderado' ? 'Riesgo medio' : inm.estado_afectacion === 'colapso' ? 'Colapso' : 'Riesgo bajo'}
               </span>
             </p>
-            <p style="font-size:0.9rem;color:#555;">Sobre banqueta: ${inm.sobre_nivel_banqueta ?? 0} | Bajo banqueta: ${inm.bajo_nivel_banqueta ?? 0} | Niveles totales: ${(inm.sobre_nivel_banqueta ?? 0) + (inm.bajo_nivel_banqueta ?? 0)}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
+            <p style="font-size:0.9rem;color:#555;">Niveles sobre el terreno (2.10): ${nivelesSobre ?? 0} | Sótanos (2.11): ${nivelesSotano ?? 0} | Niveles totales: ${nivelesTotales}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
             ${valores.length > 0 ? `
               <div style="margin-top:0.5rem;">
                 <p style="font-weight:600;font-size:0.9rem;">Características capturadas:</p>

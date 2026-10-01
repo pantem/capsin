@@ -1027,6 +1027,7 @@ async function showDetail(siniestroId) {
           else if (v.valor_booleano != null) valor = v.valor_booleano ? 'Sí' : 'No';
           else if (v.valor_seleccion != null && v.valor_seleccion !== '') valor = v.valor_seleccion;
           else valor = '—';
+          if (/alcald[ií]a/i.test(nombre)) valor = resolveAlcaldia(siniestro.ubicacion);
           if (v.valor_texto_condicional) {
             valor = valor && valor !== '—'
               ? `${valor} (${v.valor_texto_condicional})`

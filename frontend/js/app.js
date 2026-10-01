@@ -1141,15 +1141,14 @@ function encabezadoReporteHTML(logoB64) {
       <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General de la</div>
       <div style="font-size:8px;font-weight:bold;color:#555;">Comisión para la Reconstrucción de la Ciudad de</div>
       <div style="font-size:8px;font-weight:bold;color:#555;">México.</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General</div>
     </td>
     <td style="width:10%;vertical-align:middle;">
       <div style="font-size:7px;color:${MAROON};text-align:center;margin-bottom:2px;">&nbsp;</div>
       <div style="border:1px solid ${MAROON};background:#fdf2f8;text-align:center;padding:5px;font-size:12px;font-weight:bold;color:${MAROON};">&nbsp;</div>
     </td>
   </tr></table>
-  <div style="border-top:3px solid ${MAROON};"></div>
-  <div style="height:10px;"></div>`;
+  <div style="border-top:3px solid ${MAROON};">&nbsp;</div>
+  <div style="height:10px;">&nbsp;</div>`;
 }
 
 async function renderizarEncabezadoReporte(logoB64) {

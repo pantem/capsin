@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const damnificadoSchema = new mongoose.Schema({
-  inmueble: { type: mongoose.Schema.Types.ObjectId, ref: 'Inmueble', required: true },
+  inmueble: { type: mongoose.Schema.Types.ObjectId, ref: 'Inmueble', required: true, index: true },
   nombre: { type: String, default: '' },
   edad: { type: Number, default: 0 },
   sexo: { type: String, enum: ['M', 'F', ''] },

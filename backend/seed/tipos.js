@@ -300,7 +300,7 @@ const CARACTERISTICAS = [
     nombre: '6.1 Fotografías (fachada, máximo 10)',
     tipo_dato: 'texto',
     opciones: [],
-    requerido: true,
+    requerido: false,
     orden: 61,
   },
 ];

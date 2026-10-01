@@ -1132,6 +1132,38 @@ function extraerValorDeValor(v) {
   return null;
 }
 
+function encabezadoReporteHTML(logoB64) {
+  const MAROON = '#7A0C38';
+  return `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
+    <td style="width:30%;vertical-align:middle;">${logoB64 ? `<img src="${logoB64}" style="height:52px;" alt="Logo CDMX">` : ''}</td>
+    <td style="width:60%;text-align:left;vertical-align:middle;padding-right:20px;">
+      <div style="font-size:13px;font-weight:bold;color:#333;">SECRETARÍA DE VIVIENDA</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General de la</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">Comisión para la Reconstrucción de la Ciudad de</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">México.</div>
+      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General</div>
+    </td>
+    <td style="width:10%;vertical-align:middle;">
+      <div style="font-size:7px;color:${MAROON};text-align:center;margin-bottom:2px;">&nbsp;</div>
+      <div style="border:1px solid ${MAROON};background:#fdf2f8;text-align:center;padding:5px;font-size:12px;font-weight:bold;color:${MAROON};">&nbsp;</div>
+    </td>
+  </tr></table>
+  <div style="border-top:3px solid ${MAROON};"></div>
+  <div style="height:10px;"></div>`;
+}
+
+async function renderizarEncabezadoReporte(logoB64) {
+  const outer = document.createElement('div');
+  outer.style.cssText =
+    'position:fixed;left:-10000px;top:0;width:760px;background:#fff;font-family:Arial,Helvetica,sans-serif;';
+  outer.innerHTML = `<div style="width:720px;margin:0 auto;padding:16px 20px 0 20px;background:#fff;">${encabezadoReporteHTML(logoB64)}</div>`;
+  document.body.appendChild(outer);
+  await new Promise((r) => setTimeout(r, 150));
+  const canvas = await html2canvas(outer, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+  document.body.removeChild(outer);
+  return canvas;
+}
+
 function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, logoB64, fotosB64 }) {
   const folio = siniestro.folio || 'SAS-REPORTE';
   const fechaReporte = formatDate(siniestro.fecha || new Date());
@@ -1199,24 +1231,7 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
     <div style="font-size:11px;font-weight:bold;color:${MAROON};margin:8px 0 4px 0;">${num}. ${escHtml(text)}</div>`;
 
   let html = '';
-  html += `<div style="width:720px;margin:0 auto;padding:16px 20px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">`;
-
-  html += `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
-    <td style="width:30%;vertical-align:middle;">${logoB64 ? `<img src="${logoB64}" style="height:52px;" alt="Logo CDMX">` : ''}</td>
-    <td style="width:43%;text-align:right;vertical-align:middle;padding-right:20px;">
-      <div style="font-size:13px;font-weight:bold;color:#333;">SECRETARÍA DE VIVIENDA</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General de la</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">Comisión para la Reconstrucción de la Ciudad de</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">México.</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General</div>
-    </td>
-    <td style="width:27%;vertical-align:middle;">
-      <div style="font-size:7px;color:${MAROON};text-align:center;margin-bottom:2px;">Folio de Inspección</div>
-      <div style="border:1px solid ${MAROON};background:#fdf2f8;text-align:center;padding:5px;font-size:12px;font-weight:bold;color:${MAROON};">${escHtml(folio)}</div>
-    </td>
-  </tr></table>`;
-
-  html += `<div style="border-top:3px solid ${MAROON};margin-bottom:10px;"></div>`;
+  html += `<div style="width:720px;margin:0 auto;padding:0 20px 16px 20px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#1e293b;">`;
 
   html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
     <div style="width:28px;height:28px;background:${MAROON};border-radius:14px;flex-shrink:0;"></div>
@@ -1382,6 +1397,8 @@ async function descargarReporte(siniestroId) {
     container.innerHTML = htmlContent;
     document.body.appendChild(container);
 
+    const encabezadoCanvas = await renderizarEncabezadoReporte(logoB64);
+
     await new Promise(r => setTimeout(r, 300));
 
     const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
@@ -1399,28 +1416,35 @@ async function descargarReporte(siniestroId) {
 
     const canvasW = canvas.width;
     const canvasH = canvas.height;
-    const imgHmm = (canvasH * contentW) / canvasW;
-    const totalPages = Math.max(1, Math.ceil(imgHmm / contentH));
-    const pxPerMmY = canvasH / imgHmm;
-    const pageContentPxH = contentH * pxPerMmY;
+    const pxPerMm = canvasW / contentW;
+    const encHmm = (encabezadoCanvas.height * contentW) / encabezadoCanvas.width;
+    const gapHmm = 1;
+    const bodyTop = marginT + encHmm + gapHmm;
+    const bodyHmmMax = Math.max(20, contentH - encHmm - gapHmm);
+    const pageBodyPxH = Math.max(1, Math.floor(bodyHmmMax * pxPerMm));
+    const totalPages = Math.max(1, Math.ceil(canvasH / pageBodyPxH));
+    const encabezadoData = encabezadoCanvas.toDataURL('image/jpeg', 0.95);
 
     for (let i = 0; i < totalPages; i++) {
       if (i > 0) pdf.addPage();
 
-      const srcY = Math.floor(i * pageContentPxH);
-      const srcH = Math.min(Math.ceil(pageContentPxH), canvasH - srcY);
+      pdf.addImage(encabezadoData, 'JPEG', marginL, marginT, contentW, encHmm);
 
-      const slice = document.createElement('canvas');
-      slice.width = canvasW;
-      slice.height = srcH;
-      const ctx = slice.getContext('2d');
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, slice.width, slice.height);
-      ctx.drawImage(canvas, 0, srcY, canvasW, srcH, 0, 0, canvasW, srcH);
+      const srcY = Math.floor(i * pageBodyPxH);
+      const srcH = Math.min(pageBodyPxH, canvasH - srcY);
 
-      const sliceData = slice.toDataURL('image/jpeg', 0.95);
-      const sliceHmm = srcH / pxPerMmY;
-      pdf.addImage(sliceData, 'JPEG', marginL, marginT, contentW, sliceHmm);
+      if (srcH > 0) {
+        const slice = document.createElement('canvas');
+        slice.width = canvasW;
+        slice.height = srcH;
+        const ctx = slice.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, srcY, canvasW, srcH, 0, 0, canvasW, srcH);
+
+        const sliceData = slice.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(sliceData, 'JPEG', marginL, bodyTop, contentW, srcH / pxPerMm);
+      }
 
       dibujarFooterPDF(pdf, i + 1, totalPages, margaB64, mascotB64);
     }

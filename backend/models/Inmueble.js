@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const inmuebleSchema = new mongoose.Schema({
-  siniestro: { type: mongoose.Schema.Types.ObjectId, ref: 'Siniestro', required: true },
+  siniestro: { type: mongoose.Schema.Types.ObjectId, ref: 'Siniestro', required: true, index: true },
   tipo: { type: String, default: '' },
   tipo_inmueble_ref: { type: mongoose.Schema.Types.ObjectId, ref: 'TipoInmueble', default: null },
   numero_niveles: { type: Number, default: 1 },

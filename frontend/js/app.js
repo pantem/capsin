@@ -383,6 +383,260 @@ async function loadDashboard() {
   }
 }
 
+function dibujarPastelDashboard({ sinDano, moderado, critico, colapso, total }) {
+  const W = 460;
+  const H = 340;
+  const S = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * S;
+  canvas.height = H * S;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(S, S);
+
+  const cx = 230;
+  const cy = 170;
+  const r = 105;
+  const data = [
+    { label: 'Riesgo bajo', v: sinDano, c: '#55b74e' },
+    { label: 'Riesgo medio', v: moderado, c: '#f7b731' },
+    { label: 'Riesgo alto', v: critico, c: '#881337' },
+    { label: 'Colapso', v: colapso, c: '#333333' },
+  ];
+  const t = total > 0 ? total : 1;
+  let start = -Math.PI / 2;
+
+  data.forEach((d) => {
+    const sweep = (d.v / t) * Math.PI * 2;
+    if (sweep > 0) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, start + sweep);
+      ctx.closePath();
+      ctx.fillStyle = d.c;
+      ctx.fill();
+    }
+
+    const mid = start + sweep / 2;
+    const ex = cx + Math.cos(mid) * (r + 5);
+    const ey = cy + Math.sin(mid) * (r + 5);
+    const lx = cx + Math.cos(mid) * (r + 38);
+    const ly = cy + Math.sin(mid) * (r + 38);
+    const der = Math.cos(mid) >= 0;
+
+    ctx.strokeStyle = d.c;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(lx, ly);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(ex, ey, 3, 0, Math.PI * 2);
+    ctx.fillStyle = d.c;
+    ctx.fill();
+
+    ctx.textAlign = der ? 'left' : 'right';
+    const tx = lx + (der ? 6 : -6);
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 13px Arial';
+    ctx.fillText(d.label, tx, ly - 4);
+    ctx.fillStyle = '#555';
+    ctx.font = '12px Arial';
+    ctx.fillText(`${d.v} · ${((d.v / t) * 100).toFixed(1)}%`, tx, ly + 13);
+
+    start += sweep;
+  });
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 26px Arial';
+  ctx.fillText(String(total), cx, cy + 2);
+  ctx.font = '13px Arial';
+  ctx.fillText('Inmuebles', cx, cy + 22);
+
+  return canvas.toDataURL('image/png');
+}
+
+async function exportarDashboardPDF() {
+  const jspdfLib = window.jsPDF || (window.jspdf && window.jspdf.jsPDF);
+  if (typeof html2canvas === 'undefined' || !jspdfLib) {
+    alert('No se pudieron cargar las librerías para generar el PDF. Recarga la página y verifica tu conexión.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-export-dashboard');
+  if (btn) btn.disabled = true;
+
+  try {
+    let stats = null;
+    try {
+      stats = await fetchJSON(`${API}/resumen`);
+    } catch (fetchErr) {
+      stats = _dashboardStats;
+      if (!stats) throw fetchErr;
+    }
+
+    const total = stats.totalInmuebles || 0;
+    const sinDano = stats.inmueblesSinDanos || 0;
+    const moderado = stats.inmueblesModerados || 0;
+    const critico = stats.inmueblesCriticos || 0;
+    const colapso = stats.inmueblesColapso || 0;
+    const pct = (n) => (total > 0 ? `${((n / total) * 100).toFixed(1)}%` : '0.0%');
+
+    const ahora = new Date();
+    const fechaLarga = ahora.toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'America/Mexico_City',
+    });
+
+    const kpis = [
+      { titulo: 'Total de inmuebles', valor: total, sub: 'Inmuebles registrados', bg: '#fde8ef', color: '#7A0C38' },
+      { titulo: 'Riesgo bajo', valor: sinDano, sub: `${pct(sinDano)} del total`, bg: '#e7f6e6', color: '#16a34a' },
+      { titulo: 'Riesgo medio', valor: moderado, sub: `${pct(moderado)} del total`, bg: '#fdf1dd', color: '#f59e0b' },
+      { titulo: 'Riesgo alto', valor: critico, sub: `${pct(critico)} del total`, bg: '#fde8e8', color: '#dc2626' },
+      { titulo: 'Colapso', valor: colapso, sub: `${pct(colapso)} del total`, bg: '#eceff3', color: '#111827' },
+    ];
+
+    const iconoCasa =
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
+
+    const kpiHtml = kpis
+      .map(
+        (k) => `
+      <div style="flex:1;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;background:#fff;">
+        <div style="width:38px;height:38px;border-radius:50%;background:${k.bg};color:${k.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconoCasa}</div>
+        <div>
+          <div style="font-size:11px;font-weight:bold;color:#334155;">${k.titulo}</div>
+          <div style="font-size:26px;font-weight:bold;color:${k.color};line-height:1.15;">${k.valor.toLocaleString()}</div>
+          <div style="font-size:10px;color:#64748b;">${k.sub}</div>
+        </div>
+      </div>`
+      )
+      .join('');
+
+    const porAlc = Array.isArray(stats.porAlcaldia) ? stats.porAlcaldia : [];
+    const totales = porAlc.reduce(
+      (acc, a) => ({
+        sinDano: acc.sinDano + (a.sinDano || 0),
+        moderado: acc.moderado + (a.moderado || 0),
+        critico: acc.critico + (a.critico || 0),
+        colapso: acc.colapso + (a.colapso || 0),
+        total: acc.total + (a.total || 0),
+      }),
+      { sinDano: 0, moderado: 0, critico: 0, colapso: 0, total: 0 }
+    );
+
+    const celda = (v, color) =>
+      v > 0
+        ? `<span style="color:${color};font-weight:600;">${v}</span>`
+        : '<span style="color:#94a3b8;">—</span>';
+    const td = 'padding:5px 8px;font-size:11px;text-align:center;';
+
+    const filasAlc = porAlc
+      .map(
+        (a) => `
+      <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:5px 8px;font-size:11px;color:#334155;">${escHtml(a.alcaldia || '')}</td>
+        <td style="${td}">${celda(a.sinDano || 0, '#16a34a')}</td>
+        <td style="${td}">${celda(a.moderado || 0, '#f59e0b')}</td>
+        <td style="${td}">${celda(a.critico || 0, '#dc2626')}</td>
+        <td style="${td}">${celda(a.colapso || 0, '#111827')}</td>
+        <td style="${td};font-weight:600;color:#334155;">${a.total || 0}</td>
+      </tr>`
+      )
+      .join('');
+
+    const html = `
+      <div style="width:1000px;background:#fff;padding:26px 30px;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div style="width:56px;height:56px;border-radius:50%;background:#7A0C38;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor"><path d="M4 20h3v-8H4v8zm6.5 0h3V4h-3v16zM17 20h3v-12h-3v12z"/></svg>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:bold;letter-spacing:3px;color:#7A0C38;">SAS</div>
+            <div style="font-size:25px;font-weight:bold;color:#7A0C38;line-height:1.1;">REPORTE DE INMUEBLES DAÑADOS</div>
+            <div style="font-size:12px;color:#64748b;">Resumen general del dashboard · Fecha de generación: ${fechaLarga}</div>
+          </div>
+        </div>
+
+        <div style="border-top:2px solid #7A0C38;margin:14px 0 18px;"></div>
+
+        <div style="display:flex;gap:12px;">${kpiHtml}</div>
+
+        <div style="display:flex;gap:24px;margin-top:22px;align-items:flex-start;">
+          <div style="width:40%;">
+            <div style="font-size:15px;font-weight:bold;color:#7A0C38;">Distribución de inmuebles por nivel de daño</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Número de inmuebles registrados por nivel de riesgo</div>
+            <img src="${dibujarPastelDashboard({ sinDano, moderado, critico, colapso, total })}" style="width:100%;display:block;" alt="Distribución">
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px;font-weight:bold;color:#7A0C38;">Nivel de daño por alcaldía</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Información completa de las 16 alcaldías</div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#0f172a;color:#fff;">
+                  <th style="padding:6px 8px;font-size:11px;text-align:left;">Alcaldía</th>
+                  <th style="padding:6px 8px;font-size:11px;">Riesgo bajo</th>
+                  <th style="padding:6px 8px;font-size:11px;">Riesgo medio</th>
+                  <th style="padding:6px 8px;font-size:11px;">Riesgo alto</th>
+                  <th style="padding:6px 8px;font-size:11px;">Colapso</th>
+                  <th style="padding:6px 8px;font-size:11px;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filasAlc}
+                <tr style="background:#f1f5f9;font-weight:bold;">
+                  <td style="padding:6px 8px;font-size:11px;color:#334155;">TOTAL GENERAL</td>
+                  <td style="${td};color:#16a34a;">${totales.sinDano}</td>
+                  <td style="${td};color:#f59e0b;">${totales.moderado}</td>
+                  <td style="${td};color:#dc2626;">${totales.critico}</td>
+                  <td style="${td};color:#111827;">${totales.colapso}</td>
+                  <td style="${td};color:#334155;">${totales.total}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-10000px;top:0;width:1000px;background:#fff;';
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    await new Promise((r) => setTimeout(r, 300));
+
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    document.body.removeChild(container);
+
+    const pdf = new jspdfLib('p', 'mm', 'letter');
+    const pageW = 215.9;
+    const pageH = 279.4;
+    const margin = 12;
+    const contentW = pageW - margin * 2;
+    const contentH = pageH - margin * 2;
+
+    let w = contentW;
+    let h = (canvas.height / canvas.width) * w;
+    if (h > contentH) {
+      h = contentH;
+      w = (canvas.width / canvas.height) * h;
+    }
+    const x = (pageW - w) / 2;
+    const y = margin + (contentH - h) / 2;
+
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', x, y, w, h);
+
+    const fecha = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`;
+    pdf.save(`Dashboard_Inmuebles_Danados_${fecha}.pdf`);
+  } catch (err) {
+    alert(`Error al exportar el dashboard: ${err.message}`);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 async function abrirDetalleAlcaldia(alcaldia, dano) {
   const modal = document.getElementById('modal-alcaldia');
   const body = document.getElementById('modal-alcaldia-body');

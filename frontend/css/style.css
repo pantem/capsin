@@ -218,6 +218,35 @@ main {
   font-weight: 600;
 }
 
+.btn-export-dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.75rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--primary-burgundy);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 6px rgba(122, 12, 56, 0.15);
+}
+
+.btn-export-dashboard:hover {
+  background: var(--primary-burgundy-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 10px rgba(122, 12, 56, 0.2);
+}
+
+.btn-export-dashboard:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
 /* KPI Summary Cards Grid */
 .kpi-grid {
   display: grid;

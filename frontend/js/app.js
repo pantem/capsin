@@ -1271,19 +1271,17 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
       <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Folio de inspección</td>
       <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Coordenadas</td>
       <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dispositivo</td>
-      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Capturista</td>
     </tr>
     <tr>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(fechaReporte)}</td>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(folio)}</td>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(coords)}</td>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dispositivo)}</td>
-      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(capturista)}</td>
     </tr>
-    <tr><td colspan="5" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dirección</td></tr>
-    <tr><td colspan="5" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dir)}, ${escHtml(alcaldiaResolv)}, CDMX</td></tr>
-    <tr><td colspan="5" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Descripción</td></tr>
-    <tr><td colspan="5" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;">${escHtml(descripcion)}</td></tr>
+    <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dirección</td></tr>
+    <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dir)}, ${escHtml(alcaldiaResolv)}, CDMX</td></tr>
+    <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Descripción</td></tr>
+    <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;">${escHtml(descripcion)}</td></tr>
   </table>`;
 
   const numsSeccion = [...secciones.keys()].sort((a, b) => a - b);

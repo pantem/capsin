@@ -244,12 +244,16 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
         ? Colors.red
         : estado == 'moderado'
             ? Colors.orange
-            : Colors.green;
+            : estado == 'colapso'
+                ? Colors.black
+                : Colors.green;
     final textoEstado = estado == 'critico'
-        ? 'Crítico'
+        ? 'Riesgo alto'
         : estado == 'moderado'
-            ? 'Moderado'
-            : 'Sin daños';
+            ? 'Riesgo medio'
+            : estado == 'colapso'
+                ? 'Colapso'
+                : 'Riesgo bajo';
 
     return Container(
       width: double.infinity,

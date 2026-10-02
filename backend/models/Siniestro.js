@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const siniestroSchema = new mongoose.Schema({
   folio: { type: String, required: true, unique: true },
   folio_original: { type: String, default: null },
+  reporte_local_id: { type: String, default: null, index: true },
   fecha: { type: Date, default: Date.now },
   ubicacion: {
     lat: { type: Number, required: true },

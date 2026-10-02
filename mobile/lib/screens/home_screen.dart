@@ -182,14 +182,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           child: Text(
                                             r.estadoAfectacion == 'critico'
-                                                ? 'Crítico'
+                                                ? 'Riesgo alto'
                                                 : r.estadoAfectacion ==
                                                         'moderado'
-                                                    ? 'Moderado'
+                                                    ? 'Riesgo medio'
                                                     : r.estadoAfectacion ==
                                                             'colapso'
                                                         ? 'Colapso'
-                                                        : 'Sin daños',
+                                                        : 'Riesgo bajo',
                                             style: TextStyle(
                                               fontSize: 11,
                                               color: r.estadoAfectacion ==

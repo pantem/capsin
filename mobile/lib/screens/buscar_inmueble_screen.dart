@@ -99,6 +99,8 @@ class _BuscarInmuebleScreenState extends State<BuscarInmuebleScreen> {
         return Colors.red;
       case 'moderado':
         return Colors.orange;
+      case 'colapso':
+        return Colors.black;
       default:
         return Colors.green;
     }
@@ -107,11 +109,13 @@ class _BuscarInmuebleScreenState extends State<BuscarInmuebleScreen> {
   String _labelEstado(String estado) {
     switch (estado) {
       case 'critico':
-        return 'Crítico';
+        return 'Riesgo alto';
       case 'moderado':
-        return 'Moderado';
+        return 'Riesgo medio';
+      case 'colapso':
+        return 'Colapso';
       default:
-        return 'Sin daños';
+        return 'Riesgo bajo';
     }
   }
 

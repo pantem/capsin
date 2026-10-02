@@ -132,6 +132,7 @@ class Reporte {
       );
 
   Map<String, dynamic> toJson() => {
+        'reporte_id': id,
         'folio': folio,
         'fecha': fechaIso,
         'nombre_capturista': nombreCapturista,

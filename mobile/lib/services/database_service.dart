@@ -269,25 +269,48 @@ class DatabaseService {
     final valores = await getValoresCaracteristica(reporteId);
     String estado = 'sin_daños';
     for (final c in caracts) {
-      if (c.nombre.contains('Nivel de riesgo') || c.nombre.contains('Clasificación de Nivel de Daño')) {
-        final v = valores.where((val) => val.caracteristicaId == c.id).toList();
-        if (v.isNotEmpty) {
-          final sel = v.first.valorSeleccion ?? '';
-          if (sel.contains('Riesgo Alto')) estado = 'critico';
-          else if (sel.contains('Riesgo Medio')) estado = 'moderado';
-          else if (sel.contains('Colapso')) estado = 'colapso';
-          else estado = 'sin_daños';
-        }
-        break;
+      final nombre = _normTxt(c.nombre);
+      if (!nombre.contains('nivel de riesgo') &&
+          !nombre.contains('clasificacion de nivel de dano')) {
+        continue;
       }
+      final v = valores.where((val) => val.caracteristicaId == c.id).toList();
+      if (v.isEmpty) continue;
+      final sel = (v.first.valorSeleccion ?? v.first.valorTexto ?? '').trim();
+      if (sel.isEmpty) continue;
+      estado = _derivarEstadoRiesgo(sel);
+      break;
     }
     await db.update('reportes', {'estadoAfectacion': estado},
         where: 'id = ?', whereArgs: [reporteId]);
   }
 
+  String _normTxt(String s) {
+    var t = s.toLowerCase();
+    const mapa = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+    mapa.forEach((k, v) => t = t.replaceAll(k, v));
+    return t;
+  }
+
+  String _derivarEstadoRiesgo(String valor) {
+    final s = _normTxt(valor).trim();
+    if (s.isEmpty) return 'sin_daños';
+    if (s.contains('colapso')) return 'colapso';
+    if (s.contains('alto') || s.contains('critic')) return 'critico';
+    if (s.contains('medio')) return 'moderado';
+    return 'sin_daños';
+  }
+
   Future<void> actualizarFotosReporte(String id, String fotos) async {
     final db = await database;
     await db.update('reportes', {'fotos': fotos},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> actualizarFolioReporte(String id, String folio) async {
+    if (folio.trim().isEmpty) return;
+    final db = await database;
+    await db.update('reportes', {'folio': folio.trim()},
         where: 'id = ?', whereArgs: [id]);
   }
 

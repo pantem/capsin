@@ -75,6 +75,22 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     });
   }
 
+  String _norm(String s) {
+    var t = s.toLowerCase();
+    const mapa = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+    mapa.forEach((k, v) => t = t.replaceAll(k, v));
+    return t;
+  }
+
+  String _derivarEstadoRiesgo(String valor) {
+    final s = _norm(valor).trim();
+    if (s.isEmpty) return 'sin_daños';
+    if (s.contains('colapso')) return 'colapso';
+    if (s.contains('alto') || s.contains('critic')) return 'critico';
+    if (s.contains('medio')) return 'moderado';
+    return 'sin_daños';
+  }
+
   Future<void> _cargarCaracteristicas() async {
     final tipos = await _db.getTiposInmueble(soloActivos: true);
     if (!mounted) return;
@@ -261,8 +277,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       }
     }
     try {
-      final folio =
-          'SIS-${DateFormat('yyyyMMdd').format(_fechaSeleccionada)}-${_uuid.v4().substring(0, 4).toUpperCase()}';
+      final folio = await SyncService().generarFolioLocal();
       final reporteId = _uuid.v4();
 
       String _getCaractByNombre(String nombre) {
@@ -276,19 +291,16 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
       String estadoAfectacion = 'sin_daños';
       for (final c in _caracteristicas) {
-        if (c.nombre.contains('Nivel de riesgo') ||
-            c.nombre.contains('Clasificación de Nivel de Daño')) {
-          final raw = _valoresCaracteristica[c.id];
-          final valor = raw as String? ?? '';
-          if (valor.contains('Riesgo Alto')) {
-            estadoAfectacion = 'critico';
-          } else if (valor.contains('Riesgo Medio')) {
-            estadoAfectacion = 'moderado';
-          } else if (valor.contains('Colapso')) {
-            estadoAfectacion = 'colapso';
-          }
-          break;
+        final nombre = _norm(c.nombre);
+        if (!nombre.contains('nivel de riesgo') &&
+            !nombre.contains('clasificacion de nivel de dano')) {
+          continue;
         }
+        final raw = _valoresCaracteristica[c.id];
+        final valor = raw is String ? raw : '';
+        if (valor.trim().isEmpty) continue;
+        estadoAfectacion = _derivarEstadoRiesgo(valor);
+        break;
       }
 
       final reporte = Reporte(

@@ -14,6 +14,8 @@ import '../models/valor_caracteristica.dart';
 class SyncService {
   String get _baseUrl => AppConfig.apiBaseUrl;
   static const String _deviceIdKey = 'dispositivo_id';
+  static const String _mascaraKey = 'mascara_folio_json';
+  static const String _folioSeqKey = 'folio_seq_local';
 
   final DatabaseService _db = DatabaseService();
   final _uuid = const Uuid();
@@ -33,6 +35,82 @@ class SyncService {
     return _dispositivoId!;
   }
 
+  Future<Map<String, dynamic>?> getMascaraFolio({bool forzar = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!forzar) {
+      final cache = _leerMascaraCache(prefs);
+      if (cache != null) return cache;
+    }
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/mascaras-folio?aplica_a=siniestros&activo=true'),
+            headers: {'Content-Type': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode == 200) {
+        final lista = jsonDecode(response.body) as List;
+        if (lista.isNotEmpty) {
+          final m = Map<String, dynamic>.from(lista.first as Map);
+          await prefs.setString(_mascaraKey, jsonEncode(m));
+          return m;
+        }
+      }
+    } catch (_) {
+      // Sin conexión: se usa el caché local
+    }
+    return _leerMascaraCache(prefs);
+  }
+
+  Map<String, dynamic>? _leerMascaraCache(SharedPreferences prefs) {
+    final raw = prefs.getString(_mascaraKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String> generarFolioLocal() async {
+    final mascara = await getMascaraFolio();
+    final formato = (mascara?['formato'] as String?) ?? '';
+    if (mascara == null || formato.isEmpty) {
+      final now = DateTime.now();
+      final fecha =
+          '${now.year.toString().padLeft(4, '0')}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      return 'SIS-$fecha-${_uuid.v4().substring(0, 4).toUpperCase()}';
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final seqServidor = (mascara['secuencia_actual'] as num?)?.toInt() ?? 0;
+    final seqLocal = prefs.getInt(_folioSeqKey) ?? 0;
+    final seq = (seqServidor > seqLocal ? seqServidor : seqLocal) + 1;
+    await prefs.setInt(_folioSeqKey, seq);
+    return _resolverFormatoFolio(formato, mascara, seq);
+  }
+
+  String _resolverFormatoFolio(
+      String formato, Map<String, dynamic> mascara, int seq) {
+    final ahora = DateTime.now();
+    final dos = (int n) => n.toString().padLeft(2, '0');
+    final longitud = (mascara['longitud_secuencia'] as num?)?.toInt() ?? 4;
+    final tokens = <String, String>{
+      'prefijo': (mascara['prefijo'] as String?) ?? '',
+      'aaaa': '${ahora.year}',
+      'yyyy': '${ahora.year}',
+      'mm': dos(ahora.month),
+      'MM': dos(ahora.month),
+      'dd': dos(ahora.day),
+      'DD': dos(ahora.day),
+      'alcaldia': '',
+      'seq': '$seq',
+      'seq_padded': '$seq'.padLeft(longitud, '0'),
+    };
+    return formato.replaceAllMapped(
+        RegExp(r'\{(\w+)\}'), (m) => tokens[m.group(1)!] ?? m.group(0)!);
+  }
+
   Future<SyncResult> sincronizar() async {
     int subidos = 0;
     int errores = 0;
@@ -46,6 +124,8 @@ class SyncService {
 
       final tiposResult = await _sincronizarTipos();
       final tiposOk = tiposResult['ok'] as bool;
+
+      await getMascaraFolio(forzar: true);
 
       final descargadosCount = await _descargar(did);
       descargados = descargadosCount;
@@ -91,6 +171,10 @@ class SyncService {
             final resData = jsonDecode(response.body) as Map<String, dynamic>;
             final siniestros = resData['siniestros'] as List? ?? [];
             final siniestroFolio = siniestros.isNotEmpty ? siniestros[0]['folio'] as String : null;
+
+            if (siniestroFolio != null && siniestroFolio != reporte.folio) {
+              await _db.actualizarFolioReporte(reporte.id, siniestroFolio);
+            }
 
             if (siniestroFolio != null && reporte.fotos.isNotEmpty) {
               final res = await _subirFotos(siniestroFolio, reporte.fotos);
@@ -267,10 +351,27 @@ class SyncService {
       for (final item in data) {
         final folio = item['folio'] as String?;
         if (folio == null) continue;
+        final folioOriginal = (item['folio_original'] as String? ?? '').trim();
+        final reporteLocalId = (item['reporte_local_id'] as String? ?? '').trim();
 
         final existentes = await _db.getReportes();
-        final yaExiste = existentes.any((r) => r.folio == folio);
-        if (yaExiste) continue;
+        final existente = existentes.firstWhere(
+          (r) =>
+              (reporteLocalId.isNotEmpty && r.id == reporteLocalId) ||
+              r.folio == folio ||
+              (folioOriginal.isNotEmpty && r.folio == folioOriginal),
+          orElse: () => Reporte(
+            id: '',
+            folio: '',
+            fecha: DateTime.now(),
+          ),
+        );
+        if (existente.id.isNotEmpty) {
+          if (existente.folio != folio) {
+            await _db.actualizarFolioReporte(existente.id, folio);
+          }
+          continue;
+        }
 
         final reporteId = _uuid.v4();
         final reporte = Reporte(

@@ -18,6 +18,9 @@ class SyncService {
   final DatabaseService _db = DatabaseService();
   final _uuid = const Uuid();
   String? _dispositivoId;
+  int _fotosSubidas = 0;
+  int _fotosPendientes = 0;
+  String? _errorFotos;
 
   Future<String> get dispositivoId async {
     if (_dispositivoId != null) return _dispositivoId!;
@@ -34,6 +37,9 @@ class SyncService {
     int subidos = 0;
     int errores = 0;
     int descargados = 0;
+    _fotosSubidas = 0;
+    _fotosPendientes = 0;
+    _errorFotos = null;
 
     try {
       final did = await dispositivoId;
@@ -44,16 +50,18 @@ class SyncService {
       final descargadosCount = await _descargar(did);
       descargados = descargadosCount;
 
+      await _reintentarFotosPendientes();
+
       final pendientes = await _db.getReportesNoSincronizados();
 
       if (pendientes.isEmpty) {
         if (!tiposOk && descargados == 0) {
           return SyncResult(subidos: 0, errores: 1, mensaje: 'Error: ${tiposResult['error'] ?? 'Sin conexión'}');
         }
-        final msg = descargados > 0
-            ? '$descargados reporte(s) descargado(s)'
-            : 'Sincronizado correctamente';
-        return SyncResult(subidos: 0, errores: 0, mensaje: msg);
+        return SyncResult(
+            subidos: 0,
+            errores: 0,
+            mensaje: _mensajeResultado(descargados: descargados));
       }
 
       for (final reporte in pendientes) {
@@ -85,10 +93,12 @@ class SyncService {
             final siniestroFolio = siniestros.isNotEmpty ? siniestros[0]['folio'] as String : null;
 
             if (siniestroFolio != null && reporte.fotos.isNotEmpty) {
-              final urls = await _subirFotos(siniestroFolio, reporte.fotos);
-              if (urls.isNotEmpty) {
-                await _db.actualizarFotosReporte(reporte.id, urls.join(','));
-              }
+              final res = await _subirFotos(siniestroFolio, reporte.fotos);
+              _fotosSubidas += res.nuevas;
+              _fotosPendientes += res.pendientes.length;
+              if (res.error != null) _errorFotos = res.error;
+              await _db.actualizarFotosReporte(
+                  reporte.id, [...res.urls, ...res.pendientes].join(','));
             }
 
             await _db.marcarReporteSincronizado(reporte.id);
@@ -109,14 +119,25 @@ class SyncService {
           subidos: 0, errores: 1, mensaje: 'Error de conexión: $e');
     }
 
+    return SyncResult(
+        subidos: subidos,
+        errores: errores,
+        mensaje: _mensajeResultado(
+            subidos: subidos, descargados: descargados, errores: errores));
+  }
+
+  String _mensajeResultado(
+      {int subidos = 0, int descargados = 0, int errores = 0}) {
     final partes = <String>[];
     if (descargados > 0) partes.add('$descargados descargado(s)');
     if (subidos > 0) partes.add('$subidos subido(s)');
+    if (_fotosSubidas > 0) partes.add('$_fotosSubidas foto(s) subida(s)');
+    if (_fotosPendientes > 0) {
+      final detalle = _errorFotos != null ? ': ${_errorFotos!}' : '';
+      partes.add('$_fotosPendientes foto(s) pendiente(s)$detalle');
+    }
     if (errores > 0) partes.add('$errores error(es)');
-    final msg =
-        partes.isNotEmpty ? partes.join(', ') : 'Sincronizado correctamente';
-
-    return SyncResult(subidos: subidos, errores: errores, mensaje: msg);
+    return partes.isNotEmpty ? partes.join(', ') : 'Sincronizado correctamente';
   }
 
   Future<Map<String, dynamic>> _sincronizarTipos() async {
@@ -157,36 +178,78 @@ class SyncService {
     }
   }
 
-  Future<List<String>> _subirFotos(String folio, String fotosPath) async {
+  Future<_ResultadoFotos> _subirFotos(String folio, String fotosPath) async {
     final urls = <String>[];
-    try {
-      final paths = fotosPath.split(',').where((p) => p.trim().isNotEmpty).toList();
-      if (paths.isEmpty) return urls;
+    final pendientes = <String>[];
+    int nuevas = 0;
+    String? error;
 
-      var request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/fotos/$folio'));
-      for (final path in paths) {
-        final file = File(path.trim());
-        if (await file.exists()) {
-          request.files.add(await http.MultipartFile.fromPath('fotos', path.trim()));
-        }
+    final partes = fotosPath
+        .split(',')
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+
+    for (final parte in partes) {
+      if (parte.startsWith('http')) {
+        urls.add(parte);
+        continue;
       }
 
-      if (request.files.isEmpty) return urls;
+      final file = File(parte);
+      if (!await file.exists()) continue;
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      try {
+        final request =
+            http.MultipartRequest('POST', Uri.parse('$_baseUrl/fotos/$folio'));
+        request.files.add(await http.MultipartFile.fromPath('fotos', parte));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final fotos = data['fotos'] as List? ?? [];
-        for (final f in fotos) {
-          urls.add(f['url'] as String);
+        final streamed =
+            await request.send().timeout(const Duration(seconds: 120));
+        final response = await http.Response.fromStream(streamed);
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final subidas = (data['fotos'] as List? ?? [])
+              .map((f) => ((f as Map)['url']) as String?)
+              .whereType<String>()
+              .toList();
+          if (subidas.isNotEmpty) {
+            urls.add(subidas.last);
+            nuevas++;
+            continue;
+          }
+          error = 'Respuesta sin fotos';
+        } else {
+          error = 'HTTP ${response.statusCode}: ${response.body}';
         }
+      } catch (e) {
+        error = e.toString();
       }
-    } catch (e) {
-      // Photos upload failed silently - they remain as local paths
+
+      pendientes.add(parte);
     }
-    return urls;
+
+    return _ResultadoFotos(
+        urls: urls, pendientes: pendientes, nuevas: nuevas, error: error);
+  }
+
+  Future<void> _reintentarFotosPendientes() async {
+    try {
+      final reportes = await _db.getReportesConFotosLocales();
+      for (final reporte in reportes) {
+        if (!reporte.sincronizado) continue;
+
+        final res = await _subirFotos(reporte.folio, reporte.fotos);
+        _fotosSubidas += res.nuevas;
+        _fotosPendientes += res.pendientes.length;
+        if (res.error != null) _errorFotos = res.error;
+        await _db.actualizarFotosReporte(
+            reporte.id, [...res.urls, ...res.pendientes].join(','));
+      }
+    } catch (_) {
+      // Los reintentos de fotos no deben detener la sincronización
+    }
   }
 
   Future<int> _descargar(String did) async {
@@ -279,6 +342,20 @@ class SyncService {
       return 0;
     }
   }
+}
+
+class _ResultadoFotos {
+  final List<String> urls;
+  final List<String> pendientes;
+  final int nuevas;
+  final String? error;
+
+  _ResultadoFotos({
+    required this.urls,
+    required this.pendientes,
+    required this.nuevas,
+    this.error,
+  });
 }
 
 class SyncResult {

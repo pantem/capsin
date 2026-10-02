@@ -23,41 +23,57 @@ router.post('/:folio', upload.array('fotos', 20), async (req, res) => {
     }
 
     const uploaded = [];
+    const fallidas = [];
     for (const file of req.files) {
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: `capsin/${folio}`,
-            resource_type: 'image',
-            transformation: [
-              {
-                width: 1600,
-                height: 1600,
-                crop: 'limit',
-                quality: 'auto',
-                format: 'auto',
-              },
-            ],
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-        stream.end(file.buffer);
-      });
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: `capsin/${folio}`,
+              resource_type: 'image',
+              transformation: [
+                {
+                  width: 1600,
+                  height: 1600,
+                  crop: 'limit',
+                  quality: 'auto',
+                  format: 'auto',
+                },
+              ],
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(file.buffer);
+        });
 
-      uploaded.push({
-        url: result.secure_url,
-        public_id: result.public_id,
-        filename: file.originalname,
+        uploaded.push({
+          url: result.secure_url,
+          public_id: result.public_id,
+          filename: file.originalname,
+        });
+      } catch (err) {
+        fallidas.push({ filename: file.originalname, error: err.message });
+      }
+    }
+
+    if (uploaded.length === 0) {
+      return res.status(500).json({
+        error: fallidas[0]?.error || 'No se pudo subir ninguna foto',
+        fallidas,
       });
     }
 
     siniestro.fotos.push(...uploaded);
     await siniestro.save();
 
-    res.json({ message: `${uploaded.length} foto(s) subida(s)`, fotos: siniestro.fotos });
+    res.json({
+      message: `${uploaded.length} foto(s) subida(s)`,
+      fotos: siniestro.fotos,
+      fallidas,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

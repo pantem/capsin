@@ -235,9 +235,9 @@ const CARACTERISTICAS = [
     nombre: '4.1 Nivel de riesgo',
     tipo_dato: 'seleccion',
     opciones: [
-      'Edificación en Riesgo Bajo',
-      'Área Insegura o Edificación en Riesgo Medio',
-      'Edificación en Riesgo Alto',
+      'Riesgo bajo',
+      'Riesgo medio',
+      'Riesgo alto',
       'Colapso',
     ],
     requerido: true,

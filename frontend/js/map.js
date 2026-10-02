@@ -151,11 +151,6 @@ function renderMapMarkers() {
       <div style="min-width:200px;">
         <h3 style="margin:0 0 0.3rem;color:#1a237e;">${item.folio || 'Sin folio'}</h3>
         <p style="margin:0.2rem 0;font-size:0.9rem;">${item.ubicacion.direccion || ''}</p>
-        <p style="margin:0.2rem 0;font-size:0.9rem;"><strong>Damnificados:</strong> ${item.totalDamnificados}</p>
-        <p style="margin:0.2rem 0;font-size:0.9rem;">
-          <span style="color:#d32f2f;">● ${item.fallecidos} fallecidos</span>
-          <span style="color:#f57c00;margin-left:0.5rem;">● ${item.lesionadosGrave} graves</span>
-        </p>
         <p style="margin:0.2rem 0;font-size:0.9rem;"><strong>Inmuebles:</strong> ${item.totalInmuebles}</p>
         <button onclick="showDetail('${item._id}')" style="margin-top:0.5rem;padding:0.3rem 0.8rem;background:#1a237e;color:#fff;border:none;border-radius:4px;cursor:pointer;">
           Ver detalle

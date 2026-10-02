@@ -1642,7 +1642,7 @@ function renderUbicacion(data, countEl, container) {
             <th style="padding:0.6rem;">CP</th>
             <th style="padding:0.6rem;">Uso</th>
             <th style="padding:0.6rem;">Niveles</th>
-            <th style="padding:0.6rem;">Estado</th>
+            <th style="padding:0.6rem;">Nivel de riesgo</th>
             <th style="padding:0.6rem;">Tipo daño</th>
             <th style="padding:0.6rem;text-align:center;">Descargar</th>
           </tr>

@@ -291,6 +291,18 @@ class DatabaseService {
         where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<List<Reporte>> getReportesConFotosLocales() async {
+    final db = await database;
+    final maps = await db.query('reportes');
+    return maps.map((m) => Reporte.fromMap(m)).where((r) {
+      return r.fotos
+          .split(',')
+          .map((p) => p.trim())
+          .where((p) => p.isNotEmpty)
+          .any((p) => !p.startsWith('http'));
+    }).toList();
+  }
+
   Future<String> insertDamnificado(Damnificado d) async {
     final db = await database;
     await db.insert('damnificados', d.toMap(),

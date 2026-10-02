@@ -276,7 +276,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
       String estadoAfectacion = 'sin_daños';
       for (final c in _caracteristicas) {
-        if (c.nombre.contains('Nivel de riesgo') || c.nombre.contains('Clasificación de Nivel de Daño')) {
+        if (c.nombre.contains('Nivel de riesgo') ||
+            c.nombre.contains('Clasificación de Nivel de Daño')) {
           final raw = _valoresCaracteristica[c.id];
           final valor = raw as String? ?? '';
           if (valor.contains('Riesgo Alto')) {
@@ -1013,8 +1014,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   items: [
                     const DropdownMenuItem<String>(
                       value: '',
-                      child:
-                          Text('Seleccione', style: TextStyle(color: Colors.grey)),
+                      child: Text('Seleccione',
+                          style: TextStyle(color: Colors.grey)),
                     ),
                     ...c.opciones.map((o) => DropdownMenuItem<String>(
                           value: o,
@@ -1024,7 +1025,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   onChanged: (v) {
                     setState(() {
                       _valoresCaracteristica[c.id] = v;
-                      if (v != null && v != 'Sí' && c.condicionalTexto == 'si') {
+                      if (v != null &&
+                          v != 'Sí' &&
+                          c.condicionalTexto == 'si') {
                         _limpiarTextoCondicional(c.id);
                       }
                     });
@@ -1041,7 +1044,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       onChanged: (v) =>
                           _valoresCaracteristica['${c.id}_cond'] = v,
                       decoration: const InputDecoration(
-                        labelText: 'Observaciones',
+                        labelText:
+                            'Indique la dependencia que brindará el apoyo',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 2,
@@ -1068,7 +1072,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     onChanged: (v) {
                       setState(() {
                         _valoresCaracteristica[c.id] = v;
-                        if (v != null && v != 'Sí' && c.condicionalTexto == 'si') {
+                        if (v != null &&
+                            v != 'Sí' &&
+                            c.condicionalTexto == 'si') {
                           _limpiarTextoCondicional(c.id);
                         }
                       });
@@ -1091,7 +1097,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                 ),
               ],
-              if (c.condicionalTexto == 'si' && seleccion != null && seleccion == 'Sí')
+              if (c.condicionalTexto == 'si' &&
+                  seleccion != null &&
+                  seleccion == 'Sí')
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(

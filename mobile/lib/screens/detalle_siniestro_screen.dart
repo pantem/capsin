@@ -254,6 +254,13 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
             : estado == 'colapso'
                 ? 'Colapso'
                 : 'Riesgo bajo';
+    final colorTextoEstado = estado == 'critico'
+        ? Colors.red.shade800
+        : estado == 'moderado'
+            ? Colors.orange.shade800
+            : estado == 'colapso'
+                ? Colors.black
+                : Colors.green.shade800;
 
     return Container(
       width: double.infinity,
@@ -354,7 +361,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: colorEstado.shade800)),
+                            color: colorTextoEstado)),
                   ],
                 ),
               ),

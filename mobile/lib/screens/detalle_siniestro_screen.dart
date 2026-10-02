@@ -122,8 +122,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r.folio,
-                      style: Theme.of(context).textTheme.titleLarge),
+                  Text(r.folio, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
                   _infoRow(Icons.person, 'Capturista: ${r.nombreCapturista}'),
                   _infoRow(Icons.work, 'Área: ${r.area}'),
@@ -138,7 +137,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.warning, size: 16,
+                      Icon(Icons.warning,
+                          size: 16,
                           color: r.estadoAfectacion == 'critico'
                               ? Colors.red
                               : r.estadoAfectacion == 'moderado'
@@ -150,7 +150,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                         style: const TextStyle(fontSize: 13),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 3),
                         decoration: BoxDecoration(
                           color: r.estadoAfectacion == 'critico'
                               ? Colors.red.shade100
@@ -190,7 +191,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Inmueble afectado',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
                   _infoRow(Icons.location_on, r.calleNumero),
                   _infoRow(Icons.map, 'Col. ${r.colonia}, ${r.alcaldia}'),
@@ -199,13 +201,16 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   if (r.lat != null && r.lng != null)
                     _infoRow(Icons.gps_fixed,
                         '${r.lat!.toStringAsFixed(5)}, ${r.lng!.toStringAsFixed(5)}'),
-                  _infoRow(Icons.layers, 'Niveles sobre el terreno (2.10): ${niveles ?? 0} | Sótanos (2.11): ${sotanos ?? 0} | Niveles totales: $nivelesTotales'),
+                  _infoRow(Icons.layers,
+                      'Niveles sobre el terreno (2.10): ${niveles ?? 0} | Sótanos (2.11): ${sotanos ?? 0} | Niveles totales: $nivelesTotales'),
                   if (caractsTab2.isNotEmpty) ...[
                     const Divider(height: 24),
                     const Text('Características',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
-                    ...caractsTab2.map((c) => _buildValorRow(c, valorIndex[c.id])),
+                    ...caractsTab2
+                        .map((c) => _buildValorRow(c, valorIndex[c.id])),
                   ],
                 ],
               ),
@@ -220,9 +225,11 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Estado, clasificación y recomendaciones',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
-                    ...caractsResto.map((c) => _buildValorRow(c, valorIndex[c.id])),
+                    ...caractsResto
+                        .map((c) => _buildValorRow(c, valorIndex[c.id])),
                   ],
                 ),
               ),
@@ -237,7 +244,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Observaciones',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     Text(r.observaciones),
                   ],
@@ -254,7 +262,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Fotografías',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14)),
                     const SizedBox(height: 8),
                     ...r.fotos.split(',').map(
                           (f) => Padding(
@@ -263,7 +272,9 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                               children: [
                                 const Icon(Icons.image, size: 16),
                                 const SizedBox(width: 6),
-                                Expanded(child: Text(f.trim(), overflow: TextOverflow.ellipsis)),
+                                Expanded(
+                                    child: Text(f.trim(),
+                                        overflow: TextOverflow.ellipsis)),
                               ],
                             ),
                           ),
@@ -273,37 +284,6 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Damnificados (${_damnificados.length})',
-                  style: Theme.of(context).textTheme.titleMedium),
-              FilledButton.tonalIcon(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NuevoDamnificadoScreen(reporteId: r.id),
-                    ),
-                  );
-                  _cargar();
-                },
-                icon: const Icon(Icons.person_add, size: 18),
-                label: const Text('Agregar'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (_damnificados.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: Text('Sin damnificados registrados')),
-              ),
-            )
-          else
-            ..._damnificados.map((d) => _buildDamnificadoCard(d)),
         ],
       ),
     );
@@ -416,8 +396,10 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-          child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
+          backgroundColor:
+              Theme.of(context).colorScheme.primary.withOpacity(0.15),
+          child:
+              Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(d.nombre.isNotEmpty ? d.nombre : 'Sin nombre',
             style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -425,7 +407,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
           '${d.edad > 0 ? '${d.edad} años' : ''} ${d.sexo.isNotEmpty ? '· ${d.sexo == "M" ? "Masculino" : "Femenino"}' : ''}',
         ),
         trailing: Chip(
-          label: Text(_labelEstado(d.estado), style: const TextStyle(fontSize: 11)),
+          label: Text(_labelEstado(d.estado),
+              style: const TextStyle(fontSize: 11)),
           backgroundColor: _colorEstado(d.estado).withOpacity(0.2),
           visualDensity: VisualDensity.compact,
         ),

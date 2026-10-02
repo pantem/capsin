@@ -48,6 +48,20 @@ class AuthService {
     return prefs.getString(_userNombreKey) ?? '';
   }
 
+  Future<String> getUserUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userUsernameKey) ?? '';
+  }
+
+  Future<String> getCapturista() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nombre = (prefs.getString(_userNombreKey) ?? '').trim();
+    if (nombre.isNotEmpty) return nombre;
+    final username = (prefs.getString(_userUsernameKey) ?? '').trim();
+    if (username.isNotEmpty) return username;
+    return 'Sin usuario';
+  }
+
   Future<String> getUserArea() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_userAreaKey) ?? '';

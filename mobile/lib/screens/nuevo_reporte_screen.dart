@@ -66,11 +66,11 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   Future<void> _cargarDatosUsuario() async {
     final auth = AuthService();
-    final nombre = await auth.getUserNombre();
+    final capturista = await auth.getCapturista();
     final area = await auth.getUserArea();
     if (!mounted) return;
     setState(() {
-      _nombreCapturistaCtrl.text = nombre;
+      _nombreCapturistaCtrl.text = capturista;
       _areaCtrl.text = area;
     });
   }
@@ -295,7 +295,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         id: reporteId,
         folio: folio,
         fecha: _fechaSeleccionada,
-        nombreCapturista: _nombreCapturistaCtrl.text,
+        nombreCapturista: _nombreCapturistaCtrl.text.trim().isNotEmpty
+            ? _nombreCapturistaCtrl.text.trim()
+            : 'Sin usuario',
         area: _areaCtrl.text,
         calleNumero: _getCaractByNombre('Calle y Número'),
         colonia: _getCaractByNombre('Colonia'),
@@ -485,9 +487,12 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _nombreCapturistaCtrl,
+                  readOnly: true,
                   decoration: const InputDecoration(
                     labelText: 'Nombre del capturista',
+                    helperText: 'Automático: usuario con sesión iniciada',
                     border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.badge_outlined),
                   ),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Requerido' : null,

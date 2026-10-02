@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 import '../models/reporte.dart';
 import '../models/damnificado.dart';
 import '../models/caracteristica_tipo.dart';
@@ -55,6 +56,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
   List<Damnificado> _damnificados = [];
   List<ValorCaracteristica> _valores = [];
   List<CaracteristicaTipo> _caracteristicas = [];
+  String _dispositivoId = '';
   bool _loading = true;
 
   @override
@@ -69,7 +71,12 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     final damns = await _db.getDamnificados(widget.reporteId);
     final valores = await _db.getValoresCaracteristica(widget.reporteId);
     final caracts = await _db.getTodasCaracteristicas();
+    String did = '';
+    try {
+      did = await SyncService().dispositivoId;
+    } catch (_) {}
     setState(() {
+      _dispositivoId = did;
       _reporte = r;
       _damnificados = damns;
       _valores = valores;
@@ -182,10 +189,10 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
       final sec = _numSeccion(c.nombre);
       if (sec <= 0) continue;
       filasPorSeccion.putIfAbsent(sec, () => []).add(_FilaTabla(
-        num: _numCaracteristica(c.nombre),
-        nombre: _nombreLimpio(c.nombre),
-        valor: _valorDe(c, valorIndex[c.id], niveles, sotanos),
-      ));
+            num: _numCaracteristica(c.nombre),
+            nombre: _nombreLimpio(c.nombre),
+            valor: _valorDe(c, valorIndex[c.id], niveles, sotanos),
+          ));
     }
 
     final fotos = r.fotos
@@ -251,7 +258,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _borde),
         boxShadow: const [
-          BoxShadow(color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3)),
+          BoxShadow(
+              color: Color(0x14000000), blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
       padding: const EdgeInsets.all(16),
@@ -283,8 +291,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                     const SizedBox(height: 2),
                     Text(
                       'SAS • Sistema de Afectaciones por Sismo',
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
@@ -300,16 +308,11 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
           ),
           const SizedBox(height: 8),
           _fila2(
-            _dato('Coordenadas',
+            _dato(
+                'Coordenadas',
                 (r.lat != null && r.lng != null)
                     ? '${r.lat!.toStringAsFixed(5)}, ${r.lng!.toStringAsFixed(5)}'
                     : 'No disponible'),
-            _dato('Capturista',
-                r.nombreCapturista.isNotEmpty ? r.nombreCapturista : '—'),
-          ),
-          const SizedBox(height: 8),
-          _fila2(
-            _dato('Área', r.area.isNotEmpty ? r.area : '—'),
             _dato('Nivel de afectación', textoEstado, valorColor: colorEstado),
           ),
           const SizedBox(height: 8),
@@ -322,8 +325,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                   ? r.observaciones
                   : 'Sin observaciones adicionales registradas.'),
           const SizedBox(height: 8),
-          _datoAncho(
-              'Niveles',
+          _datoAncho('Niveles',
               'Sobre el terreno (2.10): ${niveles ?? 0}  |  Sótanos (2.11): ${sotanos ?? 0}  |  Totales: $nivelesTotales'),
           const SizedBox(height: 12),
           Wrap(
@@ -354,8 +356,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               ),
               if (!r.sincronizado)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade100,
                     borderRadius: BorderRadius.circular(14),
@@ -376,8 +378,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                 ),
               if (_damnificados.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     color: _maroonBg,
                     borderRadius: BorderRadius.circular(14),
@@ -389,6 +391,30 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                           fontWeight: FontWeight.w700,
                           color: _maroon)),
                 ),
+              if (_dispositivoId.isNotEmpty)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: _borde),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.smartphone,
+                          size: 15, color: Color(0xFF64748B)),
+                      const SizedBox(width: 5),
+                      Text(
+                          'Dispositivo: ${_dispositivoId.substring(0, _dispositivoId.length > 8 ? 8 : _dispositivoId.length)}',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B))),
+                    ],
+                  ),
+                ),
             ],
           ),
         ],
@@ -396,7 +422,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     );
   }
 
-  Widget _seccion(int num, List<_FilaTabla> filas, {List<String> fotos = const []}) {
+  Widget _seccion(int num, List<_FilaTabla> filas,
+      {List<String> fotos = const []}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -417,7 +444,9 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
               border: Border.all(color: _borde),
               boxShadow: const [
                 BoxShadow(
-                    color: Color(0x10000000), blurRadius: 6, offset: Offset(0, 2)),
+                    color: Color(0x10000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 2)),
               ],
             ),
             clipBehavior: Clip.antiAlias,
@@ -436,7 +465,8 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                 ]),
                 for (final f in filas)
                   TableRow(children: [
-                    _Celda(f.num, centrado: true, negrita: true, colorTexto: _maroon),
+                    _Celda(f.num,
+                        centrado: true, negrita: true, colorTexto: _maroon),
                     _Celda(f.nombre),
                     _Celda(f.valor, colorTexto: _colorValor(f.valor)),
                   ]),
@@ -573,8 +603,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
         height: h,
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
-          return const Center(
-              child: CircularProgressIndicator(strokeWidth: 2));
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2));
         },
         errorBuilder: (_, __, ___) => _placeholder(),
       );
@@ -658,11 +687,15 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
   Color? _colorValor(String valor) {
     final s = _norm(valor);
     if (s.contains('colapso')) return const Color(0xFF111827);
-    if (s.contains('alto') || s.contains('critico')) return const Color(0xFF991B1B);
-    if (s.contains('medio') || s.contains('moderado') || s.contains('insegura')) {
+    if (s.contains('alto') || s.contains('critico'))
+      return const Color(0xFF991B1B);
+    if (s.contains('medio') ||
+        s.contains('moderado') ||
+        s.contains('insegura')) {
       return const Color(0xFF854D0E);
     }
-    if (s.contains('bajo') || s == 'no' || s == 'si') return const Color(0xFF166534);
+    if (s.contains('bajo') || s == 'no' || s == 'si')
+      return const Color(0xFF166534);
     return null;
   }
 
@@ -732,18 +765,16 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
             color: Colors.white,
             border: Border.all(color: _maroonBorder),
             borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(6), bottomRight: Radius.circular(6)),
+                bottomLeft: Radius.circular(6),
+                bottomRight: Radius.circular(6)),
           ),
           child: Text(value,
               style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: _texto)),
+                  fontSize: 12.5, fontWeight: FontWeight.w600, color: _texto)),
         ),
       ],
     );
   }
-
 }
 
 class _FilaTabla {
@@ -751,7 +782,8 @@ class _FilaTabla {
   final String nombre;
   final String valor;
 
-  const _FilaTabla({required this.num, required this.nombre, required this.valor});
+  const _FilaTabla(
+      {required this.num, required this.nombre, required this.valor});
 }
 
 class _Celda extends StatelessWidget {
@@ -786,9 +818,8 @@ class _Celda extends StatelessWidget {
         style: TextStyle(
           fontSize: 11.5,
           fontWeight: header || negrita ? FontWeight.w700 : FontWeight.w500,
-          color: header
-              ? Colors.white
-              : (colorTexto ?? const Color(0xFF334155)),
+          color:
+              header ? Colors.white : (colorTexto ?? const Color(0xFF334155)),
         ),
       ),
     );

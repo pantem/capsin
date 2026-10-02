@@ -1643,7 +1643,6 @@ function renderUbicacion(data, countEl, container) {
             <th style="padding:0.6rem;">Uso</th>
             <th style="padding:0.6rem;">Niveles</th>
             <th style="padding:0.6rem;">Nivel de riesgo</th>
-            <th style="padding:0.6rem;">Tipo daño</th>
             <th style="padding:0.6rem;text-align:center;">Descargar</th>
           </tr>
         </thead>
@@ -1665,7 +1664,6 @@ function renderUbicacion(data, countEl, container) {
                     ${estadoLabel}
                   </span>
                 </td>
-                <td style="padding:0.5rem;">${d.tipoDanio || '—'}</td>
                 <td style="padding:0.5rem;text-align:center;" onclick="event.stopPropagation();">
                   <button class="btn-download-report" onclick="descargarReporte('${d.siniestroId}')" title="Descargar Reporte (${d.folio || 'PDF'})" style="padding:0.3rem 0.6rem;font-size:0.75rem;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

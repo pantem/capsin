@@ -36,6 +36,43 @@ const alcaldiasCDMX = [
   'Xochimilco',
 ];
 
+const normalizeTxt = (s) =>
+  (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+// Devuelve la alcaldía de CDMX del siniestro o null si no corresponde a ninguna
+function resolverAlcaldia(siniestro, cpMap) {
+  if (!siniestro) return null;
+  const mun = siniestro.ubicacion?.municipio || '';
+  const cp = siniestro.ubicacion?.codigo_postal || '';
+  const dir = siniestro.ubicacion?.direccion || '';
+
+  for (const a of alcaldiasCDMX) {
+    const aN = normalizeTxt(a);
+    const mN = normalizeTxt(mun);
+    if (mN && mN !== 'ciudad de mexico' && mN !== 'cdmx' && (mN === aN || mN.includes(aN) || aN.includes(mN))) {
+      return a;
+    }
+  }
+  if (cp && cpMap[cp]) {
+    const cpMun = normalizeTxt(cpMap[cp]);
+    for (const a of alcaldiasCDMX) {
+      const aN = normalizeTxt(a);
+      if (cpMun.includes(aN) || aN.includes(cpMun)) return a;
+    }
+  }
+  if (dir) {
+    const dirN = normalizeTxt(dir);
+    for (const a of alcaldiasCDMX) {
+      if (dirN.includes(normalizeTxt(a))) return a;
+    }
+  }
+  return null;
+}
+
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '50mb' }));
@@ -62,22 +99,8 @@ app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 app.get('/api/resumen', async (req, res) => {
   try {
-    const Siniestro = require('./models/Siniestro');
     const Inmueble = require('./models/Inmueble');
     const Damnificado = require('./models/Damnificado');
-
-    const totalSiniestros = await Siniestro.countDocuments();
-    const totalInmuebles = await Inmueble.countDocuments();
-    const totalDamnificados = await Damnificado.countDocuments();
-    const fallecidos = await Damnificado.countDocuments({ estado: 'fallecido' });
-    const lesionadosGrave = await Damnificado.countDocuments({ estado: 'lesionado_grave' });
-    const lesionadosLeve = await Damnificado.countDocuments({ estado: 'lesionado_leve' });
-    const ilesos = await Damnificado.countDocuments({ estado: 'ileso' });
-    const inmueblesCriticos = await Inmueble.countDocuments({ estado_afectacion: 'critico' });
-    const inmueblesModerados = await Inmueble.countDocuments({ estado_afectacion: 'moderado' });
-    const inmueblesSinDanos = await Inmueble.countDocuments({ estado_afectacion: 'sin_daños' });
-    const inmueblesColapso = await Inmueble.countDocuments({ estado_afectacion: 'colapso' });
-
     const CodigoPostal = require('./models/CodigoPostal');
 
     const inmueblesConSiniestro = await Inmueble.find().populate('siniestro').lean();
@@ -87,61 +110,21 @@ app.get('/api/resumen', async (req, res) => {
       if (c.codigo) cpMap[c.codigo] = c.municipio;
     });
 
-    const normalize = (s) =>
-      (s || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim();
-
     const porAlcaldiaMap = {};
     alcaldiasCDMX.forEach((a) => {
       porAlcaldiaMap[a] = { sinDano: 0, moderado: 0, critico: 0, colapso: 0, total: 0 };
     });
 
+    // Solo entran al dashboard los inmuebles con alcaldía de CDMX resuelta
+    const incluidos = [];
+    let descartados = 0;
     for (const inm of inmueblesConSiniestro) {
-      const s = inm.siniestro;
-      if (!s) continue;
-
-      let alcFound = null;
-      const mun = s.ubicacion?.municipio || '';
-      const cp = s.ubicacion?.codigo_postal || '';
-      const dir = s.ubicacion?.direccion || '';
-
-      // Direct match
-      for (const a of alcaldiasCDMX) {
-        const aN = normalize(a);
-        const mN = normalize(mun);
-        if (mN && mN !== 'ciudad de mexico' && mN !== 'cdmx' && (mN === aN || mN.includes(aN) || aN.includes(mN))) {
-          alcFound = a;
-          break;
-        }
+      const alcFound = resolverAlcaldia(inm.siniestro, cpMap);
+      if (!alcFound) {
+        descartados++;
+        continue;
       }
-
-      // CP lookup
-      if (!alcFound && cp && cpMap[cp]) {
-        const cpMun = normalize(cpMap[cp]);
-        for (const a of alcaldiasCDMX) {
-          const aN = normalize(a);
-          if (cpMun.includes(aN) || aN.includes(cpMun)) {
-            alcFound = a;
-            break;
-          }
-        }
-      }
-
-      // Address match
-      if (!alcFound && dir) {
-        const dirN = normalize(dir);
-        for (const a of alcaldiasCDMX) {
-          if (dirN.includes(normalize(a))) {
-            alcFound = a;
-            break;
-          }
-        }
-      }
-
-      if (!alcFound) alcFound = 'Cuauhtémoc';
+      incluidos.push(inm);
 
       const st = inm.estado_afectacion || 'sin_daños';
       if (st === 'sin_daños') porAlcaldiaMap[alcFound].sinDano++;
@@ -150,6 +133,23 @@ app.get('/api/resumen', async (req, res) => {
       else if (st === 'colapso') porAlcaldiaMap[alcFound].colapso++;
       porAlcaldiaMap[alcFound].total++;
     }
+
+    const idsIncluidos = incluidos.map((i) => i._id);
+    const totalSiniestros = new Set(
+      incluidos.map((i) => String(i.siniestro?._id || '')).filter(Boolean)
+    ).size;
+    const totalInmuebles = incluidos.length;
+    const contarEstado = (e) =>
+      incluidos.filter((i) => (i.estado_afectacion || 'sin_daños') === e).length;
+
+    const damnificados = await Damnificado.find({ inmueble: { $in: idsIncluidos } }).lean();
+    const contarDamnificado = (estado) =>
+      damnificados.filter((d) => (estado ? d.estado === estado : true)).length;
+
+    const inmueblesCriticos = contarEstado('critico');
+    const inmueblesModerados = contarEstado('moderado');
+    const inmueblesSinDanos = contarEstado('sin_daños');
+    const inmueblesColapso = contarEstado('colapso');
 
     const porAlcaldia = alcaldiasCDMX.map((alc) => ({
       alcaldia: alc,
@@ -163,16 +163,17 @@ app.get('/api/resumen', async (req, res) => {
     res.json({
       totalSiniestros,
       totalInmuebles,
-      totalDamnificados,
-      fallecidos,
-      lesionadosGrave,
-      lesionadosLeve,
-      ilesos,
+      totalDamnificados: damnificados.length,
+      fallecidos: contarDamnificado('fallecido'),
+      lesionadosGrave: contarDamnificado('lesionado_grave'),
+      lesionadosLeve: contarDamnificado('lesionado_leve'),
+      ilesos: contarDamnificado('ileso'),
       inmueblesCriticos,
       inmueblesModerados,
       inmueblesSinDanos,
       inmueblesColapso,
       porAlcaldia,
+      descartados,
       ultimaActualizacion: new Date().toISOString(),
     });
   } catch (err) {
@@ -189,9 +190,6 @@ app.get('/api/resumen/alcaldia-detalle', async (req, res) => {
     const { alcaldia, dano } = req.query;
     if (!alcaldia) return res.status(400).json({ error: 'alcaldia requerida' });
 
-    const normalize = (s) =>
-      (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-
     const allCPs = await CodigoPostal.find().lean();
     const cpMap = {};
     allCPs.forEach((c) => { if (c.codigo) cpMap[c.codigo] = c.municipio; });
@@ -203,33 +201,8 @@ app.get('/api/resumen/alcaldia-detalle', async (req, res) => {
       const s = inm.siniestro;
       if (!s) continue;
 
-      let alcFound = null;
-      const mun = s.ubicacion?.municipio || '';
-      const cp = s.ubicacion?.codigo_postal || '';
-      const dir = s.ubicacion?.direccion || '';
-
-      for (const a of alcaldiasCDMX) {
-        const aN = normalize(a);
-        const mN = normalize(mun);
-        if (mN && mN !== 'ciudad de mexico' && mN !== 'cdmx' && (mN === aN || mN.includes(aN) || aN.includes(mN))) {
-          alcFound = a;
-          break;
-        }
-      }
-      if (!alcFound && cp && cpMap[cp]) {
-        const cpMun = normalize(cpMap[cp]);
-        for (const a of alcaldiasCDMX) {
-          const aN = normalize(a);
-          if (cpMun.includes(aN) || aN.includes(cpMun)) { alcFound = a; break; }
-        }
-      }
-      if (!alcFound && dir) {
-        const dirN = normalize(dir);
-        for (const a of alcaldiasCDMX) {
-          if (dirN.includes(normalize(a))) { alcFound = a; break; }
-        }
-      }
-      if (!alcFound) alcFound = 'Cuauhtémoc';
+      const alcFound = resolverAlcaldia(s, cpMap);
+      if (!alcFound) continue;
 
       if (alcFound !== alcaldia) continue;
       if (dano && inm.estado_afectacion !== dano) continue;

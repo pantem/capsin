@@ -55,10 +55,10 @@ router.post('/sync', async (req, res) => {
       if (reporteData.reporte_id) {
         exists = await Siniestro.findOne({ reporte_local_id: reporteData.reporte_id });
       }
-      if (!exists) {
+      if (!exists && reporteData.folio) {
         exists = await Siniestro.findOne({ folio_original: reporteData.folio });
       }
-      if (!exists) {
+      if (!exists && reporteData.folio) {
         const porFolio = await Siniestro.findOne({ folio: reporteData.folio });
         if (porFolio && (!porFolio.dispositivo_id || porFolio.dispositivo_id === (dispositivo_id || ''))) {
           exists = porFolio;
@@ -66,17 +66,20 @@ router.post('/sync', async (req, res) => {
       }
       let siniestro;
 
-      let folioFinal = reporteData.folio;
-      if (!exists) {
-        const nuevoFolio = await generarFolio('siniestros');
-        if (nuevoFolio) {
-          folioFinal = nuevoFolio;
-        }
+      // El folio del servidor es el definitivo: nunca se pisa con el local.
+      // Solo se asigna uno nuevo si el reporte no tiene folio definitivo
+      // (reporte nuevo o reporte que se subio sin mascara disponible).
+      let folioFinal = exists ? exists.folio : (reporteData.folio || null);
+      if (!folioFinal || /^LOCAL-/i.test(String(folioFinal))) {
+        const nuevoFolio = await generarFolio('siniestros', async (f) =>
+          Boolean(await Siniestro.exists({ folio: f }))
+        );
+        if (nuevoFolio) folioFinal = nuevoFolio;
       }
 
       const siniestroData = {
         folio: folioFinal,
-        folio_original: exists ? exists.folio_original : reporteData.folio,
+        folio_original: exists ? exists.folio_original : (reporteData.folio || null),
         fecha: fechaMX(reporteData.fecha, new Date()),
         fecha_sincronizacion: fechaMX(reporteData.fecha_sincronizacion, new Date()),
         ubicacion: {

@@ -26,25 +26,32 @@ function resolveFormat(formato, data) {
   return formato.replace(/\{(\w+)\}/g, (match, token) => resolveToken(token, data));
 }
 
-async function generarFolio(tipo) {
+async function generarFolio(tipo, existeFolio) {
   const filtro = tipo === 'seguimiento'
     ? { aplica_a: { $in: ['seguimiento', 'ambos'] }, activo: true }
     : { aplica_a: { $in: ['siniestros', 'ambos'] }, activo: true };
 
-  const mascara = await MascaraFolio.findOne(filtro).sort({ nombre: 1 });
-  if (!mascara) return null;
+  for (let intento = 0; intento < 10; intento++) {
+    // Incremento atomico: dos solicitudes concurrentes nunca reciben la misma secuencia
+    const mascara = await MascaraFolio.findOneAndUpdate(
+      filtro,
+      { $inc: { secuencia_actual: 1 } },
+      { new: true }
+    );
+    if (!mascara) return null;
 
-  mascara.secuencia_actual += 1;
-  await mascara.save();
+    const folio = resolveFormat(mascara.formato, {
+      prefijo: mascara.prefijo,
+      secuencia: mascara.secuencia_actual,
+      longitud_secuencia: mascara.longitud_secuencia,
+      alcaldia: '',
+    });
 
-  const folio = resolveFormat(mascara.formato, {
-    prefijo: mascara.prefijo,
-    secuencia: mascara.secuencia_actual,
-    longitud_secuencia: mascara.longitud_secuencia,
-    alcaldia: '',
-  });
-
-  return folio;
+    if (!existeFolio) return folio;
+    const ocupado = await existeFolio(folio);
+    if (!ocupado) return folio;
+  }
+  return null;
 }
 
 module.exports = { generarFolio, resolveFormat };

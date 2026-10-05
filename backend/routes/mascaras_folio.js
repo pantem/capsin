@@ -5,7 +5,9 @@ const MascaraFolio = require('../models/MascaraFolio');
 router.get('/', async (req, res) => {
   try {
     const filtros = {};
-    if (req.query.aplica_a) filtros.aplica_a = req.query.aplica_a;
+    if (req.query.aplica_a) {
+      filtros.aplica_a = { $in: [req.query.aplica_a, 'ambos'] };
+    }
     if (req.query.activo !== undefined) filtros.activo = req.query.activo === 'true';
     const mascaras = await MascaraFolio.find(filtros).sort({ nombre: 1 });
     res.json(mascaras);

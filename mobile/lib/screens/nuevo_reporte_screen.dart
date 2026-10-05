@@ -277,8 +277,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       }
     }
     try {
-      final folio = await SyncService().generarFolioLocal();
       final reporteId = _uuid.v4();
+      final folio =
+          'LOCAL-${reporteId.replaceAll('-', '').substring(0, 8).toUpperCase()}';
 
       String _getCaractByNombre(String nombre) {
         for (final c in _caracteristicas) {

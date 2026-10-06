@@ -297,7 +297,7 @@ function renderAlcaldiasGrid() {
         </div>
         <span class="damage-row-count">${item.critico || 0}</span>
       </div>
-      <div class="damage-row row-colapso" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'colapso')" style="color:#000;">
+      <div class="damage-row row-colapso" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'colapso')">
         <div class="damage-row-label">
           <span class="legend-dot dot-black"></span>
           <span>Colapso</span>

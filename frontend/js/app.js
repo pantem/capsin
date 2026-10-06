@@ -1118,22 +1118,13 @@ function cargarImagenB64(url, { normalizarFoto = false } = {}) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (normalizarFoto) {
-          const MAX_W = 1600;
-          const MAX_H = 1200;
-          const RATIO = 4 / 3;
-          let fw = img.width;
-          let fh = img.height;
-          if (fw / fh >= RATIO) fh = fw / RATIO; else fw = fh * RATIO;
-          const scale = Math.min(1, MAX_W / fw, MAX_H / fh);
-          const marcoW = Math.max(2, Math.round(fw * scale));
-          const marcoH = Math.max(2, Math.round(marcoW * RATIO));
-          canvas.width = marcoW;
-          canvas.height = marcoH;
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, marcoW, marcoH);
-          const dw = img.width * scale;
-          const dh = img.height * scale;
-          ctx.drawImage(img, (marcoW - dw) / 2, (marcoH - dh) / 2, dw, dh);
+          const MAX = 1600;
+          const scale = Math.min(1, MAX / img.width, MAX / img.height);
+          const W = Math.max(1, Math.round(img.width * scale));
+          const H = Math.max(1, Math.round(img.height * scale));
+          canvas.width = W;
+          canvas.height = H;
+          ctx.drawImage(img, 0, 0, W, H);
           resolve(canvas.toDataURL('image/jpeg', 0.85));
         } else {
           canvas.width = img.width;
@@ -1328,7 +1319,7 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
       fotos.slice(i, i + POR_BLOQUE).forEach((b64, j) => {
         const n = i + j + 1;
         out += `<div style="text-align:center;">
-          <img src="${b64}" style="display:block;width:100%;height:264px;object-fit:contain;border:1px solid #e2e8f0;border-radius:4px;background:#fff;" alt="Evidencia ${n}">
+          <img src="${b64}" style="display:block;width:100%;height:264px;object-fit:fill;border:1px solid #e2e8f0;border-radius:4px;background:#fff;" alt="Evidencia ${n}">
           <div style="font-size:8px;color:#475569;text-align:right;margin-top:3px;">Foto ${n}</div>
         </div>`;
       });

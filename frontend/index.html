@@ -305,7 +305,7 @@
         <div id="map-legend">
           <h4>Leyenda</h4>
           <p><span class="dot green-dot"></span> Riesgo bajo</p>
-          <p><span class="dot yellow-dot"></span> Riesgo moderado</p>
+          <p><span class="dot yellow-dot"></span> Riesgo medio</p>
           <p><span class="dot red-dot"></span> Riesgo alto</p>
           <p><span class="dot" style="background:#222;"></span> Colapso</p>
           <hr style="margin:0.5rem 0;border-color:#ddd;">
@@ -317,7 +317,7 @@
             </label>
             <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
               <input type="checkbox" class="map-filter-cb" data-color="yellow" onchange="toggleMapFilter('yellow')"
-                checked> <span style="color:#f57c00;font-weight:600;">Riesgo moderado</span>
+                checked> <span style="color:#f57c00;font-weight:600;">Riesgo medio</span>
             </label>
             <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.8rem;">
               <input type="checkbox" class="map-filter-cb" data-color="red" onchange="toggleMapFilter('red')" checked>
@@ -377,8 +377,9 @@
             style="padding:0.6rem;border:1px solid #ccc;border-radius:8px;font-size:0.9rem;min-width:160px;">
             <option value="">Todos los daños</option>
             <option value="sin_daños">Riesgo bajo</option>
-            <option value="moderado">Moderado</option>
-            <option value="critico">Crítico</option>
+            <option value="moderado">Riesgo medio</option>
+            <option value="critico">Riesgo alto</option>
+            <option value="colapso">Colapso</option>
           </select>
         </div>
         <p id="ubic-count" style="font-size:0.85rem;color:#999;margin-bottom:0.5rem;"></p>

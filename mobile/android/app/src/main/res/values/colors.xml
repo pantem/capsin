@@ -2,4 +2,5 @@
 <resources>
     <color name="primary_burgundy">#FF7A0C38</color>
     <color name="secondary_gold">#FFbc955c</color>
+	<color name="ic_launcher_background">#7A0C38</color>
 </resources>

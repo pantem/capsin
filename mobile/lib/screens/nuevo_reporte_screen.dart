@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
@@ -239,42 +240,120 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     if (picked != null) setState(() => _fechaSeleccionada = picked);
   }
 
-  Future<void> _guardar() async {
-    if (!_formKey.currentState!.validate()) return;
+  bool _campoVacio(CaracteristicaTipo c) {
+    switch (c.tipoDato) {
+      case 'texto':
+      case 'textarea':
+      case 'numero':
+        final ctrl = _textControllers[c.id];
+        return ctrl == null || ctrl.text.trim().isEmpty;
+      case 'seleccion':
+        final sel = _valoresCaracteristica[c.id];
+        return sel is! String || sel.trim().isEmpty;
+      case 'multiseleccion':
+        final sel = _valoresCaracteristica[c.id];
+        return sel is! Set || sel.isEmpty;
+      case 'date':
+        final sel = _valoresCaracteristica[c.id];
+        return sel is! String || sel.trim().isEmpty;
+      case 'booleano':
+        return _valoresCaracteristica[c.id] == null;
+    }
+    return false;
+  }
 
+  List<CaracteristicaTipo> _camposFaltantes() =>
+      _caracteristicas.where((c) => c.requerido && _campoVacio(c)).toList();
+
+  int _tabDeOrden(int orden) {
+    if (orden < 15) return 1;
+    if (orden < 41) return 2;
+    if (orden < 51) return 3;
+    if (orden < 61) return 4;
+    return 5;
+  }
+
+  String _mensajeValidacion(
+      List<CaracteristicaTipo> faltantes, List<String> invalidos) {
+    final partes = <String>[];
+    if (faltantes.isNotEmpty) {
+      final nombres = faltantes.map((c) => c.nombre).toList();
+      final visibles = nombres.take(4).join(', ');
+      final extra = nombres.length > 4 ? ' (+${nombres.length - 4} más)' : '';
+      partes.add(
+          'Faltan ${nombres.length} dato(s) obligatorio(s): $visibles$extra');
+    }
+    if (invalidos.isNotEmpty) {
+      final visibles = invalidos.take(3).join('; ');
+      final extra = invalidos.length > 3 ? ' (+${invalidos.length - 3} más)' : '';
+      partes.add('Corrige: $visibles$extra');
+    }
+    return partes.join('\n');
+  }
+
+  List<String> _camposInvalidos() {
+    final errores = <String>[];
     for (final c in _caracteristicas) {
-      if (!c.requerido) continue;
-      final raw = _valoresCaracteristica[c.id];
-      bool vacio = false;
-      switch (c.tipoDato) {
-        case 'texto':
-        case 'textarea':
-        case 'numero':
-          final ctrl = _textControllers[c.id];
-          if (ctrl == null || ctrl.text.trim().isEmpty) vacio = true;
-          break;
-        case 'seleccion':
-          final sel = raw as String?;
-          if (sel == null || sel.isEmpty) vacio = true;
-          break;
-        case 'booleano':
-          if (raw == null) vacio = true;
-          break;
-        case 'date':
-          if (raw == null || (raw as String? ?? '').isEmpty) vacio = true;
-          break;
-        case 'multiseleccion':
-          final s = raw as Set<String>?;
-          if (s == null || s.isEmpty) vacio = true;
-          break;
+      if (c.tipoDato != 'numero') continue;
+      final txt = _textControllers[c.id]?.text.trim() ?? '';
+      if (txt.isEmpty) continue;
+      final n = num.tryParse(txt);
+      if (n == null) {
+        errores.add('${c.nombre}: debe ser un número');
+        continue;
       }
-      if (vacio) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${c.nombre} es requerido')),
-        );
-        return;
+      if (c.minimo != null && n < c.minimo!) {
+        errores.add('${c.nombre}: mínimo ${c.minimo!.toInt()}');
       }
+      if (c.maximo != null && n > c.maximo!) {
+        errores.add('${c.nombre}: máximo ${c.maximo!.toInt()}');
+      }
+    }
+    return errores;
+  }
+
+  void _avisar(String mensaje) {
+    if (!mounted) return;
+    FocusScope.of(context).unfocus();
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        duration: const Duration(seconds: 6),
+        backgroundColor: const Color(0xFF7A0C38),
+      ),
+    );
+  }
+
+  Future<void> _guardar() async {
+    final faltantes = _camposFaltantes();
+    final invalidos = _camposInvalidos();
+    if (faltantes.isNotEmpty || invalidos.isNotEmpty) {
+      if (!mounted) return;
+      if (faltantes.isNotEmpty) {
+        final tab = _tabDeOrden(faltantes.first.orden);
+        if (tab != _tabController.index) _tabController.animateTo(tab);
+      }
+      _avisar(_mensajeValidacion(faltantes, invalidos));
+      return;
+    }
+
+    if (_fotos.isEmpty) {
+      _avisar('Agrega al menos una fotografía (incluyendo la fachada) '
+          'para guardar el reporte.');
+      return;
+    }
+
+    bool formOk = true;
+    try {
+      formOk = _formKey.currentState?.validate() ?? true;
+    } catch (_) {
+      formOk = false;
+    }
+    if (!formOk) {
+      _avisar('Hay campos con datos inválidos. Revisa los mensajes en rojo.');
+      return;
     }
     try {
       final reporteId = _uuid.v4();
@@ -470,7 +549,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       )
                     else
                       FilledButton.icon(
-                        onPressed: _fotos.isNotEmpty ? _guardar : null,
+                        onPressed: _guardar,
                         icon: const Icon(Icons.save),
                         label: const Text('Guardar Reporte'),
                       ),
@@ -928,6 +1007,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           ),
         );
       case 'numero':
+        final conDecimales = (c.minimo != null &&
+                c.minimo != c.minimo!.roundToDouble()) ||
+            (c.maximo != null && c.maximo != c.maximo!.roundToDouble());
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextFormField(
@@ -940,15 +1022,22 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               border: const OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                  conDecimales ? RegExp(r'[0-9.]') : RegExp(r'[0-9]')),
+            ],
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (v) {
               if (c.requerido && (v == null || v.isEmpty)) return 'Requerido';
               if (v != null && v.isNotEmpty) {
                 final n = num.tryParse(v);
                 if (n == null) return 'Debe ser un número';
-                if (c.minimo != null && n < c.minimo!)
+                if (c.minimo != null && n < c.minimo!) {
                   return 'Mínimo ${c.minimo!.toInt()}';
-                if (c.maximo != null && n > c.maximo!)
+                }
+                if (c.maximo != null && n > c.maximo!) {
                   return 'Máximo ${c.maximo!.toInt()}';
+                }
               }
               return null;
             },

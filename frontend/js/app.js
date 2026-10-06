@@ -1094,13 +1094,22 @@ function cargarImagenB64(url, { normalizarFoto = false } = {}) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (normalizarFoto) {
-          const MAX = 1600;
-          const scale = Math.min(1, MAX / img.width, MAX / img.height);
-          const W = Math.max(1, Math.round(img.width * scale));
-          const H = Math.max(1, Math.round(img.height * scale));
-          canvas.width = W;
-          canvas.height = H;
-          ctx.drawImage(img, 0, 0, W, H);
+          const MAX_W = 1600;
+          const MAX_H = 1200;
+          const RATIO = 4 / 3;
+          let fw = img.width;
+          let fh = img.height;
+          if (fw / fh >= RATIO) fh = fw / RATIO; else fw = fh * RATIO;
+          const scale = Math.min(1, MAX_W / fw, MAX_H / fh);
+          const marcoW = Math.max(2, Math.round(fw * scale));
+          const marcoH = Math.max(2, Math.round(marcoW * RATIO));
+          canvas.width = marcoW;
+          canvas.height = marcoH;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, marcoW, marcoH);
+          const dw = img.width * scale;
+          const dh = img.height * scale;
+          ctx.drawImage(img, (marcoW - dw) / 2, (marcoH - dh) / 2, dw, dh);
           resolve(canvas.toDataURL('image/jpeg', 0.85));
         } else {
           canvas.width = img.width;
@@ -1285,25 +1294,38 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
   </table>`;
 
   const numsSeccion = [...secciones.keys()].sort((a, b) => a - b);
+
+  const fotosGridHTML = (fotos) => {
+    const POR_BLOQUE = 4;
+    let out = '<div class="corte-foto"></div>';
+    for (let i = 0; i < fotos.length; i += POR_BLOQUE) {
+      if (i > 0) out += '<div class="corte-foto"></div>';
+      out += '<div style="display:grid;grid-template-columns:repeat(2,1fr);column-gap:16px;row-gap:16px;width:calc(100% + 40px);margin-left:-20px;padding-top:6px;">';
+      fotos.slice(i, i + POR_BLOQUE).forEach((b64, j) => {
+        const n = i + j + 1;
+        out += `<div style="text-align:center;">
+          <img src="${b64}" style="display:block;width:100%;height:264px;object-fit:contain;border:1px solid #e2e8f0;border-radius:4px;background:#fff;" alt="Evidencia ${n}">
+          <div style="font-size:8px;color:#475569;text-align:right;margin-top:3px;">Foto ${n}</div>
+        </div>`;
+      });
+      out += '</div>';
+    }
+    return out;
+  };
+
   numsSeccion.forEach(secNum => {
     const rows = secciones.get(secNum);
     const titulo = TITULOS_SECCIONES[secNum] || `Sección ${secNum}`;
+    const fotosValidas = secNum === 6
+      ? (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0)
+      : [];
+    if (fotosValidas.length > 0) html += '<div class="corte-foto"></div>';
     html += sectionTitle(String(secNum), titulo);
     html += makeSectionTable(rows);
 
-    if (secNum === 6) {
-      const fotosValidas = (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0);
-      if (fotosValidas.length > 0) {
-        fotosValidas.forEach((b64, i) => {
-          html += `<div style="margin:4px 0 8px 0;text-align:center;">
-            <div style="width:calc(100% + 40px);margin-left:-20px;text-align:center;">
-              <img src="${b64}" style="max-width:100%;max-height:540px;width:auto;height:auto;display:inline-block;border:1px solid #e2e8f0;border-radius:4px;" alt="Evidencia">
-            </div>
-            <div style="font-size:8px;color:#475569;text-align:right;margin-top:2px;">Foto ${i + 1}</div>
-          </div>`;
-        });
-        html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:8px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
-      }
+    if (fotosValidas.length > 0) {
+      html += fotosGridHTML(fotosValidas);
+      html += `<div style="font-size:9px;font-weight:bold;color:#475569;text-align:center;margin:8px 0 10px 0;">Evidencia registrada durante la inspección</div>`;
     }
   });
 
@@ -1349,17 +1371,26 @@ function dibujarFooterPDF(pdf, pageNum, totalPages, margaB64, mascotB64) {
 
 function obtenerCortesSeguros(container, escala) {
   const base = container.getBoundingClientRect().top;
-  const puntos = new Set();
-  const add = (v) => {
+  const suaves = new Set();
+  const duros = new Set();
+  const add = (set, v) => {
     const y = Math.round((v - base) * escala);
-    if (y > 0) puntos.add(y);
+    if (y > 0) set.add(y);
   };
   container.querySelectorAll('tr, table, img, .corte-pdf').forEach((el) => {
     const r = el.getBoundingClientRect();
-    add(r.top);
-    add(r.bottom);
+    add(suaves, r.top);
+    add(suaves, r.bottom);
   });
-  return Array.from(puntos).sort((a, b) => a - b);
+  container.querySelectorAll('.corte-foto').forEach((el) => {
+    const r = el.getBoundingClientRect();
+    add(duros, r.top);
+    add(duros, r.bottom);
+  });
+  return {
+    suaves: Array.from(suaves).sort((a, b) => a - b),
+    duros: Array.from(duros).sort((a, b) => a - b),
+  };
 }
 
 async function descargarReporte(siniestroId) {
@@ -1472,13 +1503,27 @@ async function descargarReporte(siniestroId) {
       if (fin >= canvasH) {
         fin = canvasH;
       } else {
-        let mejor = -1;
-        for (const p of cortesSeguros) {
-          if (p < y + minCuerpoPx) continue;
-          if (p > fin) break;
-          mejor = p;
+        const buscar = (puntos, desde) => {
+          let mejor = -1;
+          for (const p of puntos) {
+            if (p < desde) continue;
+            if (p > fin) break;
+            mejor = p;
+          }
+          return mejor;
+        };
+        const corteDuro = buscar(cortesSeguros.duros, y + minCuerpoPx);
+        if (corteDuro > 0) {
+          fin = Math.max(y + minCuerpoPx, corteDuro);
+        } else {
+          const corteDuroCorto = buscar(cortesSeguros.duros, y + 1);
+          if (corteDuroCorto > 0) {
+            fin = corteDuroCorto;
+          } else {
+            const corteSuave = buscar(cortesSeguros.suaves, y + minCuerpoPx);
+            if (corteSuave > 0) fin = Math.max(y + minCuerpoPx, corteSuave);
+          }
         }
-        if (mejor > 0) fin = Math.max(y + minCuerpoPx, mejor);
       }
       hojas.push([y, fin]);
       y = fin;

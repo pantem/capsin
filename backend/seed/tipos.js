@@ -70,8 +70,8 @@ const CARACTERISTICAS = [
     nombre: '2.9 Uso del Inmueble',
     tipo_dato: 'seleccion',
     opciones: [
-      'HABITACIÓN UNIFAMILIAR',
-      'HABITACIÓN MULTIFAMILIAR',
+      'UNI',
+      'MULTI',
       'CENTRO DE REUNIÓN',
       'OFICINAS PRIVADAS',
       'INDUSTRIAS',
@@ -96,7 +96,7 @@ const CARACTERISTICAS = [
   {
     nombre: '2.11 Número de sótanos',
     tipo_dato: 'seleccion',
-    opciones: Array.from({ length: 100 }, (_, i) => String(i + 1)),
+    opciones: Array.from({ length: 101 }, (_, i) => String(i)),
     requerido: true,
     orden: 11,
   },
@@ -305,24 +305,35 @@ const CARACTERISTICAS = [
   },
 ];
 
+const OPCIONES_SINCRONIZADAS = ['2.11 Número de sótanos'];
+
 async function seedTiposInmueble() {
   let tipo = await TipoInmueble.findOne({ nombre: 'Inmueble Genérico' });
   if (tipo) {
     console.log('Inmueble Genérico ya existe, verificando características...');
     const existentes = await CaracteristicaTipo.find({ tipo_inmueble: tipo._id });
-    const existentesNombres = new Set(existentes.map(c => c.nombre));
+    const porNombre = new Map(existentes.map(c => [c.nombre, c]));
 
     let agregadas = 0;
+    let actualizadas = 0;
     for (const c of CARACTERISTICAS) {
-      if (!existentesNombres.has(c.nombre)) {
+      const existente = porNombre.get(c.nombre);
+      if (!existente) {
         await new CaracteristicaTipo({ ...c, tipo_inmueble: tipo._id }).save();
         agregadas++;
         console.log(`  Agregada: ${c.nombre}`);
+        continue;
       }
+      if (!OPCIONES_SINCRONIZADAS.includes(c.nombre)) continue;
+      if (JSON.stringify(existente.opciones || []) === JSON.stringify(c.opciones)) continue;
+      existente.opciones = c.opciones;
+      await existente.save();
+      actualizadas++;
+      console.log(`  Opciones actualizadas: ${c.nombre} (${c.opciones.length})`);
     }
 
     const total = await CaracteristicaTipo.countDocuments({ tipo_inmueble: tipo._id });
-    console.log(`  Total: ${total} (${agregadas} nuevas)`);
+    console.log(`  Total: ${total} (${agregadas} nuevas, ${actualizadas} actualizadas)`);
     return;
   }
 

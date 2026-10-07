@@ -240,7 +240,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     if (picked != null) setState(() => _fechaSeleccionada = picked);
   }
 
+  bool _esCaracteristicaFotos(CaracteristicaTipo c) {
+    final n = _norm(c.nombre);
+    return n.contains('fotograf') || n.contains('fotos');
+  }
+
   bool _campoVacio(CaracteristicaTipo c) {
+    if (_esCaracteristicaFotos(c)) return _fotos.isEmpty;
     switch (c.tipoDato) {
       case 'texto':
       case 'textarea':
@@ -294,6 +300,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   List<String> _camposInvalidos() {
     final errores = <String>[];
     for (final c in _caracteristicas) {
+      if (_esCaracteristicaFotos(c)) continue;
       if (c.tipoDato != 'numero') continue;
       final txt = _textControllers[c.id]?.text.trim() ?? '';
       if (txt.isEmpty) continue;
@@ -327,6 +334,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Future<void> _guardar() async {
+    if (_fotos.isEmpty) {
+      if (_tabController.index != 5) _tabController.animateTo(5);
+      _avisar('Agrega al menos una fotografía (incluyendo la fachada) '
+          'para guardar el reporte.');
+      return;
+    }
+
     final faltantes = _camposFaltantes();
     final invalidos = _camposInvalidos();
     if (faltantes.isNotEmpty || invalidos.isNotEmpty) {
@@ -336,12 +350,6 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         if (tab != _tabController.index) _tabController.animateTo(tab);
       }
       _avisar(_mensajeValidacion(faltantes, invalidos));
-      return;
-    }
-
-    if (_fotos.isEmpty) {
-      _avisar('Agrega al menos una fotografía (incluyendo la fachada) '
-          'para guardar el reporte.');
       return;
     }
 
@@ -359,6 +367,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
       final reporteId = _uuid.v4();
       final folio =
           'LOCAL-${reporteId.replaceAll('-', '').substring(0, 8).toUpperCase()}';
+
+      for (final c in _caracteristicas) {
+        if (!_esCaracteristicaFotos(c)) continue;
+        final total = _fotos.length.toString();
+        _textControllers[c.id]?.text = total;
+        _valoresCaracteristica[c.id] = total;
+      }
 
       String _getCaractByNombre(String nombre) {
         for (final c in _caracteristicas) {
@@ -874,19 +889,23 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     style:
                         TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 4),
-                const Text('Máximo 10 imágenes',
+                const Text('Mínimo 1 fotografía · Máximo 10 imágenes',
                     style: TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     FilledButton.tonalIcon(
-                      onPressed: () => _tomarFoto(ImageSource.camera),
+                      onPressed: _fotos.length >= 10
+                          ? null
+                          : () => _tomarFoto(ImageSource.camera),
                       icon: const Icon(Icons.camera_alt),
                       label: const Text('Cámara'),
                     ),
                     const SizedBox(width: 12),
                     FilledButton.tonalIcon(
-                      onPressed: () => _tomarFoto(ImageSource.gallery),
+                      onPressed: _fotos.length >= 10
+                          ? null
+                          : () => _tomarFoto(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library),
                       label: const Text('Galería'),
                     ),
@@ -894,7 +913,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                 ),
                 if (_fotos.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text('Fotos capturadas (${_fotos.length})',
+                  Text('Fotos capturadas (${_fotos.length}/10)',
                       style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   Wrap(
@@ -916,6 +935,10 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Future<void> _tomarFoto(ImageSource source) async {
+    if (_fotos.length >= 10) {
+      _avisar('Máximo 10 fotografías por reporte.');
+      return;
+    }
     try {
       final xfile = await _picker.pickImage(
         source: source,
@@ -923,7 +946,13 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         maxHeight: 1920,
         imageQuality: 80,
       );
-      if (xfile != null) setState(() => _fotos.add(xfile.path));
+      if (xfile != null) {
+        if (_fotos.length >= 10) {
+          _avisar('Máximo 10 fotografías por reporte.');
+          return;
+        }
+        setState(() => _fotos.add(xfile.path));
+      }
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -970,6 +999,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   }
 
   Widget _buildCampoDinamico(CaracteristicaTipo c) {
+    if (_esCaracteristicaFotos(c)) return const SizedBox.shrink();
     return _buildCampoBase(c);
   }
 

@@ -1,4 +1,4 @@
-name: siniestros_sismo
+name: SAS
 description: App móvil para registro offline de siniestros por sismo
 
 publish_to: 'none'

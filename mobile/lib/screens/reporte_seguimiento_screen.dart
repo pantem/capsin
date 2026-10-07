@@ -89,7 +89,20 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
     super.dispose();
   }
 
+  String _norm(String s) {
+    var t = s.toLowerCase();
+    const mapa = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+    mapa.forEach((k, v) => t = t.replaceAll(k, v));
+    return t;
+  }
+
+  bool _esCaracteristicaFotos(CaracteristicaTipo c) {
+    final n = _norm(c.nombre);
+    return n.contains('fotograf') || n.contains('fotos');
+  }
+
   bool _campoVacio(CaracteristicaTipo c) {
+    if (_esCaracteristicaFotos(c)) return _fotos.isEmpty;
     switch (c.tipoDato) {
       case 'texto':
       case 'textarea':
@@ -135,6 +148,7 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
   List<String> _camposInvalidos() {
     final errores = <String>[];
     for (final c in _caracteristicas) {
+      if (_esCaracteristicaFotos(c)) continue;
       if (c.tipoDato != 'numero') continue;
       final txt = _textControllers[c.id]?.text.trim() ?? '';
       if (txt.isEmpty) continue;
@@ -170,6 +184,13 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
   Future<void> _guardar() async {
     if (_guardando) return;
 
+    if (_fotos.isEmpty) {
+      if (_tabController.index != 4) _tabController.animateTo(4);
+      _avisar('Agrega al menos una fotografía (incluyendo la fachada) '
+          'para guardar el reporte.');
+      return;
+    }
+
     final faltantes = _camposFaltantes();
     final invalidos = _camposInvalidos();
     if (faltantes.isNotEmpty || invalidos.isNotEmpty) {
@@ -196,6 +217,14 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
 
     try {
       final reporteId = _uuid.v4();
+
+      for (final c in _caracteristicas) {
+        if (!_esCaracteristicaFotos(c)) continue;
+        final total = _fotos.length.toString();
+        _textControllers[c.id]?.text = total;
+        _valoresCaracteristica[c.id] = total;
+      }
+
       final reporte = ReporteSeguimiento(
         id: reporteId,
         inmueblePadronId: widget.inmueblePadron.id,
@@ -642,6 +671,10 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
   }
 
   Future<void> _tomarFoto(ImageSource source) async {
+    if (_fotos.length >= 10) {
+      _avisar('Máximo 10 fotografías por reporte.');
+      return;
+    }
     try {
       final xfile = await _picker.pickImage(
         source: source,
@@ -650,6 +683,10 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
         imageQuality: 80,
       );
       if (xfile != null) {
+        if (_fotos.length >= 10) {
+          _avisar('Máximo 10 fotografías por reporte.');
+          return;
+        }
         setState(() => _fotos.add(xfile.path));
       }
     } catch (e) {
@@ -698,6 +735,7 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
   }
 
   Widget _buildCampoDinamico(CaracteristicaTipo c) {
+    if (_esCaracteristicaFotos(c)) return const SizedBox.shrink();
     switch (c.tipoDato) {
       case 'texto':
         return Padding(

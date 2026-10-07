@@ -70,8 +70,8 @@ const CARACTERISTICAS = [
     nombre: '2.9 Uso del Inmueble',
     tipo_dato: 'seleccion',
     opciones: [
-      'UNI',
-      'MULTI',
+      'UNIFAMILIAR',
+      'MULTIFAMILIAR',
       'CENTRO DE REUNIÓN',
       'OFICINAS PRIVADAS',
       'INDUSTRIAS',

@@ -85,7 +85,8 @@ const CARACTERISTICAS = [
       'MIXTO',
     ],
     requerido: true,
-    condicional_texto: 'si',
+    render_type: 'dropdown',
+    condicional_texto: 'mixto',
     orden: 9,
   },
   {
@@ -328,11 +329,25 @@ async function seedTiposInmueble() {
         continue;
       }
       if (OPCIONES_EXCLUIDAS.includes(c.nombre)) continue;
-      if (JSON.stringify(existente.opciones || []) === JSON.stringify(c.opciones || [])) continue;
-      existente.opciones = c.opciones || [];
+      let cambios = [];
+      if (JSON.stringify(existente.opciones || []) !== JSON.stringify(c.opciones || [])) {
+        existente.opciones = c.opciones || [];
+        cambios.push('opciones');
+      }
+      if (c.condicional_texto !== undefined &&
+          (existente.condicional_texto || 'no') !== c.condicional_texto) {
+        existente.condicional_texto = c.condicional_texto;
+        cambios.push('condicional_texto');
+      }
+      if (c.render_type !== undefined &&
+          (existente.render_type || 'auto') !== c.render_type) {
+        existente.render_type = c.render_type;
+        cambios.push('render_type');
+      }
+      if (cambios.length === 0) continue;
       await existente.save();
       actualizadas++;
-      console.log(`  Opciones actualizadas: ${c.nombre} (${existente.opciones.length})`);
+      console.log(`  Actualizada: ${c.nombre} (${cambios.join(', ')})`);
     }
 
     const total = await CaracteristicaTipo.countDocuments({ tipo_inmueble: tipo._id });

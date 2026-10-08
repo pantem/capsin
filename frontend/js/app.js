@@ -2252,7 +2252,8 @@ function abrirFormCaract(idx) {
         <label>Condicional texto</label>
         <select id="caract-cond-texto">
           <option value="no" ${(c.condicionalTexto || 'no') === 'no' ? 'selected' : ''}>No</option>
-          <option value="si" ${c.condicionalTexto === 'si' ? 'selected' : ''}>Sí</option>
+          <option value="si" ${c.condicionalTexto === 'si' ? 'selected' : ''}>Sí (al elegir Sí)</option>
+          <option value="mixto" ${c.condicionalTexto === 'mixto' ? 'selected' : ''}>Mixto (al elegir MIXTO)</option>
         </select>
       </div>
     </div>
@@ -2996,11 +2997,16 @@ async function abrirFormInmueblePadron(id) {
 
   function renderCampo(c) {
     const actual = valsPadron[c._id] != null ? String(valsPadron[c._id]) : '';
-    const condTexto = c.condicional_texto === 'si';
+    const esMixto = c.condicional_texto === 'mixto';
+    const condTexto = c.condicional_texto === 'si' || esMixto;
+    const condTrigger = esMixto ? 'MIXTO' : 'Sí';
+    const condLabel = esMixto
+      ? 'Indique la modalidad Mixta'
+      : 'Indique la dependencia que brindará el apoyo';
     const condValor = valsPadron[`${c._id}_cond`] != null ? String(valsPadron[`${c._id}_cond`]) : '';
     const wrapperCond = condTexto ? `
-        <div class="form-group" data-cond-wrapper="${c._id}" style="${actual === 'Sí' ? '' : 'display:none;'}">
-          <label>Indique la dependencia que brindará el apoyo</label>
+        <div class="form-group" data-cond-wrapper="${c._id}" data-cond-trigger="${condTrigger}" style="${actual === condTrigger ? '' : 'display:none;'}">
+          <label>${condLabel}</label>
           <input type="text" data-caract-cond="${c._id}" value="${escHtml(condValor)}" style="width:100%;">
         </div>` : '';
 
@@ -3129,7 +3135,8 @@ function onValorCaractChange(id) {
 function toggleCondTexto(id, valor) {
   const wrapper = document.querySelector(`[data-cond-wrapper="${id}"]`);
   if (!wrapper) return;
-  const mostrar = valor === 'Sí';
+  const trigger = wrapper.dataset.condTrigger || 'Sí';
+  const mostrar = valor === trigger;
   wrapper.style.display = mostrar ? '' : 'none';
   if (!mostrar) {
     const input = wrapper.querySelector(`[data-caract-cond="${id}"]`);

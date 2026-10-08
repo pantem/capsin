@@ -78,7 +78,15 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
 
   String _norm(String s) {
     var t = s.toLowerCase();
-    const mapa = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ü': 'u', 'ñ': 'n'};
+    const mapa = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ü': 'u',
+      'ñ': 'n'
+    };
     mapa.forEach((k, v) => t = t.replaceAll(k, v));
     return t;
   }
@@ -114,7 +122,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               c.tipoDato == 'numero') {
             _textControllers[c.id] = TextEditingController();
           }
-          if (c.condicionalTexto == 'si') {
+          if (c.condicionalTexto == 'si' || c.condicionalTexto == 'mixto') {
             _textControllers['${c.id}_cond'] = TextEditingController();
           }
         }
@@ -132,6 +140,12 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
   void _limpiarTextoCondicional(String id) {
     _textControllers['${id}_cond']?.clear();
     _valoresCaracteristica.remove('${id}_cond');
+  }
+
+  bool _condActivo(CaracteristicaTipo c, String? valor) {
+    if (c.condicionalTexto == 'mixto') return valor == 'MIXTO';
+    if (c.condicionalTexto == 'si') return valor == 'Sí';
+    return false;
   }
 
   String _textoCondicional(String id) {
@@ -291,7 +305,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
     }
     if (invalidos.isNotEmpty) {
       final visibles = invalidos.take(3).join('; ');
-      final extra = invalidos.length > 3 ? ' (+${invalidos.length - 3} más)' : '';
+      final extra =
+          invalidos.length > 3 ? ' (+${invalidos.length - 3} más)' : '';
       partes.add('Corrige: $visibles$extra');
     }
     return partes.join('\n');
@@ -1037,9 +1052,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           ),
         );
       case 'numero':
-        final conDecimales = (c.minimo != null &&
-                c.minimo != c.minimo!.roundToDouble()) ||
-            (c.maximo != null && c.maximo != c.maximo!.roundToDouble());
+        final conDecimales =
+            (c.minimo != null && c.minimo != c.minimo!.roundToDouble()) ||
+                (c.maximo != null && c.maximo != c.maximo!.roundToDouble());
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextFormField(
@@ -1123,7 +1138,7 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
         final seleccion = _valoresCaracteristica[c.id] as String?;
         final tieneOtro = c.opciones.contains('Otro');
         bool usarDropdown;
-        if (c.condicionalTexto == 'si') {
+        if (c.condicionalTexto == 'si' || c.condicionalTexto == 'mixto') {
           usarDropdown = true;
         } else if (c.renderType == 'dropdown') {
           usarDropdown = true;
@@ -1136,6 +1151,9 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
           final bool mostrarCond = c.condicionalTexto == 'si' &&
               seleccion != null &&
               seleccion == 'Sí';
+          final bool mostrarCondMixto = c.condicionalTexto == 'mixto' &&
+              seleccion != null &&
+              seleccion == 'MIXTO';
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Column(
@@ -1162,9 +1180,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   onChanged: (v) {
                     setState(() {
                       _valoresCaracteristica[c.id] = v;
-                      if (v != null &&
-                          v != 'Sí' &&
-                          c.condicionalTexto == 'si') {
+                      if (c.condicionalTexto != 'no' &&
+                          !_condActivo(c, v)) {
                         _limpiarTextoCondicional(c.id);
                       }
                     });
@@ -1183,6 +1200,20 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                       decoration: const InputDecoration(
                         labelText:
                             'Indique la dependencia que brindará el apoyo',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                  ),
+                if (mostrarCondMixto)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: TextFormField(
+                      controller: _condController(c.id),
+                      onChanged: (v) =>
+                          _valoresCaracteristica['${c.id}_cond'] = v,
+                      decoration: const InputDecoration(
+                        labelText: 'Indique la modalidad Mixta',
                         border: OutlineInputBorder(),
                       ),
                       maxLines: 2,
@@ -1209,9 +1240,8 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                     onChanged: (v) {
                       setState(() {
                         _valoresCaracteristica[c.id] = v;
-                        if (v != null &&
-                            v != 'Sí' &&
-                            c.condicionalTexto == 'si') {
+                        if (c.condicionalTexto != 'no' &&
+                            !_condActivo(c, v)) {
                           _limpiarTextoCondicional(c.id);
                         }
                       });
@@ -1234,18 +1264,18 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
                   ),
                 ),
               ],
-              if (c.condicionalTexto == 'si' &&
-                  seleccion != null &&
-                  seleccion == 'Sí')
+              if (_condActivo(c, seleccion))
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: TextFormField(
                     controller: _condController(c.id),
                     onChanged: (v) =>
                         _valoresCaracteristica['${c.id}_cond'] = v,
-                    decoration: const InputDecoration(
-                      labelText: 'Observaciones',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: c.condicionalTexto == 'mixto'
+                          ? 'Indique la modalidad Mixta'
+                          : 'Observaciones',
+                      border: const OutlineInputBorder(),
                     ),
                     maxLines: 2,
                   ),

@@ -52,7 +52,7 @@ Botón de **sincronizar** (esquina superior derecha) para subir datos pendientes
 - **2.6 Responsable del Inmueble** y **2.7 Teléfono del Responsable** (texto y número)
 - **2.13 Tipo de inspección** (selección): INSPECCIÓN EXTERIOR ÚNICAMENTE, INSPECCIÓN INTERIOR Y EXTERIOR
 
-> Nota: la **Década de construcción** y las coordenadas se capturan en el registro del inmueble (web, sección *Alta Inmuebles*), no como características del reporte.
+> Nota: las **coordenadas** (Latitud/Longitud), el **Nombre** y el **Tipo de inmueble** se capturan en el registro del inmueble (web, sección *Alta Inmuebles*); el resto de los campos 2.1 a 2.13 —incluido el **2.8 Año estimado de la Construcción**— son características del catálogo.
 
 ### Paso 3 — Estado de la Edificación
 
@@ -207,27 +207,39 @@ Navegación: Haz clic en **Alta Inmuebles** en el menú superior (requiere el pe
 
 ### Formulario del inmueble
 
-Se abre como modal (`Nuevo Inmueble en Padrón` / `Editar Inmueble`) con la sección **1. Ubicación y Descripción**:
+Se abre como modal (`Nuevo Inmueble en Padrón` / `Editar Inmueble`). Primero aparece un indicador de carga y después la sección **1. Ubicación y Descripción**, formada por tres campos fijos:
 
 | Campo | Detalle |
 |-------|---------|
 | Nombre / Descripción del inmueble | Obligatorio |
 | Tipo de inmueble | Desplegable con los tipos activos |
-| Calle y Número, Colonia, Alcaldía, Código Postal | Texto (CP máximo 5 dígitos) |
-| Entre que calles / Referencia | Texto |
-| Persona contactada | Texto |
 | Latitud / Longitud | Números decimales |
-| Uso del Inmueble | Las 12 opciones del catálogo (UNIFAMILIAR … MIXTO) |
-| Década de construcción | 50S O ANTES, 60S, 70S, 80S, 90S, 2000S, 2010S O MÁS |
-| Niveles sobre terreno | 1 a 100 |
-| Sótanos | 0 a 100 |
-| Tipo de inspección | INSPECCIÓN EXTERIOR ÚNICAMENTE / INSPECCIÓN INTERIOR Y EXTERIOR |
+
+El resto de la sección 1 **se genera desde las características 2.1 a 2.13** del tipo de inmueble (las mismas que aparecen en la API y en el catálogo *Características*):
+
+| Característica | Tipo |
+|----------------|------|
+| 2.1 Calle y Número (Manzana y Lote, en su caso) | Texto |
+| 2.2 Colonia | Texto |
+| 2.3 Alcaldía | Texto |
+| 2.4 Código Postal | Texto (5 dígitos) |
+| 2.5 Entre que calles / Referencia | Texto |
+| 2.6 Responsable del Inmueble | Texto |
+| 2.7 Teléfono del Responsable del Inmueble | Número |
+| 2.8 Año estimado de la Construcción | Número (1700 a 2026) |
+| 2.9 Uso del Inmueble | Las 12 opciones del catálogo (UNIFAMILIAR … MIXTO) |
+| 2.10 Número de niveles sobre el terreno | 1 a 100 |
+| 2.11 Número de sótanos | 0 a 100 |
+| 2.12 Número de ocupantes | Número |
+| 2.13 Tipo de inspección | INSPECCIÓN EXTERIOR ÚNICAMENTE / INSPECCIÓN INTERIOR Y EXTERIOR |
 
 A continuación se pintan las secciones dinámicas **2. Estado de la Edificación**, **3. Clasificación Global**, **4. Recomendaciones** y **5. Observaciones**, generadas desde las características del tipo de inmueble.
 
 - Las selecciones `Sí` / `No` se muestran como botones de radio; el resto como desplegables.
 - En **5.5 ¿Requiere apoyo de alguna dependencia?**, al elegir **Sí** aparece el campo **"Indique la dependencia que brindará el apoyo"**.
-- Al editar, los valores capturados se cargan de nuevo en el formulario.
+- Al editar, los valores capturados se cargan de nuevo en el formulario (los guardados antes en los campos fijos del inmueble se muestran en su característica correspondiente).
+- El catálogo se guarda en caché en el navegador: la primera apertura tarda lo que tarde la red y las siguientes se abren de inmediato; al guardar o eliminar un **Tipo de Inmueble** la caché se vuelve a cargar.
+- Si la consulta falla, el modal muestra un mensaje de error con el botón **Reintentar**.
 
 **Fotografías**: botón **📷 Seleccionar imágenes** (máximo 10, con vista previa y ✕ para quitar).
 

@@ -2113,6 +2113,7 @@ async function eliminarTipo(id) {
   if (!confirm('¿Eliminar este tipo de inmueble y sus características?')) return;
   try {
     await fetch(`${API}/tipos-inmueble/${id}`, { method: 'DELETE' });
+    invalidarCatalogoPadron();
     loadTipos();
   } catch (err) {
     alert('Error al eliminar: ' + err.message);
@@ -2380,6 +2381,7 @@ async function guardarTipo() {
       }
     }
 
+    invalidarCatalogoPadron();
     cerrarModal('modal-tipo');
     loadTipos();
   } catch (err) {
@@ -2813,6 +2815,7 @@ async function loadInmueblesPadron(filter = '') {
   const container = document.getElementById('padron-lista');
   const countEl = document.getElementById('padron-count');
   container.innerHTML = '<p style="color:#777;">Cargando...</p>';
+  precargarCatalogoPadron();
 
   try {
     const inmuebles = await fetchJSON(`${API}/inmuebles-padron`);
@@ -2885,22 +2888,92 @@ async function loadInmueblesPadron(filter = '') {
   }
 }
 
+let _tiposPadronCache = null;
+let _caractsPadronCache = new Map();
+let _padronPreloadHecho = false;
+let _caractsPadron = [];
+
+async function getTiposPadron() {
+  if (!_tiposPadronCache) _tiposPadronCache = await fetchJSON(`${API}/tipos-inmueble?activos=true`);
+  return _tiposPadronCache;
+}
+
+async function getCaractsPadron(tipoId) {
+  if (!tipoId) return [];
+  if (!_caractsPadronCache.has(tipoId)) {
+    _caractsPadronCache.set(tipoId, await fetchJSON(`${API}/tipos-inmueble/${tipoId}/caracteristicas`));
+  }
+  return _caractsPadronCache.get(tipoId);
+}
+
+function invalidarCatalogoPadron() {
+  _tiposPadronCache = null;
+  _caractsPadronCache.clear();
+}
+
+function precargarCatalogoPadron() {
+  if (_padronPreloadHecho) return;
+  _padronPreloadHecho = true;
+  getTiposPadron()
+    .then(t => (t.length > 0 ? getCaractsPadron(t[0]._id) : null))
+    .catch(() => { _padronPreloadHecho = false; });
+}
+
+const CAMPOS_MODELO_POR_CARACT = [
+  [/calle y n/i, 'direccion'],
+  [/colonia/i, 'colonia'],
+  [/alcald/i, 'alcaldia'],
+  [/c[oó]digo postal/i, 'codigo_postal'],
+  [/entre que calles/i, 'entre_calles'],
+  [/uso del inmueble/i, 'uso_inmueble'],
+  [/n[uú]mero de niveles/i, 'niveles'],
+  [/s[oó]tanos/i, 'sotanos'],
+  [/ocupantes/i, 'ocupantes'],
+  [/tipo de inspecci/i, 'tipo_inspeccion'],
+];
+
+function campoModeloPorCaract(nombre) {
+  const limpio = String(nombre || '').replace(/^\s*\d+(\.\d+)*\s*/, '');
+  const regla = CAMPOS_MODELO_POR_CARACT.find(([re]) => re.test(limpio));
+  return regla ? regla[1] : null;
+}
+
 async function abrirFormInmueblePadron(id) {
   const body = document.getElementById('modal-inmueble-padron-body');
+  const modal = document.getElementById('modal-inmueble-padron');
   let inm = {};
   let tipos = [];
   let caracts = [];
   _fotosPadron = [];
-  try {
-    tipos = await fetchJSON(`${API}/tipos-inmueble?activos=true`);
-    if (tipos.length > 0) {
-      caracts = await fetchJSON(`${API}/tipos-inmueble/${tipos[0]._id}/caracteristicas`);
-    }
-  } catch { }
 
-  if (id) {
-    try { inm = await fetchJSON(`${API}/inmuebles-padron/${id}`); } catch { }
+  body.innerHTML = `
+    <h2>${id ? 'Editar Inmueble' : 'Nuevo Inmueble en Padrón'}</h2>
+    <div style="text-align:center;padding:2.5rem 1rem;color:#777;">
+      <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+      <div style="width:44px;height:44px;border:4px solid #e2e8f0;border-top-color:#7A0C38;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+      Cargando características…
+    </div>`;
+  modal.classList.remove('hidden');
+
+  try {
+    const [tiposRes, inmRes] = await Promise.all([
+      getTiposPadron(),
+      id ? fetchJSON(`${API}/inmuebles-padron/${id}`).catch(() => ({})) : Promise.resolve({}),
+    ]);
+    tipos = tiposRes;
+    inm = inmRes || {};
+    if (tipos.length > 0) caracts = await getCaractsPadron(tipos[0]._id);
+  } catch {
+    body.innerHTML = `
+      <h2>${id ? 'Editar Inmueble' : 'Nuevo Inmueble en Padrón'}</h2>
+      <p style="color:#d32f2f;padding:2rem 1rem;text-align:center;">No se pudieron cargar las características del catálogo. Revisa tu conexión e inténtalo de nuevo.</p>
+      <div style="text-align:center;">
+        <button type="button" class="btn-primary" onclick="abrirFormInmueblePadron('${id || ''}')">Reintentar</button>
+      </div>`;
+    return;
   }
+
+  _caractsPadron = caracts;
 
   const tiposOptions = tipos.map(t =>
     `<option value="${t._id}" ${inm.tipo_inmueble_ref === t._id ? 'selected' : ''}>${t.nombre}</option>`
@@ -2912,12 +2985,14 @@ async function abrirFormInmueblePadron(id) {
   const sec4 = caracts.filter(c => c.orden >= 50 && c.orden <= 60);
   const sec5 = caracts.filter(c => c.orden >= 60 && c.orden <= 70 && !c.nombre.includes('Fotograf'));
 
-  const valsPadron = (inm && inm.valores_seguimiento) || {};
-
-  const usoCaract = caracts.find(c => /uso del inmueble/i.test(c.nombre));
-  const usoOpciones = (usoCaract && Array.isArray(usoCaract.opciones) && usoCaract.opciones.length)
-    ? usoCaract.opciones
-    : ['UNIFAMILIAR', 'MULTIFAMILIAR', 'CENTRO DE REUNIÓN', 'OFICINAS PRIVADAS', 'INDUSTRIAS', 'RECREATIVO', 'COMERCIOS', 'ESTACIONAMIENTO', 'EDUCACIÓN', 'OFICINAS PÚBLICAS', 'BODEGAS', 'MIXTO'];
+  const valsPadron = { ...((inm && inm.valores_seguimiento) || {}) };
+  caracts.forEach(c => {
+    const campo = campoModeloPorCaract(c.nombre);
+    if (!campo) return;
+    if (c._id in valsPadron) return;
+    const legacy = inm ? inm[campo] : null;
+    if (legacy != null && legacy !== '') valsPadron[c._id] = legacy;
+  });
 
   function renderCampo(c) {
     const actual = valsPadron[c._id] != null ? String(valsPadron[c._id]) : '';
@@ -2971,10 +3046,12 @@ async function abrirFormInmueblePadron(id) {
         </div>`;
     }
     if (c.tipo_dato === 'numero') {
+      const minAttr = c.minimo != null ? ` min="${c.minimo}"` : '';
+      const maxAttr = c.maximo != null ? ` max="${c.maximo}"` : '';
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
-          <input type="number" data-caract="${c._id}" value="${escHtml(actual)}" style="width:100%;">
+          <input type="number" data-caract="${c._id}"${minAttr}${maxAttr} value="${escHtml(actual)}" style="width:100%;">
         </div>`;
     }
     if (c.tipo_dato === 'textarea') {
@@ -3001,30 +3078,6 @@ async function abrirFormInmueblePadron(id) {
           <select id="padron-tipo" style="width:100%;"><option value="">Seleccionar...</option>${tiposOptions}</select>
         </div>
         <div class="form-group">
-          <label>Calle y Número</label>
-          <input type="text" id="padron-direccion" value="${inm.direccion || ''}" style="width:100%;">
-        </div>
-        <div class="form-group">
-          <label>Colonia</label>
-          <input type="text" id="padron-colonia" value="${inm.colonia || ''}" style="width:100%;">
-        </div>
-        <div class="form-group">
-          <label>Alcaldía</label>
-          <input type="text" id="padron-alcaldia" value="${inm.alcaldia || ''}" style="width:100%;">
-        </div>
-        <div class="form-group">
-          <label>Código Postal</label>
-          <input type="text" id="padron-cp" value="${inm.codigo_postal || ''}" maxlength="5" style="width:100%;">
-        </div>
-        <div class="form-group">
-          <label>Entre que calles / Referencia</label>
-          <input type="text" id="padron-entre-calles" value="${inm.entre_calles || ''}" style="width:100%;">
-        </div>
-        <div class="form-group">
-          <label>Persona contactada</label>
-          <input type="text" id="padron-contacto" value="${inm.persona_contactada || ''}" style="width:100%;">
-        </div>
-        <div class="form-group">
           <label>Latitud</label>
           <input type="number" step="any" id="padron-lat" value="${inm.ubicacion?.coordinates?.[1] || ''}" style="width:100%;">
         </div>
@@ -3032,45 +3085,7 @@ async function abrirFormInmueblePadron(id) {
           <label>Longitud</label>
           <input type="number" step="any" id="padron-lng" value="${inm.ubicacion?.coordinates?.[0] || ''}" style="width:100%;">
         </div>
-        <div class="form-group">
-          <label>Uso del Inmueble</label>
-          <select id="padron-uso" style="width:100%;">
-            <option value="">Seleccione</option>
-            ${usoOpciones.map(u =>
-    `<option value="${escHtml(u)}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
-  ).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Década de construcción</label>
-          <select id="padron-decada" style="width:100%;">
-            <option value="">Seleccione</option>
-            ${['50S O ANTES', '60S', '70S', '80S', '90S', '2000S', '2010S O MÁS'].map(d =>
-    `<option value="${d}" ${inm.decada_construccion === d ? 'selected' : ''}>${d}</option>`
-  ).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Niveles sobre terreno</label>
-          <select id="padron-niveles" style="width:100%;">
-            ${Array.from({ length: 100 }, (_, i) => `<option value="${i + 1}" ${(inm.niveles || 1) === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Sótanos</label>
-          <select id="padron-sotanos" style="width:100%;">
-            ${Array.from({ length: 101 }, (_, i) => `<option value="${i}" ${(inm.sotanos || 0) === i ? 'selected' : ''}>${i}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Tipo de inspección</label>
-          <select id="padron-inspeccion" style="width:100%;">
-            <option value="">Seleccione</option>
-            ${['INSPECCIÓN EXTERIOR ÚNICAMENTE', 'INSPECCIÓN INTERIOR Y EXTERIOR'].map(t =>
-    `<option value="${t}" ${inm.tipo_inspeccion === t ? 'selected' : ''}>${t}</option>`
-  ).join('')}
-          </select>
-        </div>
+        ${sec1.map(c => renderCampo(c)).join('')}
       </div>
       ${sec2.length > 0 ? '<h3 style="margin:1rem 0 0.5rem;color:#7A0C38;">2. Estado de la Edificación</h3>' : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
@@ -3158,32 +3173,34 @@ async function guardarInmueblePadron(editId) {
   const data = {
     nombre: document.getElementById('padron-nombre').value.trim(),
     tipo_inmueble_ref: document.getElementById('padron-tipo').value || null,
-    uso_inmueble: document.getElementById('padron-uso').value,
-    direccion: document.getElementById('padron-direccion').value.trim(),
-    colonia: document.getElementById('padron-colonia').value.trim(),
-    alcaldia: document.getElementById('padron-alcaldia').value.trim(),
-    codigo_postal: document.getElementById('padron-cp').value.trim(),
-    entre_calles: document.getElementById('padron-entre-calles').value.trim(),
-    persona_contactada: document.getElementById('padron-contacto').value.trim(),
     lat: parseFloat(document.getElementById('padron-lat').value) || null,
     lng: parseFloat(document.getElementById('padron-lng').value) || null,
-    niveles: parseInt(document.getElementById('padron-niveles').value) || 1,
-    sotanos: parseInt(document.getElementById('padron-sotanos').value) || 0,
-    decada_construccion: document.getElementById('padron-decada').value,
-    tipo_inspeccion: document.getElementById('padron-inspeccion').value,
     valores_seguimiento: {},
   };
 
   document.querySelectorAll('#form-padron [data-caract]').forEach(el => {
     if (el.tagName === 'INPUT' && el.type === 'radio') {
       if (el.checked) data.valores_seguimiento[el.dataset.caract] = el.value;
-    } else if (el.value) {
-      data.valores_seguimiento[el.dataset.caract] = el.value;
+    } else {
+      data.valores_seguimiento[el.dataset.caract] = typeof el.value === 'string' ? el.value.trim() : el.value;
     }
   });
 
   document.querySelectorAll('#form-padron [data-caract-cond]').forEach(el => {
-    if (el.value) data.valores_seguimiento[`${el.dataset.caractCond}_cond`] = el.value;
+    if (el.value) data.valores_seguimiento[`${el.dataset.caractCond}_cond`] = el.value.trim();
+  });
+
+  _caractsPadron.forEach(c => {
+    const campo = campoModeloPorCaract(c.nombre);
+    if (!campo || !(c._id in data.valores_seguimiento)) return;
+    const valor = String(data.valores_seguimiento[c._id] ?? '');
+    if (campo === 'niveles' || campo === 'sotanos' || campo === 'ocupantes') {
+      if (valor === '') return;
+      const n = parseInt(valor, 10);
+      if (Number.isFinite(n) && n >= 0) data[campo] = n;
+    } else {
+      data[campo] = valor;
+    }
   });
 
   if (!data.nombre) { alert('El nombre es requerido'); return; }

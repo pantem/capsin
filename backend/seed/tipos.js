@@ -81,6 +81,7 @@ const CARACTERISTICAS = [
       'EDUCACIÓN',
       'OFICINAS PÚBLICAS',
       'BODEGAS',
+      'HOSPITAL',
       'MIXTO',
     ],
     requerido: true,
@@ -261,6 +262,7 @@ const CARACTERISTICAS = [
     opciones: [
       'D.R.O.',
       'C-SE',
+      'NO SE REQUIERE'
     ],
     requerido: true,
     orden: 52,

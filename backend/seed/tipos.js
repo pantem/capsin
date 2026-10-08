@@ -85,7 +85,7 @@ const CARACTERISTICAS = [
       'MIXTO',
     ],
     requerido: true,
-    condicional_texto: 'MIXTO',
+    condicional_texto: 'si',
     orden: 9,
   },
   {

@@ -305,7 +305,7 @@ const CARACTERISTICAS = [
   },
 ];
 
-const OPCIONES_SINCRONIZADAS = ['2.11 Número de sótanos'];
+const OPCIONES_EXCLUIDAS = [];
 
 async function seedTiposInmueble() {
   let tipo = await TipoInmueble.findOne({ nombre: 'Inmueble Genérico' });
@@ -324,12 +324,12 @@ async function seedTiposInmueble() {
         console.log(`  Agregada: ${c.nombre}`);
         continue;
       }
-      if (!OPCIONES_SINCRONIZADAS.includes(c.nombre)) continue;
-      if (JSON.stringify(existente.opciones || []) === JSON.stringify(c.opciones)) continue;
-      existente.opciones = c.opciones;
+      if (OPCIONES_EXCLUIDAS.includes(c.nombre)) continue;
+      if (JSON.stringify(existente.opciones || []) === JSON.stringify(c.opciones || [])) continue;
+      existente.opciones = c.opciones || [];
       await existente.save();
       actualizadas++;
-      console.log(`  Opciones actualizadas: ${c.nombre} (${c.opciones.length})`);
+      console.log(`  Opciones actualizadas: ${c.nombre} (${existente.opciones.length})`);
     }
 
     const total = await CaracteristicaTipo.countDocuments({ tipo_inmueble: tipo._id });

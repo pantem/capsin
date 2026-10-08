@@ -42,45 +42,59 @@ Botón de **sincronizar** (esquina superior derecha) para subir datos pendientes
 - **Colonia**: Se auto-rellena con el CP o puedes escribirla manualmente.
 - **Alcaldía**: Se auto-rellena con el CP o puedes escribirla manualmente.
 
-**Campos dinámicos**: Dependiendo del tipo de inmueble configurado, aparecen campos adicionales como:
+**Campos dinámicos**: Tomados de las características configuradas para el tipo de inmueble (sección 2 del catálogo). Los principales son:
 
-- Uso del Inmueble (selección): Vivienda Unifamiliar, Vivienda Multifamiliar, Escuela, Hospital, Oficina, Comercio, Otro
-- Número de niveles (número)
-- Fecha aproximada de construcción (texto)
+- **2.9 Uso del Inmueble** (selección): UNIFAMILIAR, MULTIFAMILIAR, CENTRO DE REUNIÓN, OFICINAS PRIVADAS, INDUSTRIAS, RECREATIVO, COMERCIOS, ESTACIONAMIENTO, EDUCACIÓN, OFICINAS PÚBLICAS, BODEGAS, MIXTO
+- **2.8 Año estimado de la Construcción** (número, de 1700 a 2026)
+- **2.10 Número de niveles sobre el terreno** (selección del 1 al 100)
+- **2.11 Número de sótanos** (selección del 0 al 100)
+- **2.12 Número de ocupantes** (número)
+- **2.6 Responsable del Inmueble** y **2.7 Teléfono del Responsable** (texto y número)
+- **2.13 Tipo de inspección** (selección): INSPECCIÓN EXTERIOR ÚNICAMENTE, INSPECCIÓN INTERIOR Y EXTERIOR
 
-### Paso 3 — Evaluación Preliminar de Daños
+> Nota: la **Década de construcción** y las coordenadas se capturan en el registro del inmueble (web, sección *Alta Inmuebles*), no como características del reporte.
 
-Campo dinámico: **Tipo de daño observado** (multiselección)
+### Paso 3 — Estado de la Edificación
 
-Selecciona uno o varios:
+Campo dinámico: **3.1 Sistema constructivo** (texto largo) y los incisos **3.2 a 3.15** (selección única).
 
-- Grietas leves
-- Grietas estructurales
-- Desprendimiento de acabados
-- Daño en columnas
-- Daño en trabes
-- Inclinación
-- Colapso parcial
-- Colapso total
+- **3.2 ¿Presenta colapso estructural?** (desplegable): No presenta colapso, Colapso parcial, Colapso total
+- **3.3 a 3.15** se responden con **Sí** / **No**:
+  - Edificación separada de su cimentación
+  - Asentamiento diferencial o hundimiento
+  - Inclinación notoria de la edificación o de algún entrepiso
+  - Daños severos en elementos estructurales (columnas, vigas, muros de carga)
+  - Daños moderados en elementos estructurales
+  - Daños severos en elementos no estructurales (muros divisorios, acabados, cancelería)
+  - Daños moderados en elementos no estructurales
+  - Daños en instalaciones eléctricas, hidrosanitarias y de gas
+  - Deslizamiento de talud o corte
+  - Pretiles, balcones u otros objetos en peligro de caer
+  - Otros peligros (líneas o ductos rotos, derrames tóxicos, etc.)
 
-### Paso 4 — Condición de Seguridad
+### Paso 4 — Clasificación Global
 
-Campo dinámico: **Condición de seguridad** (selección única)
+Campo dinámico: **4.1 Nivel de riesgo** (selección única):
 
-- Edificación segura
-- Riesgo alto
-- Riesgo medio
 - Riesgo bajo
+- Riesgo medio
+- Riesgo alto
+- Colapso
 
-### Paso 5 — Observaciones Adicionales
+El sistema muestra esta clasificación (como píldora de color) en las listas, el mapa y la ubicación de inmuebles.
 
-Texto libre para notas, comentarios o información relevante.
+### Paso 5 — Recomendaciones
 
-### Paso 6 — Fotografías
+- **5.1 Requiere revisión futura** (Sí / No)
+- **5.2 ¿Requiere D.R.O. o C-SE?** (desplegable): D.R.O., C-SE
+- **5.3 Apuntalar** (Sí / No)
+- **5.4 Maquinaria para remover escombro** (Sí / No)
+- **5.5 ¿Requiere apoyo de alguna dependencia?** (desplegable): Sí / No. Al elegir **Sí** se despliega el campo **"Indique la dependencia que brindará el apoyo"**; al cambiar a **No** el texto se limpia.
 
-- Presiona **Cámara** para tomar una foto
-- Presiona **Galería** para seleccionar una existente
-- Toca la **X** en una miniatura para eliminarla
+### Paso 6 — Fotos y Observaciones
+
+- **Observaciones**: texto libre para notas, comentarios o información relevante.
+- **Fotografías**: presiona **Cámara** para tomar una foto o **Galería** para seleccionar una existente; toca la **X** en una miniatura para eliminarla (máximo 10, incluyendo fachada).
 
 ### Guardar Reporte
 
@@ -95,9 +109,10 @@ Desde la pantalla principal, toca un reporte para ver:
 - Dirección completa
 - Coordenadas geográficas
 - Datos del capturista
-- Características del inmueble
-- Daños observados
-- Condición de seguridad
+- Características del inmueble (secciones 2 a 6)
+- Estado de la edificación (3.1 a 3.15)
+- Clasificación global / Nivel de riesgo (4.1)
+- Recomendaciones (5.1 a 5.5)
 - Observaciones
 - Fotografías capturadas
 - Personas damnificadas registradas (nombre, edad, sexo, estado, requiere traslado)
@@ -128,28 +143,31 @@ Abre el navegador y ve a la URL donde está alojado el backend:
 
 ## 2.2 Vista de Resumen (Dashboard)
 
-Muestra estadísticas agregadas de todos los siniestros registrados:
+Muestra indicadores agregados de todos los inmuebles registrados:
 
-- **Fallecidos**
-- **Lesionados graves**
-- **Lesionados leves**
-- **Ilesos**
-- **Inmuebles críticos**
-- **Inmuebles con daño moderado**
-- **Inmuebles sin daños**
-- **Total de siniestros**
+| Indicador | Descripción |
+|-----------|-------------|
+| **Total de inmuebles** | Registros en el padrón |
+| **Sin daño** | Inmuebles en estado "sin daños" (+ % del total) |
+| **Moderado** | Inmuebles con daño moderado (+ % del total) |
+| **Crítico** | Inmuebles en riesgo alto (+ % del total) |
+| **Colapso** | Inmuebles colapsados (+ % del total) |
+
+- **Gráfico de pastel** con la distribución por estado de afectación.
+- **Sección de alcaldías** con el desglose por alcaldía.
+- **Fecha de actualización** de los datos (hora local de la CDMX).
+- Botón **Exportar PDF** para descargar el estado actual del dashboard.
 
 ## 2.3 Lista de Reportes
 
-Navegación: Haz clic en **Lista** en el menú superior.
+Navegación: Haz clic en **Lista de Reportes** en el menú superior.
 
-- Muestra todos los siniestros en tarjetas con folio, fecha, dirección y nivel de severidad (Crítico / Moderado / Sin daños)
-- **Buscar**: Escribe en el campo de búsqueda para filtrar por folio, dirección o alcaldía
-- **Ver detalle**: Haz clic en una tarjeta para abrir un modal con:
-  - Información completa del siniestro
-  - Inmuebles asociados con su estado de afectación
-  - Damnificados registrados con su clasificación
-  - Detalle de departamentos/unidades (si aplica)
+- Tabla con columnas: **Folio**, **Fecha de Registro**, **Dirección / Ubicación**, **Nivel de Riesgo**, **Descargar Reporte**.
+- El **Nivel de Riesgo** se muestra como píldora de color: Riesgo bajo (verde), Riesgo medio (ámbar), Riesgo alto (rojo), Colapso (negro).
+- **Buscar**: filtra por folio, dirección, municipio/alcaldía o código postal.
+- **Paginación**: "Mostrando X a Y de Z reportes", con selector de **10, 15, 25, 50 o 100 por página** y botones `« ‹ › »`.
+- **Ver detalle**: haz clic en cualquier fila para abrir el modal con folio, botón **Descargar Reporte Oficial (PDF)**, fecha de creación, capturista, fecha de sincronización, dirección, coordenadas, descripción, dispositivo, fotos e inmuebles asociados.
+- **Descargar**: botón en la última columna para generar el PDF del reporte.
 
 ## 2.4 Mapa Interactivo
 
@@ -164,7 +182,60 @@ Navegación: Haz clic en **Mapa** en el menú superior.
 - Leyenda de colores en la esquina inferior derecha
 - Controles de zoom y desplazamiento
 
-## 2.5 Administración de Tipos de Inmueble
+## 2.5 Ubicación de Inmuebles
+
+Navegación: Haz clic en **Ubicación** en el menú superior.
+
+- Título: **Ubicación de Inmuebles**; botón **Exportar XLSX** para descargar la tabla (con los filtros aplicados) a Excel.
+- **Filtros**: Alcaldía (`Todas las alcaldías`), Colonia (`Todas las colonias`), Código postal y Riesgo (`Riesgos`, `Riesgo bajo`, `Riesgo medio`, `Riesgo alto`, `Colapso`).
+- Contador: `N registro(s) en total` / `0 registro(s) encontrado(s)`.
+- Tabla con columnas: **Folio**, **Fecha**, **Alcaldía**, **Dirección**, **CP**, **Uso**, **Niveles** (sobre terreno + sótanos), **Nivel de riesgo**, **Descargar**.
+- **Detalle**: haz clic en cualquier fila para abrir el modal del reporte.
+- **Descargar**: genera el PDF del reporte en el navegador.
+- **Paginación**: "Mostrando 1 a 15 de N registros" con selector de 10, 15, 25, 50 o 100 por página.
+
+## 2.6 Alta de Inmuebles (Padrón)
+
+Navegación: Haz clic en **Alta Inmuebles** en el menú superior (requiere el permiso `ver_alta_inmuebles`).
+
+- Título: **Alta de Inmuebles**; botón **+ Nuevo Inmueble**.
+- **Buscador**: `Buscar por nombre, colonia, dirección...`
+- **Filtro** por alcaldía (`Todas las alcaldías`).
+- Contador: `N inmueble(s) registrado(s)` / `N inmueble(s) encontrado(s)`.
+- Tabla con columnas: **Nombre**, **Dirección**, **Colonia**, **Alcaldía**, **CP**, **Niveles**, **Último Reporte** (o `Sin reportes`), **Acciones**.
+- **Acciones por fila**: ✏️ Editar y 🗑 Eliminar (confirmación: `¿Eliminar este inmueble y todos sus reportes de seguimiento?`).
+
+### Formulario del inmueble
+
+Se abre como modal (`Nuevo Inmueble en Padrón` / `Editar Inmueble`) con la sección **1. Ubicación y Descripción**:
+
+| Campo | Detalle |
+|-------|---------|
+| Nombre / Descripción del inmueble | Obligatorio |
+| Tipo de inmueble | Desplegable con los tipos activos |
+| Calle y Número, Colonia, Alcaldía, Código Postal | Texto (CP máximo 5 dígitos) |
+| Entre que calles / Referencia | Texto |
+| Persona contactada | Texto |
+| Latitud / Longitud | Números decimales |
+| Uso del Inmueble | Las 12 opciones del catálogo (UNIFAMILIAR … MIXTO) |
+| Década de construcción | 50S O ANTES, 60S, 70S, 80S, 90S, 2000S, 2010S O MÁS |
+| Niveles sobre terreno | 1 a 100 |
+| Sótanos | 0 a 100 |
+| Tipo de inspección | INSPECCIÓN EXTERIOR ÚNICAMENTE / INSPECCIÓN INTERIOR Y EXTERIOR |
+
+A continuación se pintan las secciones dinámicas **2. Estado de la Edificación**, **3. Clasificación Global**, **4. Recomendaciones** y **5. Observaciones**, generadas desde las características del tipo de inmueble.
+
+- Las selecciones `Sí` / `No` se muestran como botones de radio; el resto como desplegables.
+- En **5.5 ¿Requiere apoyo de alguna dependencia?**, al elegir **Sí** aparece el campo **"Indique la dependencia que brindará el apoyo"**.
+- Al editar, los valores capturados se cargan de nuevo en el formulario.
+
+**Fotografías**: botón **📷 Seleccionar imágenes** (máximo 10, con vista previa y ✕ para quitar).
+
+**Botones**: **Crear Inmueble** / **Guardar Cambios** y **Cancelar**. Validación: `El nombre es requerido`.
+
+## 2.7 Administración de Tipos de Inmueble
+
+> **Nota**: el botón **Tipos** del menú superior está oculta en esta versión; esta sección describe la pantalla para cuando sea habilitada.
 
 Navegación: Haz clic en **Tipos** en el menú superior.
 
@@ -191,10 +262,16 @@ Muestra todos los tipos de inmueble registrados con:
 
 | Campo | Descripción |
 |-------|-------------|
-| Nombre | Ej: "Material predominante" |
-| Tipo de dato | Texto, Número, Sí/No, Selección, Multiselección |
+| Nombre | Ej: "Material predominante". Se recomienda mantener el prefijo numérico (2.9, 5.5…) |
+| Tipo de dato | Texto, Texto largo, Número, Sí/No, Selección, Multiselección |
+| Orden | Número que define la posición dentro de la sección (2.x = 1-14, 3.x = 20-40, 4.x = 40-50, 5.x = 50-60, 6.x = 60-70) |
 | Requerido | Marca si el campo es obligatorio |
+| Visualización | Solo para Selección/Multiselección: Automático, Desplegable o Radio. Automático pinta radio cuando las opciones son `Sí`/`No` (o `Sí`/`No`/`Existen dudas`) y desplegable en el resto |
+| Condicional texto | **No / Sí**. Con **Sí**, la selección se fuerza a desplegable y al elegir `Sí` aparece un campo de texto ("Indique la dependencia que brindará el apoyo") que se guarda como valor condicional |
 | Opciones | Solo para Selección/Multiselección. Escribe una opción por línea |
+| Mínimo / Máximo | Solo para Número: rango permitido (Ej: 1700 - 2026) |
+
+> Las opciones definidas aquí son las que muestran la app móvil y el formulario de *Alta Inmuebles*. Si cambias una opción, reinicia el backend: al arrancar, el seed sincroniza las opciones de todas las características con la base de datos (excepto las que se listen en `OPCIONES_EXCLUIDAS`).
 
 ### Crear un nuevo tipo
 
@@ -208,7 +285,9 @@ Muestra todos los tipos de inmueble registrados con:
 - Confirma la eliminación
 - Se borran el tipo y todas sus características asociadas
 
-## 2.6 Catálogo de Códigos Postales
+## 2.8 Catálogo de Códigos Postales
+
+> **Nota**: el botón **Catálogo CDMX** del menú superior está oculta en esta versión.
 
 Navegación: Haz clic en **Catálogo CDMX** en el menú superior.
 
@@ -216,6 +295,104 @@ Navegación: Haz clic en **Catálogo CDMX** en el menú superior.
 - **Filtrar por alcaldía**: Usa el menú desplegable
 - Los resultados muestran: código postal, colonia, tipo de asentamiento y alcaldía
 - Límite de 200 resultados por búsqueda
+
+## 2.9 Usuarios
+
+Navegación: Haz clic en **Usuarios** en el menú superior (requiere el permiso `ver_usuarios`).
+
+- Título: **Usuarios**; botón **+ Nuevo Usuario**.
+- Lista de tarjetas con: nombre del usuario, `@username · Rol`, `Área · Activo|Inactivo` (los inactivos se muestran atenuados).
+- Sin buscador, filtros ni paginación.
+- **Acciones**: ✏️ Editar y 🗑 Eliminar (confirmación: `¿Eliminar este usuario?`).
+
+### Formulario
+
+| Campo | Detalle |
+|-------|---------|
+| Nombre completo | Obligatorio |
+| Nombre de usuario | Obligatorio |
+| Contraseña | Obligatoria en alta; en edición: `Contraseña (dejar vacío para mantener actual)` |
+| Área | Desplegable (`Seleccionar área...`) |
+| Rol | Desplegable con los roles registrados |
+
+**Botones**: **Crear Usuario** / **Guardar Cambios** y **Cancelar**. Validaciones: `Nombre y usuario son requeridos`, `La contraseña es requerida`.
+
+## 2.10 Áreas
+
+Navegación: Haz clic en **Áreas** en el menú superior (requiere el permiso `ver_areas`).
+
+- Título: **Áreas**; botón **+ Nueva Área**.
+- Tarjetas con: nombre, descripción (o `Sin descripción`) y `Activo` / `Inactivo`.
+- **Acciones**: interruptor para activar/desactivar, ✏️ Editar y 🗑 Eliminar (confirmación: `¿Eliminar esta área?`).
+- Si el área tiene usuarios: `No se puede eliminar: N usuario(s) pertenecen a esta área`.
+
+### Formulario
+
+- **Nombre** (obligatorio) y **Descripción** (texto largo).
+- **Botones**: **Crear Área** / **Guardar Cambios** y **Cancelar**. Validación: `El nombre es requerido`.
+
+## 2.11 Roles y Permisos
+
+Navegación: Haz clic en **Roles** en el menú superior (requiere el permiso `ver_roles`).
+
+- Título: **Roles y Permisos**; botón **+ Nuevo Rol**.
+- Tarjetas con: nombre, descripción (o `Sin descripción`) y `Permisos: <lista> · Activo|Inactivo` (o `Ninguno`).
+- **Acciones**: interruptor para activar/desactivar, ✏️ Editar y 🗑 Eliminar (confirmación: `¿Eliminar este rol?`).
+- Si el rol tiene usuarios: `No se puede eliminar: N usuario(s) tienen este rol`.
+
+### Formulario
+
+- **Nombre** (obligatorio), **Descripción** y la lista **Permisos (pestañas que puede ver)** con casillas:
+
+| Permiso | Casilla en el formulario |
+|---------|--------------------------|
+| `ver_dashboard` | Dashboard |
+| `ver_mapa` | Mapa |
+| `ver_lista` | Lista de Reportes |
+| `ver_catalogo` | Catálogo CDMX |
+| `ver_usuarios` | Usuarios |
+| `ver_tipos` | Tipos de Inmueble |
+| `ver_areas` | Áreas |
+| `ver_roles` | Roles y Permisos |
+| `ver_alta_inmuebles` | Alta Inmuebles |
+| `ver_mascaras` | Máscaras de Folio |
+
+- En la práctica, los permisos muestran u ocultan las pestañas **Usuarios**, **Áreas**, **Roles**, **Alta Inmuebles** y **Máscaras Folio**.
+- **Botones**: **Crear Rol** / **Guardar Cambios** y **Cancelar**. Validación: `El nombre es requerido`.
+
+## 2.12 Máscaras de Folio
+
+Navegación: Haz clic en **Máscaras Folio** en el menú superior (requiere el permiso `ver_mascaras`).
+
+- Título: **Máscaras de Folio**; botón **+ Nueva Máscara**.
+- Tarjetas con: nombre, descripción, el `formato` en código, `Aplica a: … | Secuencial actual: N | Longitud: N` y `Activa` / `Inactiva`.
+- **Acciones**: interruptor para activar/desactivar, ✏️ Editar y 🗑 Eliminar (confirmación: `¿Eliminar esta máscara?`).
+
+### Formulario
+
+| Campo | Detalle |
+|-------|---------|
+| Nombre | Obligatorio. Ej: `Siniestros CDMX` |
+| Descripción | Texto largo opcional |
+| Formato del folio | Obligatorio. Por defecto `{prefijo}-{aaaa}-{mm}-{seq_padded}` |
+| Prefijo (valor para {prefijo}) | Ej: `SIS` |
+| Longitud del secuencial | 1 a 10. `Ej: 4 genera 0001, 5 genera 00001` |
+| Aplica a | `Siniestros y Seguimiento`, `Solo Siniestros (móvil)`, `Solo Seguimiento` |
+| Secuencial actual | Solo al editar: `Último número generado. Solo editar si es necesario.` |
+
+**Tokens disponibles** (haz clic en uno para insertarlo en el formato):
+
+| Token | Descripción |
+|-------|-------------|
+| `{prefijo}` | Prefijo de la máscara |
+| `{aaaa}` | Año (4 dígitos) |
+| `{mm}` | Mes (2 dígitos) |
+| `{dd}` | Día (2 dígitos) |
+| `{alcaldia}` | Alcaldía del reporte |
+| `{seq}` | Secuencial sin padding |
+| `{seq_padded}` | Secuencial con ceros (ej: 0001) |
+
+**Botones**: **Crear Máscara** / **Guardar Cambios** y **Cancelar**. Validaciones: `El nombre es requerido`, `El formato es requerido`.
 
 ---
 
@@ -229,6 +406,8 @@ Navegación: Haz clic en **Catálogo CDMX** en el menú superior.
 | No se sincronizan los reportes | Sin internet o URL del servidor incorrecta | Verifica conexión y la URL en `lib/config.dart` |
 | El dashboard web no carga datos | Servidor backend no está corriendo | Inicia el servidor con `npm start` en la carpeta `backend/` |
 | Las características no aparecen en la app móvil | No se ha sincronizado después de cambiar los tipos | Sincroniza la app después de guardar cambios en el dashboard |
+| En *Alta Inmuebles* no aparece el campo de texto de **5.5 ¿Requiere apoyo de alguna dependencia?** | Navegador con una versión anterior de `js/app.js` en caché | Recarga la página con Ctrl + F5 |
+| Las opciones de *Uso del Inmueble* muestran nombres viejos | El backend no se reinició después de cambiar las opciones en el seed | Reinicia el backend: al arrancar sincroniza las opciones con la base de datos |
 
 ---
 

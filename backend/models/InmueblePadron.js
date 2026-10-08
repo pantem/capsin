@@ -20,6 +20,7 @@ const inmueblePadronSchema = new mongoose.Schema({
     coordinates: { type: [Number], default: [0, 0] },
   },
   estado_afectacion: { type: String, enum: ['sin_daños', 'moderado', 'critico', 'colapso'], default: 'sin_daños' },
+  valores_seguimiento: { type: mongoose.Schema.Types.Mixed, default: null },
   fecha_ultimo_reporte: { type: Date, default: null },
   activo: { type: Boolean, default: true },
   creado_en: { type: Date, default: Date.now },

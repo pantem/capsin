@@ -2890,6 +2890,7 @@ async function abrirFormInmueblePadron(id) {
   let inm = {};
   let tipos = [];
   let caracts = [];
+  _fotosPadron = [];
   try {
     tipos = await fetchJSON(`${API}/tipos-inmueble?activos=true`);
     if (tipos.length > 0) {
@@ -2911,47 +2912,76 @@ async function abrirFormInmueblePadron(id) {
   const sec4 = caracts.filter(c => c.orden >= 50 && c.orden <= 60);
   const sec5 = caracts.filter(c => c.orden >= 60 && c.orden <= 70 && !c.nombre.includes('Fotograf'));
 
+  const valsPadron = (inm && inm.valores_seguimiento) || {};
+
+  const usoCaract = caracts.find(c => /uso del inmueble/i.test(c.nombre));
+  const usoOpciones = (usoCaract && Array.isArray(usoCaract.opciones) && usoCaract.opciones.length)
+    ? usoCaract.opciones
+    : ['UNIFAMILIAR', 'MULTIFAMILIAR', 'CENTRO DE REUNIÓN', 'OFICINAS PRIVADAS', 'INDUSTRIAS', 'RECREATIVO', 'COMERCIOS', 'ESTACIONAMIENTO', 'EDUCACIÓN', 'OFICINAS PÚBLICAS', 'BODEGAS', 'MIXTO'];
+
   function renderCampo(c) {
+    const actual = valsPadron[c._id] != null ? String(valsPadron[c._id]) : '';
+    const condTexto = c.condicional_texto === 'si';
+    const condValor = valsPadron[`${c._id}_cond`] != null ? String(valsPadron[`${c._id}_cond`]) : '';
+    const wrapperCond = condTexto ? `
+        <div class="form-group" data-cond-wrapper="${c._id}" style="${actual === 'Sí' ? '' : 'display:none;'}">
+          <label>Indique la dependencia que brindará el apoyo</label>
+          <input type="text" data-caract-cond="${c._id}" value="${escHtml(condValor)}" style="width:100%;">
+        </div>` : '';
+
     if (c.tipo_dato === 'seleccion') {
-      const esRadio3 = c.opciones.length === 3 &&
-        c.opciones.includes('Sí') && c.opciones.includes('No') && c.opciones.includes('Existen dudas');
-      const esRadio2 = c.opciones.length === 2 &&
-        c.opciones.includes('Sí') && c.opciones.includes('No');
-      if (esRadio3 || esRadio2) {
+      const opciones = c.opciones || [];
+      const esRadio3 = opciones.length === 3 &&
+        opciones.includes('Sí') && opciones.includes('No') && opciones.includes('Existen dudas');
+      const esRadio2 = opciones.length === 2 &&
+        opciones.includes('Sí') && opciones.includes('No');
+      let usarRadio;
+      if (condTexto || c.render_type === 'dropdown') usarRadio = false;
+      else if (c.render_type === 'radio') usarRadio = true;
+      else usarRadio = esRadio3 || esRadio2;
+
+      if (usarRadio) {
         return `
           <div class="form-group">
             <label style="font-weight:600;margin-bottom:0.3rem;display:block;">${c.nombre}</label>
             <div style="display:flex;gap:1rem;">
-              ${c.opciones.map(o => `
+              ${opciones.map(o => `
                 <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.9rem;">
-                  <input type="radio" name="caract-${c._id}" data-caract="${c._id}" value="${o}">
+                  <input type="radio" name="caract-${c._id}" data-caract="${c._id}" value="${escHtml(o)}" ${actual === o ? 'checked' : ''} onchange="onValorCaractChange('${c._id}')">
                   ${o}
                 </label>
               `).join('')}
             </div>
-          </div>`;
+          </div>${wrapperCond}`;
       }
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
-          <select data-caract="${c._id}" style="width:100%;">
+          <select data-caract="${c._id}" style="width:100%;" onchange="onValorCaractChange('${c._id}')">
             <option value="">Seleccione</option>
-            ${c.opciones.map(o => `<option value="${o}">${o}</option>`).join('')}
+            ${opciones.map(o => `<option value="${escHtml(o)}" ${actual === o ? 'selected' : ''}>${o}</option>`).join('')}
           </select>
-        </div>`;
+        </div>${wrapperCond}`;
     }
     if (c.tipo_dato === 'texto') {
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
-          <input type="text" data-caract="${c._id}" style="width:100%;">
+          <input type="text" data-caract="${c._id}" value="${escHtml(actual)}" style="width:100%;">
         </div>`;
     }
     if (c.tipo_dato === 'numero') {
       return `
         <div class="form-group">
           <label>${c.nombre}</label>
-          <input type="number" data-caract="${c._id}" style="width:100%;">
+          <input type="number" data-caract="${c._id}" value="${escHtml(actual)}" style="width:100%;">
+        </div>`;
+    }
+    if (c.tipo_dato === 'textarea') {
+      return `
+        <div class="form-group" style="grid-column:1/3;">
+          <label>${c.nombre}</label>
+          <textarea data-caract="${c._id}" rows="2" style="width:100%;">${escHtml(actual)}</textarea>
         </div>`;
     }
     return '';
@@ -3006,8 +3036,8 @@ async function abrirFormInmueblePadron(id) {
           <label>Uso del Inmueble</label>
           <select id="padron-uso" style="width:100%;">
             <option value="">Seleccione</option>
-            ${['HABITACIÓN UNIFAMILIAR', 'HABITACIÓN MULTIFAMILIAR', 'CENTRO DE REUNIÓN', 'OFICINAS PRIVADAS', 'INDUSTRIAS', 'RECREATIVO', 'COMERCIOS', 'ESTACIONAMIENTO', 'EDUCACIÓN', 'OFICINAS PÚBLICAS', 'BODEGAS', 'MIXTO'].map(u =>
-    `<option value="${u}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
+            ${usoOpciones.map(u =>
+    `<option value="${escHtml(u)}" ${inm.uso_inmueble === u ? 'selected' : ''}>${u}</option>`
   ).join('')}
           </select>
         </div>
@@ -3029,7 +3059,7 @@ async function abrirFormInmueblePadron(id) {
         <div class="form-group">
           <label>Sótanos</label>
           <select id="padron-sotanos" style="width:100%;">
-            ${Array.from({ length: 100 }, (_, i) => `<option value="${i}" ${(inm.sotanos || 0) === i ? 'selected' : ''}>${i}</option>`).join('')}
+            ${Array.from({ length: 101 }, (_, i) => `<option value="${i}" ${(inm.sotanos || 0) === i ? 'selected' : ''}>${i}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -3072,6 +3102,24 @@ async function abrirFormInmueblePadron(id) {
   `;
 
   document.getElementById('modal-inmueble-padron').classList.remove('hidden');
+}
+
+function onValorCaractChange(id) {
+  const sel = document.querySelector(`select[data-caract="${id}"]`);
+  const marcado = document.querySelector(`input[data-caract="${id}"]:checked`);
+  const valor = sel ? sel.value : (marcado ? marcado.value : '');
+  toggleCondTexto(id, valor);
+}
+
+function toggleCondTexto(id, valor) {
+  const wrapper = document.querySelector(`[data-cond-wrapper="${id}"]`);
+  if (!wrapper) return;
+  const mostrar = valor === 'Sí';
+  wrapper.style.display = mostrar ? '' : 'none';
+  if (!mostrar) {
+    const input = wrapper.querySelector(`[data-caract-cond="${id}"]`);
+    if (input) input.value = '';
+  }
 }
 
 let _fotosPadron = [];
@@ -3132,6 +3180,10 @@ async function guardarInmueblePadron(editId) {
     } else if (el.value) {
       data.valores_seguimiento[el.dataset.caract] = el.value;
     }
+  });
+
+  document.querySelectorAll('#form-padron [data-caract-cond]').forEach(el => {
+    if (el.value) data.valores_seguimiento[`${el.dataset.caractCond}_cond`] = el.value;
   });
 
   if (!data.nombre) { alert('El nombre es requerido'); return; }

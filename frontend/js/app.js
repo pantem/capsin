@@ -163,7 +163,7 @@ function renderDashboardChart(data) {
           <title>Riesgo alto: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
         </path>
         <path d="${d4}" fill="#333333" class="pie-slice">
-          <title>Colapso: ${colapsoPct}% (${colapsoVal.toLocaleString()})</title>
+          <title>ARC: ${colapsoPct}% (${colapsoVal.toLocaleString()})</title>
         </path>
       </g>
       <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#FFF">${effectiveTotal.toLocaleString()}</text>
@@ -193,7 +193,7 @@ function renderDashboardChart(data) {
       <g>
         <circle cx="${edge4.x}" cy="${edge4.y}" r="3" fill="#333333"/>
         <line x1="${edge4.x}" y1="${edge4.y}" x2="${txt4.x}" y2="${txt4.y}" stroke="#333333" stroke-width="1.5"/>
-        <text x="${txt4.x + off4}" y="${txt4.y - 8}" text-anchor="${anchor4}" font-size="12" font-weight="600" fill="#333">Colapso</text>
+        <text x="${txt4.x + off4}" y="${txt4.y - 8}" text-anchor="${anchor4}" font-size="12" font-weight="600" fill="#333">ARC</text>
         <text x="${txt4.x + off4}" y="${txt4.y + 8}" text-anchor="${anchor4}" font-size="11" fill="#555">${colapsoVal.toLocaleString()} · ${colapsoPct}%</text>
       </g>
     </svg>
@@ -300,7 +300,7 @@ function renderAlcaldiasGrid() {
       <div class="damage-row row-colapso" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'colapso')">
         <div class="damage-row-label">
           <span class="legend-dot dot-black"></span>
-          <span>Colapso</span>
+          <span>ARC</span>
         </div>
         <span class="damage-row-count">${item.colapso || 0}</span>
       </div>
@@ -400,7 +400,7 @@ function dibujarPastelDashboard({ sinDano, moderado, critico, colapso, total }) 
     { label: 'Riesgo bajo', v: sinDano, c: '#55b74e' },
     { label: 'Riesgo medio', v: moderado, c: '#f7b731' },
     { label: 'Riesgo alto', v: critico, c: '#881337' },
-    { label: 'Colapso', v: colapso, c: '#333333' },
+    { label: 'ARC', v: colapso, c: '#333333' },
   ];
   const t = total > 0 ? total : 1;
   let start = -Math.PI / 2;
@@ -496,7 +496,7 @@ async function exportarDashboardPDF() {
       { titulo: 'Riesgo bajo', valor: sinDano, sub: `${pct(sinDano)} del total`, bg: '#e7f6e6', color: '#16a34a' },
       { titulo: 'Riesgo medio', valor: moderado, sub: `${pct(moderado)} del total`, bg: '#fdf1dd', color: '#f59e0b' },
       { titulo: 'Riesgo alto', valor: critico, sub: `${pct(critico)} del total`, bg: '#fde8e8', color: '#dc2626' },
-      { titulo: 'Colapso', valor: colapso, sub: `${pct(colapso)} del total`, bg: '#eceff3', color: '#111827' },
+      { titulo: 'ARC', valor: colapso, sub: `${pct(colapso)} del total`, bg: '#eceff3', color: '#111827' },
     ];
 
     const iconoCasa =
@@ -581,7 +581,7 @@ async function exportarDashboardPDF() {
                   <th style="padding:6px 8px;font-size:11px;">Riesgo bajo</th>
                   <th style="padding:6px 8px;font-size:11px;">Riesgo medio</th>
                   <th style="padding:6px 8px;font-size:11px;">Riesgo alto</th>
-                  <th style="padding:6px 8px;font-size:11px;">Colapso</th>
+                  <th style="padding:6px 8px;font-size:11px;">ARC</th>
                   <th style="padding:6px 8px;font-size:11px;">Total</th>
                 </tr>
               </thead>
@@ -645,7 +645,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
     sin_daños: 'Riesgo bajo',
     moderado: 'Riesgo medio',
     critico: 'Riesgo alto',
-    colapso: 'Colapso',
+    colapso: 'ARC',
   };
 
   body.innerHTML = `<h2>${alcaldia} — ${danoLabels[dano] || dano}</h2><p style="color:#777;">Cargando...</p>`;
@@ -683,7 +683,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
                 <td style="padding:0.5rem;">${r.tipo || '—'}</td>
                 <td style="padding:0.5rem;">
                   <span class="${getBadgeClass(r.estadoAfectacion === 'critico' ? 'red' : r.estadoAfectacion === 'moderado' ? 'yellow' : r.estadoAfectacion === 'colapso' ? 'black' : 'green')}">
-                    ${r.estadoAfectacion === 'critico' ? 'Riesgo alto' : r.estadoAfectacion === 'moderado' ? 'Riesgo medio' : r.estadoAfectacion === 'colapso' ? 'Colapso' : 'Riesgo bajo'}
+                    ${r.estadoAfectacion === 'critico' ? 'Riesgo alto' : r.estadoAfectacion === 'moderado' ? 'Riesgo medio' : r.estadoAfectacion === 'colapso' ? 'Alto riesgo de colapso' : 'Riesgo bajo'}
                   </span>
                 </td>
                 <td style="padding:0.5rem;color:#555;">${r.direccion || '—'}</td>
@@ -870,7 +870,7 @@ function renderReportesTable() {
         <tbody>
           ${pageItems.map((s) => {
     const badgeClass = getBadgeClass(s.color);
-    const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'Colapso' : 'Riesgo bajo';
+    const labelRisk = s.color === 'red' ? 'Riesgo alto' : s.color === 'yellow' ? 'Riesgo medio' : s.color === 'black' ? 'ARC' : 'Riesgo bajo';
     const alcaldia = resolveAlcaldia(s.ubicacion);
     return `
               <tr class="reporte-row" data-id="${s._id}">
@@ -1035,7 +1035,7 @@ async function showDetail(siniestroId) {
             <p><strong>${inm.tipo === 'edificio' ? 'Edificio' : 'Casa'}</strong>
               ${inm.identificador ? `- ${inm.identificador}` : ''}
               <span class="${getBadgeClass(inm.estado_afectacion === 'critico' ? 'red' : inm.estado_afectacion === 'moderado' ? 'yellow' : inm.estado_afectacion === 'colapso' ? 'black' : 'green')}" style="margin-left:0.5rem;">
-                ${inm.estado_afectacion === 'critico' ? 'Riesgo alto' : inm.estado_afectacion === 'moderado' ? 'Riesgo medio' : inm.estado_afectacion === 'colapso' ? 'Colapso' : 'Riesgo bajo'}
+                ${inm.estado_afectacion === 'critico' ? 'Riesgo alto' : inm.estado_afectacion === 'moderado' ? 'Riesgo medio' : inm.estado_afectacion === 'colapso' ? 'Alto riesgo de colapso' : 'Riesgo bajo'}
               </span>
             </p>
             <p style="font-size:0.9rem;color:#555;">Niveles sobre el terreno (2.10): ${nivelesSobre ?? 0} | Sótanos (2.11): ${nivelesSotano ?? 0} | Niveles totales: ${nivelesTotales}${inm.tipo_unidad ? ` | Tipo: ${inm.tipo_unidad}` : ''}</p>
@@ -1083,7 +1083,7 @@ async function showDetail(siniestroId) {
               <p style="font-weight:600;margin-top:0.5rem;">Departamentos/Unidades (${hijos.length}):</p>
               ${hijos.map(h => `
                 <div style="background:#fff;padding:0.5rem;border-radius:6px;margin:0.3rem 0;border-left:3px solid ${h.estado_afectacion === 'critico' ? '#d32f2f' : h.estado_afectacion === 'colapso' ? '#000000' : h.estado_afectacion === 'moderado' ? '#f57c00' : '#388e3c'};">
-                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Riesgo alto' : h.estado_afectacion === 'colapso' ? 'Colapso' : h.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}</p>
+                  <p><strong>${h.identificador || 'Unidad'}</strong> - ${h.estado_afectacion === 'critico' ? 'Riesgo alto' : h.estado_afectacion === 'colapso' ? 'Alto riesgo de colapso' : h.estado_afectacion === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo'}</p>
                 </div>
               `).join('')}
             ` : ''}
@@ -1668,7 +1668,7 @@ function colorEstadoAfectacion(estado) {
 }
 
 function etiquetaEstadoAfectacion(estado) {
-  return estado === 'critico' ? 'Riesgo alto' : estado === 'colapso' ? 'Colapso' : estado === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
+  return estado === 'critico' ? 'Riesgo alto' : estado === 'colapso' ? 'ARC' : estado === 'moderado' ? 'Riesgo medio' : 'Riesgo bajo';
 }
 
 function renderUbicacion(data, countEl, container) {

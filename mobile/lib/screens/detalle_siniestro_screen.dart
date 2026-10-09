@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
-import '../services/sync_service.dart';
 import '../models/reporte.dart';
 import '../models/damnificado.dart';
 import '../models/caracteristica_tipo.dart';
@@ -56,7 +55,6 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
   List<Damnificado> _damnificados = [];
   List<ValorCaracteristica> _valores = [];
   List<CaracteristicaTipo> _caracteristicas = [];
-  String _dispositivoId = '';
   bool _loading = true;
 
   @override
@@ -71,12 +69,7 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
     final damns = await _db.getDamnificados(widget.reporteId);
     final valores = await _db.getValoresCaracteristica(widget.reporteId);
     final caracts = await _db.getTodasCaracteristicas();
-    String did = '';
-    try {
-      did = await SyncService().dispositivoId;
-    } catch (_) {}
     setState(() {
-      _dispositivoId = did;
       _reporte = r;
       _damnificados = damns;
       _valores = valores;
@@ -327,6 +320,9 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
             _dato('Nivel de afectación', textoEstado, valorColor: colorEstado),
           ),
           const SizedBox(height: 8),
+          _datoAncho('Evaluador técnico',
+              r.nombreCapturista.isNotEmpty ? r.nombreCapturista : '—'),
+          const SizedBox(height: 8),
           _datoAncho('Dirección',
               '${r.calleNumero}, ${r.colonia}, ${_alcaldiaResuelta(r)}${r.codigoPostal.isNotEmpty ? ', C.P. ${r.codigoPostal}' : ''}, CDMX'),
           const SizedBox(height: 8),
@@ -401,30 +397,6 @@ class _DetalleSiniestroScreenState extends State<DetalleSiniestroScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _maroon)),
-                ),
-              if (_dispositivoId.isNotEmpty)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _borde),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.smartphone,
-                          size: 15, color: Color(0xFF64748B)),
-                      const SizedBox(width: 5),
-                      Text(
-                          'Dispositivo: ${_dispositivoId.substring(0, _dispositivoId.length > 8 ? 8 : _dispositivoId.length)}',
-                          style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF64748B))),
-                    ],
-                  ),
                 ),
             ],
           ),

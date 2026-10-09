@@ -8,6 +8,7 @@ class CaracteristicaTipo {
   final int orden;
   final String renderType;
   final String condicionalTexto;
+  final bool mostrarTitulo;
   final double? minimo;
   final double? maximo;
 
@@ -21,6 +22,7 @@ class CaracteristicaTipo {
     this.orden = 0,
     this.renderType = 'auto',
     this.condicionalTexto = 'no',
+    this.mostrarTitulo = false,
     this.minimo,
     this.maximo,
   });
@@ -35,6 +37,7 @@ class CaracteristicaTipo {
         'orden': orden,
         'render_type': renderType,
         'condicional_texto': condicionalTexto,
+        'mostrar_titulo': mostrarTitulo ? 1 : 0,
         'minimo': minimo,
         'maximo': maximo,
       };
@@ -52,6 +55,7 @@ class CaracteristicaTipo {
         orden: map['orden'] as int? ?? 0,
         renderType: map['render_type'] as String? ?? 'auto',
         condicionalTexto: map['condicional_texto'] as String? ?? 'no',
+        mostrarTitulo: (map['mostrar_titulo'] as int? ?? 0) == 1,
         minimo: (map['minimo'] as num?)?.toDouble(),
         maximo: (map['maximo'] as num?)?.toDouble(),
       );
@@ -70,6 +74,7 @@ class CaracteristicaTipo {
         orden: json['orden'] as int? ?? 0,
         renderType: json['render_type'] as String? ?? 'auto',
         condicionalTexto: json['condicional_texto'] as String? ?? 'no',
+        mostrarTitulo: json['mostrar_titulo'] as bool? ?? false,
         minimo: (json['minimo'] as num?)?.toDouble(),
         maximo: (json['maximo'] as num?)?.toDouble(),
       );

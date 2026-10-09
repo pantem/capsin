@@ -1160,10 +1160,17 @@ class _NuevoReporteScreenState extends State<NuevoReporteScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (c.mostrarTitulo) ...[
+                  Text(c.nombre,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w500, fontSize: 14)),
+                  const SizedBox(height: 4),
+                ],
                 DropdownButtonFormField<String>(
                   value: seleccion,
                   decoration: InputDecoration(
-                    labelText: c.nombre,
+                    labelText: c.mostrarTitulo ? null : c.nombre,
+                    hintText: c.mostrarTitulo ? 'Seleccione' : null,
                     border: const OutlineInputBorder(),
                   ),
                   items: [

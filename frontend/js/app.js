@@ -2142,6 +2142,7 @@ async function abrirFormTipo(id) {
       requerido: c.requerido || false,
       renderType: c.render_type || 'auto',
       condicionalTexto: c.condicional_texto || 'no',
+      mostrarTitulo: c.mostrar_titulo || false,
       minimo: c.minimo ?? null,
       maximo: c.maximo ?? null,
       orden: c.orden ?? 0,
@@ -2192,7 +2193,7 @@ function renderCaractsLista() {
       <div class="caract-item">
         <div class="caract-info">
           <div class="caract-nombre">${c.nombre}</div>
-          <div class="caract-detalle">${tipoLabel[td] || td} · #${c.orden ?? i} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}              ${td === 'numero' && (c.minimo != null || c.maximo != null) ? ` · Rango: ${c.minimo ?? '?'} - ${c.maximo ?? '?'}` : ''}</div>
+          <div class="caract-detalle">${tipoLabel[td] || td} · #${c.orden ?? i} ${c.requerido ? '· Requerido' : ''}              ${(td === 'seleccion' || td === 'multiseleccion') && c.opciones?.length ? ' · Opciones: ' + c.opciones.join(', ') : ''}              ${td === 'numero' && (c.minimo != null || c.maximo != null) ? ` · Rango: ${c.minimo ?? '?'} - ${c.maximo ?? '?'}` : ''}              ${c.mostrarTitulo ? ' · Título fuera del desplegable' : ''}</div>
         </div>
         <div class="caract-acciones">
           <button type="button" class="btn-sm" onclick="abrirFormCaract(${i})">✏️</button>
@@ -2203,7 +2204,7 @@ function renderCaractsLista() {
 }
 
 function abrirFormCaract(idx) {
-  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, renderType: 'auto', condicionalTexto: 'no', minimo: null, maximo: null };
+  const c = idx !== undefined ? _caractsTemp[idx] : { nombre: '', tipoDato: 'texto', opciones: [], requerido: false, renderType: 'auto', condicionalTexto: 'no', mostrarTitulo: false, minimo: null, maximo: null };
   const isNew = idx === undefined;
 
   const modalBody = document.getElementById('modal-tipo-body');
@@ -2256,6 +2257,10 @@ function abrirFormCaract(idx) {
           <option value="mixto" ${c.condicionalTexto === 'mixto' ? 'selected' : ''}>Mixto (al elegir MIXTO)</option>
         </select>
       </div>
+      <div class="form-group checkbox" id="caract-titulo-group" style="${c.tipoDato === 'seleccion' ? 'align-self:flex-end;' : 'display:none;'}">
+        <input type="checkbox" id="caract-mostrar-titulo" ${c.mostrarTitulo ? 'checked' : ''}>
+        <label for="caract-mostrar-titulo">Título fuera del desplegable</label>
+      </div>
     </div>
     <div class="form-row" id="caract-rango-group" style="${c.tipoDato === 'numero' ? '' : 'display:none;'}">
       <div class="form-group">
@@ -2288,9 +2293,11 @@ function onCaractTipoChange() {
   const group = document.getElementById('caract-opciones-group');
   const rango = document.getElementById('caract-rango-group');
   const renderGroup = document.getElementById('caract-render-group');
+  const tituloGroup = document.getElementById('caract-titulo-group');
   group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
   rango.style.display = tipo === 'numero' ? '' : 'none';
   renderGroup.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
+  if (tituloGroup) tituloGroup.style.display = tipo === 'seleccion' ? '' : 'none';
 }
 
 function cancelarCaractForm() {
@@ -2315,8 +2322,10 @@ function guardarCaract(idx) {
     ? document.getElementById('caract-render-type').value
     : 'auto';
   const condicionalTexto = document.getElementById('caract-cond-texto').value;
+  const mostrarTitulo = tipoDato === 'seleccion' &&
+    document.getElementById('caract-mostrar-titulo').checked;
 
-  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden, renderType, condicionalTexto };
+  const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden, renderType, condicionalTexto, mostrarTitulo };
 
   if (idx === undefined || idx === -1) {
     _caractsTemp.push(caract);
@@ -2370,6 +2379,7 @@ async function guardarTipo() {
             orden: c.orden ?? 0,
             render_type: c.renderType || 'auto',
             condicional_texto: c.condicionalTexto || 'no',
+            mostrar_titulo: !!c.mostrarTitulo,
             minimo: c.minimo,
             maximo: c.maximo,
           })),

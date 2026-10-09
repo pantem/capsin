@@ -96,6 +96,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           orden: c.orden ?? existente.orden,
           render_type: c.render_type || 'auto',
           condicional_texto: c.condicional_texto || 'no',
+          mostrar_titulo: !!c.mostrar_titulo,
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         });
@@ -109,6 +110,7 @@ router.put('/:id/caracteristicas', async (req, res) => {
           orden: c.orden ?? i,
           render_type: c.render_type || 'auto',
           condicional_texto: c.condicional_texto || 'no',
+          mostrar_titulo: !!c.mostrar_titulo,
           minimo: c.minimo ?? null,
           maximo: c.maximo ?? null,
         }).save();

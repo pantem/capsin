@@ -269,6 +269,7 @@ const CARACTERISTICAS = [
     requerido: true,
     orden: 52,
     render_type: 'dropdown',
+    mostrar_titulo: true,
   },
   {
     nombre: '5.3 Apuntalar',
@@ -295,6 +296,7 @@ const CARACTERISTICAS = [
     orden: 55,
     render_type: 'dropdown',
     condicional_texto: 'si',
+    mostrar_titulo: true,
   },
 
   // ═══════════════════════════════════════════════════════════════
@@ -343,6 +345,11 @@ async function seedTiposInmueble() {
           (existente.render_type || 'auto') !== c.render_type) {
         existente.render_type = c.render_type;
         cambios.push('render_type');
+      }
+      if (c.mostrar_titulo !== undefined &&
+          (existente.mostrar_titulo || false) !== c.mostrar_titulo) {
+        existente.mostrar_titulo = c.mostrar_titulo;
+        cambios.push('mostrar_titulo');
       }
       if (cambios.length === 0) continue;
       await existente.save();

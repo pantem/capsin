@@ -823,23 +823,36 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
         if (usarDropdown) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: DropdownButtonFormField<String>(
-              value: seleccion,
-              decoration: InputDecoration(
-                labelText: c.nombre,
-                border: const OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String>(
-                  value: '',
-                  child: Text('Seleccione', style: TextStyle(color: Colors.grey)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (c.mostrarTitulo) ...[
+                  Text(c.nombre,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w500, fontSize: 13)),
+                  const SizedBox(height: 4),
+                ],
+                DropdownButtonFormField<String>(
+                  value: seleccion,
+                  decoration: InputDecoration(
+                    labelText: c.mostrarTitulo ? null : c.nombre,
+                    hintText: c.mostrarTitulo ? 'Seleccione' : null,
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: '',
+                      child: Text('Seleccione', style: TextStyle(color: Colors.grey)),
+                    ),
+                    ...c.opciones.map((o) => DropdownMenuItem<String>(
+                          value: o,
+                          child: Text(o),
+                        )),
+                  ],
+                  onChanged: (v) => setState(() => _valoresCaracteristica[c.id] = v),
                 ),
-                ...c.opciones.map((o) => DropdownMenuItem<String>(
-                  value: o,
-                  child: Text(o),
-                )),
               ],
-              onChanged: (v) => setState(() => _valoresCaracteristica[c.id] = v),
             ),
           );
         }

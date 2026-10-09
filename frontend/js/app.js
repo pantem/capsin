@@ -1180,14 +1180,14 @@ function encabezadoReporteHTML(logoB64) {
   const MAROON = '#7A0C38';
   return `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
     <td style="width:30%;vertical-align:middle;">${logoB64 ? `<img src="${logoB64}" style="height:52px;" alt="Logo CDMX">` : ''}</td>
-    <td style="width:65%;text-align:right;vertical-align:middle;padding-right:5px;">
+    <td style="width:5%;vertical-align:middle;">
+      <div>&nbsp;</div>
+    </td>
+    <td style="width:65%;text-align:right;vertical-align:middle;padding-right:0px;">
       <div style="font-size:13px;font-weight:bold;color:#333;">SECRETARÍA DE VIVIENDA</div>
       <div style="font-size:10px;font-weight:bold;color:#555;">DIRECCIÓN GENERAL DE LA COMISIÓN PARA LA RECONSTRUCCIÓN</div>
       <div style="font-size:10px;font-weight:bold;color:#555;">DE LA CIUDAD DE MÉXICO</div>
       <div style="font-size:10px;font-weight:bold;color:#555;">&nbsp;</div>
-    </td>
-    <td style="width:5%;vertical-align:middle;">
-      <div>&nbsp;</div>
     </td>
   </tr></table>
   <div style="border-top:3px solid ${MAROON};">&nbsp;</div>

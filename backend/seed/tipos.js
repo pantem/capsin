@@ -90,16 +90,16 @@ const CARACTERISTICAS = [
     orden: 9,
   },
   {
-    nombre: '2.10 Número de niveles sobre el terreno',
+    nombre: '2.10 Edificación sobre nivel de banqueta',
     tipo_dato: 'seleccion',
-    opciones: Array.from({ length: 100 }, (_, i) => String(i + 1)),
+    opciones: Array.from({ length: 30 }, (_, i) => String(i + 1)),
     requerido: true,
     orden: 10,
   },
   {
     nombre: '2.11 Número de sótanos',
     tipo_dato: 'seleccion',
-    opciones: Array.from({ length: 101 }, (_, i) => String(i)),
+    opciones: Array.from({ length: 11 }, (_, i) => String(i)),
     requerido: true,
     orden: 11,
   },
@@ -337,17 +337,17 @@ async function seedTiposInmueble() {
         cambios.push('opciones');
       }
       if (c.condicional_texto !== undefined &&
-          (existente.condicional_texto || 'no') !== c.condicional_texto) {
+        (existente.condicional_texto || 'no') !== c.condicional_texto) {
         existente.condicional_texto = c.condicional_texto;
         cambios.push('condicional_texto');
       }
       if (c.render_type !== undefined &&
-          (existente.render_type || 'auto') !== c.render_type) {
+        (existente.render_type || 'auto') !== c.render_type) {
         existente.render_type = c.render_type;
         cambios.push('render_type');
       }
       if (c.mostrar_titulo !== undefined &&
-          (existente.mostrar_titulo || false) !== c.mostrar_titulo) {
+        (existente.mostrar_titulo || false) !== c.mostrar_titulo) {
         existente.mostrar_titulo = c.mostrar_titulo;
         cambios.push('mostrar_titulo');
       }

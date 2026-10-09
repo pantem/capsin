@@ -1,4 +1,9 @@
 const API = '/api';
+const ARC_ALT = 'Alto riesgo de colapso';
+
+function altRiesgo(label) {
+  return label === 'ARC' ? ARC_ALT : label;
+}
 
 let allSiniestros = [];
 
@@ -163,7 +168,7 @@ function renderDashboardChart(data) {
           <title>Riesgo alto: ${criticoPct}% (${criticoVal.toLocaleString()})</title>
         </path>
         <path d="${d4}" fill="#333333" class="pie-slice">
-          <title>ARC: ${colapsoPct}% (${colapsoVal.toLocaleString()})</title>
+          <title>Alto riesgo de colapso (ARC): ${colapsoPct}% (${colapsoVal.toLocaleString()})</title>
         </path>
       </g>
       <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="22" font-weight="bold" fill="#FFF">${effectiveTotal.toLocaleString()}</text>
@@ -193,7 +198,7 @@ function renderDashboardChart(data) {
       <g>
         <circle cx="${edge4.x}" cy="${edge4.y}" r="3" fill="#333333"/>
         <line x1="${edge4.x}" y1="${edge4.y}" x2="${txt4.x}" y2="${txt4.y}" stroke="#333333" stroke-width="1.5"/>
-        <text x="${txt4.x + off4}" y="${txt4.y - 8}" text-anchor="${anchor4}" font-size="12" font-weight="600" fill="#333">ARC</text>
+        <text x="${txt4.x + off4}" y="${txt4.y - 8}" text-anchor="${anchor4}" font-size="12" font-weight="600" fill="#333"><title>${ARC_ALT}</title>ARC</text>
         <text x="${txt4.x + off4}" y="${txt4.y + 8}" text-anchor="${anchor4}" font-size="11" fill="#555">${colapsoVal.toLocaleString()} · ${colapsoPct}%</text>
       </g>
     </svg>
@@ -300,7 +305,7 @@ function renderAlcaldiasGrid() {
       <div class="damage-row row-colapso" onclick="abrirDetalleAlcaldia('${item.alcaldia.replace(/'/g, "\\'")}', 'colapso')">
         <div class="damage-row-label">
           <span class="legend-dot dot-black"></span>
-          <span>ARC</span>
+          <span title="${ARC_ALT}">ARC</span>
         </div>
         <span class="damage-row-count">${item.colapso || 0}</span>
       </div>
@@ -496,7 +501,7 @@ async function exportarDashboardPDF() {
       { titulo: 'Riesgo bajo', valor: sinDano, sub: `${pct(sinDano)} del total`, bg: '#e7f6e6', color: '#16a34a' },
       { titulo: 'Riesgo medio', valor: moderado, sub: `${pct(moderado)} del total`, bg: '#fdf1dd', color: '#f59e0b' },
       { titulo: 'Riesgo alto', valor: critico, sub: `${pct(critico)} del total`, bg: '#fde8e8', color: '#dc2626' },
-      { titulo: 'ARC', valor: colapso, sub: `${pct(colapso)} del total`, bg: '#eceff3', color: '#111827' },
+      { titulo: 'ARC', alt: ARC_ALT, valor: colapso, sub: `${pct(colapso)} del total`, bg: '#eceff3', color: '#111827' },
     ];
 
     const iconoCasa =
@@ -508,7 +513,7 @@ async function exportarDashboardPDF() {
       <div style="flex:1;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;background:#fff;">
         <div style="width:38px;height:38px;border-radius:50%;background:${k.bg};color:${k.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${iconoCasa}</div>
         <div>
-          <div style="font-size:11px;font-weight:bold;color:#334155;">${k.titulo}</div>
+          <div style="font-size:11px;font-weight:bold;color:#334155;" ${k.alt ? `title="${k.alt}"` : ''}>${k.titulo}</div>
           <div style="font-size:26px;font-weight:bold;color:${k.color};line-height:1.15;">${k.valor.toLocaleString()}</div>
           <div style="font-size:10px;color:#64748b;">${k.sub}</div>
         </div>
@@ -569,7 +574,7 @@ async function exportarDashboardPDF() {
           <div style="width:40%;">
             <div style="font-size:15px;font-weight:bold;color:#7A0C38;">Distribución de inmuebles por nivel de daño</div>
             <div style="font-size:11px;color:#64748b;margin-bottom:6px;">Número de inmuebles registrados por nivel de riesgo</div>
-            <img src="${dibujarPastelDashboard({ sinDano, moderado, critico, colapso, total })}" style="width:100%;display:block;" alt="Distribución">
+            <img src="${dibujarPastelDashboard({ sinDano, moderado, critico, colapso, total })}" style="width:100%;display:block;" alt="Distribución de inmuebles por nivel de riesgo. ARC: ${ARC_ALT}">
           </div>
           <div style="flex:1;">
             <div style="font-size:15px;font-weight:bold;color:#7A0C38;">Nivel de daño por alcaldía</div>
@@ -581,7 +586,7 @@ async function exportarDashboardPDF() {
                   <th style="padding:6px 8px;font-size:11px;">Riesgo bajo</th>
                   <th style="padding:6px 8px;font-size:11px;">Riesgo medio</th>
                   <th style="padding:6px 8px;font-size:11px;">Riesgo alto</th>
-                  <th style="padding:6px 8px;font-size:11px;">ARC</th>
+                  <th style="padding:6px 8px;font-size:11px;" title="${ARC_ALT}">ARC</th>
                   <th style="padding:6px 8px;font-size:11px;">Total</th>
                 </tr>
               </thead>
@@ -648,7 +653,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
     colapso: 'ARC',
   };
 
-  body.innerHTML = `<h2>${alcaldia} — ${danoLabels[dano] || dano}</h2><p style="color:#777;">Cargando...</p>`;
+  body.innerHTML = `<h2 title="${altRiesgo(danoLabels[dano] || dano)}">${alcaldia} — ${danoLabels[dano] || dano}</h2><p style="color:#777;">Cargando...</p>`;
   modal.classList.remove('hidden');
 
   try {
@@ -656,14 +661,14 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
 
     if (data.length === 0) {
       body.innerHTML = `
-        <h2>${alcaldia} — ${danoLabels[dano] || dano}</h2>
+        <h2 title="${altRiesgo(danoLabels[dano] || dano)}">${alcaldia} — ${danoLabels[dano] || dano}</h2>
         <p style="color:#777;">No hay reportes con este nivel de daño en esta alcaldía.</p>
       `;
       return;
     }
 
     body.innerHTML = `
-      <h2>${alcaldia} — ${danoLabels[dano] || dano}</h2>
+      <h2 title="${altRiesgo(danoLabels[dano] || dano)}">${alcaldia} — ${danoLabels[dano] || dano}</h2>
       <p style="color:#666;margin-bottom:1rem;">${data.length} reporte(s) encontrado(s)</p>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
@@ -705,7 +710,7 @@ async function abrirDetalleAlcaldia(alcaldia, dano) {
     `;
   } catch (err) {
     body.innerHTML = `
-      <h2>${alcaldia} — ${danoLabels[dano] || dano}</h2>
+      <h2 title="${altRiesgo(danoLabels[dano] || dano)}">${alcaldia} — ${danoLabels[dano] || dano}</h2>
       <p style="color:#d32f2f;">Error al cargar: ${err.message}</p>
     `;
   }
@@ -890,7 +895,7 @@ function renderReportesTable() {
                   </div>
                 </td>
                 <td>
-                  <span class="${badgeClass}">${labelRisk}</span>
+                  <span class="${badgeClass}" title="${altRiesgo(labelRisk)}">${labelRisk}</span>
                 </td>
                 <td style="text-align:center;" onclick="event.stopPropagation();">
                   <button class="btn-download-report" onclick="descargarReporte('${s._id}')" title="Descargar Reporte Oficial (${s.folio || 'PDF'})" type="button">
@@ -1722,7 +1727,7 @@ function renderUbicacion(data, countEl, container) {
                 <td style="padding:0.5rem;">${d.usoInmueble || '—'}</td>
                 <td style="padding:0.5rem;text-align:center;">${d.totalNiveles}</td>
                 <td style="padding:0.5rem;">
-                  <span style="background:${estadoColor}22;color:${estadoColor};padding:2px 8px;border-radius:12px;font-weight:600;font-size:0.8rem;">
+                  <span title="${altRiesgo(estadoLabel)}" style="background:${estadoColor}22;color:${estadoColor};padding:2px 8px;border-radius:12px;font-weight:600;font-size:0.8rem;">
                     ${estadoLabel}
                   </span>
                 </td>

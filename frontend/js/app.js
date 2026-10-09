@@ -1180,13 +1180,13 @@ function encabezadoReporteHTML(logoB64) {
   const MAROON = '#7A0C38';
   return `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;"><tr>
     <td style="width:30%;vertical-align:middle;">${logoB64 ? `<img src="${logoB64}" style="height:52px;" alt="Logo CDMX">` : ''}</td>
-    <td style="width:60%;text-align:left;vertical-align:middle;padding-right:20px;">
+    <td style="width:65%;text-align:right;vertical-align:middle;padding-right:5px;">
       <div style="font-size:13px;font-weight:bold;color:#333;">SECRETARÍA DE VIVIENDA</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">Dirección General de la</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">Comisión para la Reconstrucción de la Ciudad de</div>
-      <div style="font-size:8px;font-weight:bold;color:#555;">México.</div>
+      <div style="font-size:10px;font-weight:bold;color:#555;">DIRECCIÓN GENERAL DE LA COMISIÓN PARA LA RECONSTRUCCIÓN</div>
+      <div style="font-size:10px;font-weight:bold;color:#555;">DE LA CIUDAD DE MÉXICO</div>
+      <div style="font-size:10px;font-weight:bold;color:#555;">&nbsp;</div>
     </td>
-    <td style="width:10%;vertical-align:middle;">
+    <td style="width:5%;vertical-align:middle;">
       <div>&nbsp;</div>
     </td>
   </tr></table>
@@ -1216,7 +1216,6 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
     ? `${siniestro.ubicacion.lat}, ${siniestro.ubicacion.lng}`
     : 'No disponible';
   const descripcion = siniestro.descripcion || 'Sin observaciones adicionales registradas.';
-  const dispositivo = siniestro.dispositivo_id || 'Dispositivo Móvil SAS';
   const capturista = siniestro.capturista || '—';
 
   const valoresMap = new Map();
@@ -1294,13 +1293,13 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
       <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Fecha</td>
       <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Folio de inspección</td>
       <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Coordenadas</td>
-      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dispositivo</td>
+      <td style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Evaluador técnico</td>
     </tr>
     <tr>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(fechaReporte)}</td>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(folio)}</td>
       <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(coords)}</td>
-      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dispositivo)}</td>
+      <td style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(capturista)}</td>
     </tr>
     <tr><td colspan="4" style="background:#fdf2f8;border:0.5px solid #f3d4e0;padding:4px 6px;font-size:7px;font-weight:bold;color:${MAROON};">Dirección</td></tr>
     <tr><td colspan="4" style="border:0.5px solid #f3d4e0;padding:2px 6px;font-size:8px;font-weight:bold;">${escHtml(dir)}, ${escHtml(alcaldiaResolv)}, CDMX</td></tr>
@@ -1335,6 +1334,7 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
       ? (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0)
       : [];
     if (fotosValidas.length > 0) html += '<div class="corte-foto"></div>';
+    if (secNum === 5) html += '<div style="height:32px;"></div>';
     html += sectionTitle(String(secNum), titulo);
     html += makeSectionTable(rows);
 

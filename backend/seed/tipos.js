@@ -241,7 +241,7 @@ const CARACTERISTICAS = [
       'Riesgo bajo',
       'Riesgo medio',
       'Riesgo alto',
-      'Colapso',
+      'Alto riesgo de Colapso',
     ],
     requerido: true,
     orden: 41,

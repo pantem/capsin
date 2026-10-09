@@ -1334,7 +1334,7 @@ function generarReporteHTML({ siniestro, inmueble, caracteristicas, valores, log
       ? (fotosB64 || []).filter(b => b && b.indexOf('data:image') === 0)
       : [];
     if (fotosValidas.length > 0) html += '<div class="corte-foto"></div>';
-    if (secNum === 5) html += '<div style="height:32px;"></div>';
+    if (secNum === 5) html += '<div style="height:64px;"></div>';
     html += sectionTitle(String(secNum), titulo);
     html += makeSectionTable(rows);
 

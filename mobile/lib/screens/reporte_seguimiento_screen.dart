@@ -754,18 +754,30 @@ class _ReporteSeguimientoScreenState extends State<ReporteSeguimientoScreen>
       case 'textarea':
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: TextFormField(
-            controller: _textControllers[c.id],
-            decoration: InputDecoration(
-              labelText: c.nombre,
-              border: const OutlineInputBorder(),
-              alignLabelWithHint: true,
-            ),
-            maxLines: 4,
-            keyboardType: TextInputType.multiline,
-            validator: c.requerido
-                ? (v) => v == null || v.isEmpty ? 'Requerido' : null
-                : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (c.mostrarTitulo) ...[
+                Text(c.nombre,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, fontSize: 13)),
+                const SizedBox(height: 4),
+              ],
+              TextFormField(
+                controller: _textControllers[c.id],
+                decoration: InputDecoration(
+                  labelText: c.mostrarTitulo ? null : c.nombre,
+                  border: const OutlineInputBorder(),
+                  alignLabelWithHint: !c.mostrarTitulo,
+                ),
+                maxLines: 4,
+                keyboardType: TextInputType.multiline,
+                validator: c.requerido
+                    ? (v) => v == null || v.isEmpty ? 'Requerido' : null
+                    : null,
+              ),
+            ],
           ),
         );
       case 'numero':

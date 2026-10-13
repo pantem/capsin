@@ -2262,7 +2262,7 @@ function abrirFormCaract(idx) {
           <option value="mixto" ${c.condicionalTexto === 'mixto' ? 'selected' : ''}>Mixto (al elegir MIXTO)</option>
         </select>
       </div>
-      <div class="form-group checkbox" id="caract-titulo-group" style="${c.tipoDato === 'seleccion' ? 'align-self:flex-end;' : 'display:none;'}">
+      <div class="form-group checkbox" id="caract-titulo-group" style="${c.tipoDato === 'seleccion' || c.tipoDato === 'textarea' ? 'align-self:flex-end;' : 'display:none;'}">
         <input type="checkbox" id="caract-mostrar-titulo" ${c.mostrarTitulo ? 'checked' : ''}>
         <label for="caract-mostrar-titulo">Título fuera del desplegable</label>
       </div>
@@ -2302,7 +2302,7 @@ function onCaractTipoChange() {
   group.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
   rango.style.display = tipo === 'numero' ? '' : 'none';
   renderGroup.style.display = tipo === 'seleccion' || tipo === 'multiseleccion' ? '' : 'none';
-  if (tituloGroup) tituloGroup.style.display = tipo === 'seleccion' ? '' : 'none';
+  if (tituloGroup) tituloGroup.style.display = tipo === 'seleccion' || tipo === 'textarea' ? '' : 'none';
 }
 
 function cancelarCaractForm() {
@@ -2327,7 +2327,7 @@ function guardarCaract(idx) {
     ? document.getElementById('caract-render-type').value
     : 'auto';
   const condicionalTexto = document.getElementById('caract-cond-texto').value;
-  const mostrarTitulo = tipoDato === 'seleccion' &&
+  const mostrarTitulo = (tipoDato === 'seleccion' || tipoDato === 'textarea') &&
     document.getElementById('caract-mostrar-titulo').checked;
 
   const caract = { nombre, tipoDato, requerido, opciones, minimo, maximo, orden, renderType, condicionalTexto, mostrarTitulo };

@@ -126,6 +126,7 @@ const CARACTERISTICAS = [
     tipo_dato: 'textarea',
     opciones: [],
     requerido: true,
+    mostrar_titulo: true,
     orden: 21,
   }, {
     nombre: '3.2 ¿Presenta colapso estructural?',
@@ -136,6 +137,7 @@ const CARACTERISTICAS = [
       'Colapso total',
     ],
     requerido: true,
+    mostrar_titulo: true,
     orden: 22,
     render_type: 'dropdown',
   },
